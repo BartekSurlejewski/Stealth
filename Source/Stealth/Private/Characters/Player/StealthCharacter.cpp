@@ -16,7 +16,7 @@ AStealthCharacter::AStealthCharacter()
 	FirstPersonMesh->SetupAttachment(GetMesh());
 	FirstPersonMesh->SetOnlyOwnerSee(true);
 	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
-	FirstPersonMesh->SetCollisionProfileName(FName("NoCollision"));
+	FirstPersonMesh->SetCollisionProfileName(FName("BlockAll"));
 
 	// Create the Camera Component	
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
@@ -95,6 +95,16 @@ void AStealthCharacter::DoJumpEnd()
 	StopJumping();
 }
 
+void AStealthCharacter::DoCrouchStart_Implementation()
+{
+	Crouch(false);
+}
+
+void AStealthCharacter::DoCrouchEnd_Implementation()
+{
+	UnCrouch(false);
+}
+
 //~End Input
 
 void AStealthCharacter::Tick(float DeltaTime)
@@ -118,7 +128,10 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthCharacter::LookInput);
-		EnhancedInputComponent->BindAction(MouseLookAction, ETriggerEvent::Triggered, this, &AStealthCharacter::LookInput);
+
+		// Crouching
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AStealthCharacter::DoCrouchStart);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoCrouchEnd);
 	}
 	else
 	{

@@ -31,7 +31,7 @@ protected:
 	TObjectPtr<UInputAction> LookAction;
 
 	UPROPERTY(EditAnywhere, Category ="Input")
-	TObjectPtr<UInputAction> MouseLookAction;
+	TObjectPtr<UInputAction> CrouchAction;
 
 public:
 	AStealthCharacter();
@@ -46,20 +46,28 @@ protected:
 	void LookInput(const FInputActionValue& Value);
 
 	/** Handles aim inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category="Movement")
 	virtual void DoAim(float Yaw, float Pitch);
 
 	/** Handles move inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category="Movement")
 	virtual void DoMove(float Right, float Forward);
 
 	/** Handles jump start inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category="Movement")
 	virtual void DoJumpStart();
 
 	/** Handles jump end inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category="Movement")
 	virtual void DoJumpEnd();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Movement")
+	void DoCrouchStart();
+	virtual void DoCrouchStart_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Movement")
+	void DoCrouchEnd();
+	virtual void DoCrouchEnd_Implementation();
 
 public:
 	virtual void Tick(float DeltaTime) override;
