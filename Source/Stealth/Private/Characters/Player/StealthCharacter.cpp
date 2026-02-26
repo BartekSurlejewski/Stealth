@@ -14,7 +14,7 @@ AStealthCharacter::AStealthCharacter()
 
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
 	FirstPersonMesh->SetupAttachment(GetMesh());
-	FirstPersonMesh->SetOnlyOwnerSee(true);
+	FirstPersonMesh->SetOnlyOwnerSee(false);
 	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 	FirstPersonMesh->SetCollisionProfileName(FName("BlockAll"));
 
@@ -28,9 +28,11 @@ AStealthCharacter::AStealthCharacter()
 	FirstPersonCamera->FirstPersonFieldOfView = 70.0f;
 	FirstPersonCamera->FirstPersonScale = 0.6f;
 
-	// configure the character comps
+	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::None;
 	GetMesh()->SetOwnerNoSee(true);
-	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
+	GetMesh()->SetCastShadow(true);
+	GetMesh()->SetCastHiddenShadow(true);
+	GetMesh()->bCastDynamicShadow = true;
 
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
 
