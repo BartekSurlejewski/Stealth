@@ -1,5 +1,6 @@
 #include "Characters/NPCs/NpcCharacter.h"
 
+#include "AI/Controllers/NpcAiController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -15,11 +16,15 @@ ANpcCharacter::ANpcCharacter()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+	
+	
 }
 
 void ANpcCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	AiController = Cast<ANpcAiController>(GetController());
 }
 
 void ANpcCharacter::Tick(float DeltaTime)

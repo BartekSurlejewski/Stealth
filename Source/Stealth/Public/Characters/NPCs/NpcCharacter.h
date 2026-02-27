@@ -4,10 +4,16 @@
 #include "GameFramework/Character.h"
 #include "NpcCharacter.generated.h"
 
+class ANpcAiController;
+
 UCLASS(Abstract)
 class STEALTH_API ANpcCharacter : public ACharacter
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY();
+	TObjectPtr<ANpcAiController> AiController;
 
 public:
 	ANpcCharacter();
