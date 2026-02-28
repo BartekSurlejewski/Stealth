@@ -24,21 +24,24 @@ protected:
 	UPROPERTY()
 	TObjectPtr<ANpcAiController> NpcController;
 
+	FTimerHandle PatrolTimer;
 	int32 CurrentTargetIndex = 0;
 
 public:
 	UNpcPatrolComponent();
 
-private:
-	UFUNCTION()
-	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
-UFUNCTION()
-	void MoveToCurrentTarget();
-	
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+private:
+	UFUNCTION()
+	void MoveToCurrentTarget();
+	UFUNCTION()
+	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
+	UFUNCTION()
+	void OnPatrolTimerFinished();
 };

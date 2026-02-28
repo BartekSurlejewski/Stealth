@@ -9,30 +9,6 @@ UNpcPatrolComponent::UNpcPatrolComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UNpcPatrolComponent::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
-{
-	if (Result != EPathFollowingResult::Success) return;
-
-	CurrentTargetIndex = (CurrentTargetIndex + 1) % PatrolTargets.Num();
-	MoveToCurrentTarget();
-}
-
-void UNpcPatrolComponent::MoveToCurrentTarget()
-{
-	if (PatrolTargets.Num() == 0 || !NpcController)
-	{
-		return;
-	}
-
-	AActor* CurrentTarget = PatrolTargets[CurrentTargetIndex];
-	if (!CurrentTarget)
-	{
-		return;
-	}
-	NpcController->MoveToActor(CurrentTarget);
-}
-
-
 void UNpcPatrolComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -64,4 +40,35 @@ void UNpcPatrolComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void UNpcPatrolComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
+void UNpcPatrolComponent::MoveToCurrentTarget()
+{
+	if (PatrolTargets.Num() == 0 || !NpcController)
+	{
+		return;
+	}
+
+	AActor* CurrentTarget = PatrolTargets[CurrentTargetIndex];
+	if (!CurrentTarget)
+	{
+		return;
+	}
+	NpcController->MoveToActor(CurrentTarget);
+}
+
+void UNpcPatrolComponent::OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
+{
+	if (Result != EPathFollowingResult::Success)
+	{
+		return;
+	}
+
+	GetOwner()->GetWorldTimerManager().SetTimer(PatrolTimer, this, &UNpcPatrolComponent::OnPatrolTimerFinished, 2.0f);
+}
+
+void UNpcPatrolComponent::OnPatrolTimerFinished()
+{
+	CurrentTargetIndex = (CurrentTargetIndex + 1) % PatrolTargets.Num();
+	MoveToCurrentTarget();
 }
