@@ -31,17 +31,19 @@ public:
 	UNpcPatrolComponent();
 
 protected:
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	// virtual void BeginPlay() override;
+	// virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	// virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	UFUNCTION(BlueprintCallable)
+	AActor* GetTarget();
 
 private:
-	UFUNCTION()
-	void MoveToCurrentTarget();
-	UFUNCTION()
-	void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
-	UFUNCTION()
-	void OnPatrolTimerFinished();
+	// UFUNCTION(Blueprintable)
+	// void MoveToCurrentTarget();
+	// UFUNCTION()
+	// void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
+	// UFUNCTION()
+	// void OnPatrolTimerFinished();
 };
