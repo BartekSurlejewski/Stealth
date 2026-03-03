@@ -15,6 +15,11 @@ UPlayerInteractionComponent::UPlayerInteractionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+FKey UPlayerInteractionComponent::GetCurrentInteractKey() const
+{
+	return GetKeyForInputAction(InteractInputAction);
+}
+
 
 void UPlayerInteractionComponent::BeginPlay()
 {

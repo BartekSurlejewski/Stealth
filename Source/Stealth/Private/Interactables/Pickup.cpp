@@ -45,7 +45,7 @@ void APickup::SetHighlighted_Implementation(bool bHighlight)
 	IInteractable::SetHighlighted_Implementation(bHighlight);
 }
 
-FText APickup::GetInteractionPrompt() const
+FText APickup::GetInteractionPrompt_Implementation() const
 {
 	return InteractPrompt;
 }

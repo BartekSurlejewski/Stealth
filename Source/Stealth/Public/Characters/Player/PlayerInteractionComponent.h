@@ -18,6 +18,7 @@ class STEALTH_API UPlayerInteractionComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintAssignable)
 	FOnInteractableLookedAt OnInteractableLookedAt;
 
 private:
@@ -34,10 +35,12 @@ private:
 
 public:
 	UPlayerInteractionComponent();
+	UFUNCTION(BlueprintCallable)
+	FKey GetCurrentInteractKey() const;
 
 protected:
 	virtual void BeginPlay() override;
-	UFUNCTION()
+	UFUNCTION(Blueprintable)
 	FKey GetKeyForInputAction(const UInputAction* InputAction) const;
 
 public:

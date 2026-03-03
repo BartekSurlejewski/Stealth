@@ -29,6 +29,6 @@ public:
 	//~Begin IInteractable Interface
 	virtual void Interact_Implementation(AStealthCharacter* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
-	virtual FText GetInteractionPrompt() const override;
+	virtual FText GetInteractionPrompt_Implementation() const override;
 	//~End IInteractable Interface
 };

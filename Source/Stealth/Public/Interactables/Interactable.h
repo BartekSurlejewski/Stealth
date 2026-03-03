@@ -5,7 +5,7 @@
 
 class AStealthCharacter;
 
-UINTERFACE(MinimalAPI)
+UINTERFACE(MinimalAPI, BlueprintType)
 class UInteractable : public UInterface
 {
 	GENERATED_BODY()
@@ -20,9 +20,10 @@ public:
 	void Interact(AStealthCharacter* Interactor);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	void SetHighlighted(bool bHighlight);
-
-	virtual FText GetInteractionPrompt() const = 0;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	FText GetInteractionPrompt() const;
 
 	virtual void Interact_Implementation(AStealthCharacter* Interactor) = 0;
 	virtual void SetHighlighted_Implementation(bool bHighlight) {};
+	virtual FText GetInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
 };
