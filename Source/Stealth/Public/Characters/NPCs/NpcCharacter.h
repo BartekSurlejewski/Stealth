@@ -26,7 +26,7 @@ class STEALTH_API ANpcCharacter : public ACharacter
 protected:
 	UPROPERTY();
 	TObjectPtr<ANpcAiController> AiController;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="State", meta=(AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="State", meta=(AllowPrivateAccess = "true"))
 	FNpcCharacterState CharacterState;
 
 public:
