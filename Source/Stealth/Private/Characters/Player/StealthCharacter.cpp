@@ -2,6 +2,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Characters/Player/PlayerInteractionComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Stealth/Stealth.h"
@@ -39,6 +40,8 @@ AStealthCharacter::AStealthCharacter()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+
+	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
 }
 
 void AStealthCharacter::BeginPlay()
@@ -107,6 +110,16 @@ void AStealthCharacter::DoCrouchEnd_Implementation()
 	UnCrouch(false);
 }
 
+void AStealthCharacter::DoInteract()
+{
+	if (!InteractionComponent)
+	{
+		return;
+	}
+
+	InteractionComponent->Interact();
+}
+
 //~End Input
 
 void AStealthCharacter::Tick(float DeltaTime)
@@ -134,6 +147,10 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// Crouching
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AStealthCharacter::DoCrouchStart);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoCrouchEnd);
+
+		//Interaction
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoInteract);
+		InteractionComponent->SetInteractInputAction(InteractAction);
 	}
 	else
 	{
