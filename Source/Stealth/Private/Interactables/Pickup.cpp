@@ -16,7 +16,7 @@ APickup::APickup()
 	// create the collision sphere
 	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
 	SphereCollision->SetupAttachment(RootComponent);
-	SphereCollision->SetRelativeLocation(FVector(0.0f, 0.0f, 84.0f));
+	SphereCollision->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
 	SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	SphereCollision->SetCollisionObjectType(ECC_WorldStatic);
 	SphereCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
