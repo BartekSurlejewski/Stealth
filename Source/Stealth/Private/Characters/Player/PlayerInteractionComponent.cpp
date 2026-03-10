@@ -116,18 +116,18 @@ AActor* UPlayerInteractionComponent::GetLookAtInteractableActor() const
 	return nullptr;
 }
 
-void UPlayerInteractionComponent::Interact()
+void UPlayerInteractionComponent::Interact() const
 {
-	if (!LookAtInteractableActor)
+	if (!LookAtInteractableActor || !LookAtInteractableActor->Implements<UInteractable>())
 	{
 		return;
 	}
 
-	IInteractable* LookAtInteractable = Cast<IInteractable>(LookAtInteractableActor);
-	if (!LookAtInteractable)
-	{
-		return;
-	}
+	// IInteractable* LookAtInteractable = Cast<IInteractable>(LookAtInteractableActor);
+	// if (!LookAtInteractable)
+	// {
+	// 	return;
+	// }
 
-	IInteractable::Execute_Interact(Cast<UObject>(LookAtInteractable), Cast<AStealthCharacter>(GetOwner()));
+	IInteractable::Execute_Interact(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
 }

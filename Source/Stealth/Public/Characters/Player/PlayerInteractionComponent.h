@@ -48,7 +48,7 @@ public:
 	UFUNCTION()
 	AActor* GetLookAtInteractableActor() const;
 	UFUNCTION()
-	void Interact();
+	void Interact() const;
 
 	UFUNCTION()
 	void SetInteractInputAction(UInputAction* NewInteractInputAction)
