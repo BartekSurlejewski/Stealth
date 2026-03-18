@@ -30,20 +30,7 @@ protected:
 public:
 	UNpcPatrolComponent();
 
-protected:
-	// virtual void BeginPlay() override;
-	// virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 public:
-	// virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	UFUNCTION(BlueprintCallable)
 	AActor* GetTarget();
-
-private:
-	// UFUNCTION(Blueprintable)
-	// void MoveToCurrentTarget();
-	// UFUNCTION()
-	// void OnMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result);
-	// UFUNCTION()
-	// void OnPatrolTimerFinished();
 };

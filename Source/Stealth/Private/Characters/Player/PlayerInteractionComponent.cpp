@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Characters/Player/PlayerInteractionComponent.h"
 
 #include "EnhancedInputSubsystems.h"
@@ -9,7 +6,6 @@
 #include "GameFramework/Character.h"
 #include "Interactables/Interactable.h"
 
-// Sets default values for this component's properties
 UPlayerInteractionComponent::UPlayerInteractionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -67,8 +63,6 @@ FKey UPlayerInteractionComponent::GetKeyForInputAction(const UInputAction* Input
 	return FKey();
 }
 
-
-// Called every frame
 void UPlayerInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -122,12 +116,6 @@ void UPlayerInteractionComponent::Interact() const
 	{
 		return;
 	}
-
-	// IInteractable* LookAtInteractable = Cast<IInteractable>(LookAtInteractableActor);
-	// if (!LookAtInteractable)
-	// {
-	// 	return;
-	// }
 
 	IInteractable::Execute_Interact(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
 }

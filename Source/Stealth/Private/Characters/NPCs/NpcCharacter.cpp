@@ -7,7 +7,7 @@
 // Sets default values
 ANpcCharacter::ANpcCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
 
@@ -16,14 +16,12 @@ ANpcCharacter::ANpcCharacter()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
-	
-	
 }
 
 void ANpcCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	AiController = Cast<ANpcAiController>(GetController());
 }
 
