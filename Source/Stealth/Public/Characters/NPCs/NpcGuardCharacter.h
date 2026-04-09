@@ -19,8 +19,6 @@ class STEALTH_API ANpcGuardCharacter : public ANpcCharacter
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta=(AllowPrivateAccess = "true"))
-	TObjectPtr<UAIPerceptionComponent> AiPerception;
 
 public:
 	ANpcGuardCharacter();

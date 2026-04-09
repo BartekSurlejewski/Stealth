@@ -8,5 +8,4 @@ ANpcGuardCharacter::ANpcGuardCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 
 	PatrolComponent = CreateDefaultSubobject<UNpcPatrolComponent>(TEXT("Patrol Component"));
-	AiPerception = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AI Perception"));
 }

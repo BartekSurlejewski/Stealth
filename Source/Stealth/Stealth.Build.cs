@@ -11,7 +11,7 @@ public class Stealth : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "AIModule", "StateTreeModule",
-			"GameplayStateTreeModule"
+			"GameplayStateTreeModule", "GameplayTags"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

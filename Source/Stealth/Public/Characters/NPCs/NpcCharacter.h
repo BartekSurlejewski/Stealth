@@ -6,18 +6,6 @@
 
 class ANpcAiController;
 
-USTRUCT(BlueprintType)
-struct FNpcCharacterState
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="State")
-	bool bSeesPlayer = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="State")
-	bool bIsAwareOfPlayer = false;
-};
-
 UCLASS(Abstract)
 class STEALTH_API ANpcCharacter : public ACharacter
 {
@@ -26,10 +14,8 @@ class STEALTH_API ANpcCharacter : public ACharacter
 protected:
 	UPROPERTY();
 	TObjectPtr<ANpcAiController> AiController;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="State", meta=(AllowPrivateAccess = "true"))
-	FNpcCharacterState CharacterState;
+	
 
-public:
 	ANpcCharacter();
 
 protected:

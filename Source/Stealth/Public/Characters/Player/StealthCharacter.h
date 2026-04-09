@@ -4,6 +4,8 @@
 #include "GameFramework/Character.h"
 #include "StealthCharacter.generated.h"
 
+class UActorLightExposureComponent;
+class UAIPerceptionStimuliSourceComponent;
 class UPlayerInteractionComponent;
 struct FInputActionValue;
 class UInputAction;
@@ -22,7 +24,12 @@ protected:
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPlayerInteractionComponent> InteractionComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stimuli Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stimuli Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UActorLightExposureComponent> LightExposureComponent;
 
+protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere, Category ="Input")
@@ -40,25 +47,19 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
 
-	/** Called from Input Actions for looking input */
 	void LookInput(const FInputActionValue& Value);
 
-	/** Handles aim inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoAim(float Yaw, float Pitch);
 
-	/** Handles move inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
 
-	/** Handles jump start inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpStart();
 
-	/** Handles jump end inputs from either controls or UI interfaces */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
@@ -69,7 +70,7 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Input")
 	void DoCrouchEnd();
 	virtual void DoCrouchEnd_Implementation();
-	
+
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();
 
@@ -77,4 +78,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	[[nodiscard]] const TObjectPtr<UActorLightExposureComponent>& GetLightExposureComponent() const { return LightExposureComponent; }
 };

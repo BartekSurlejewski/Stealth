@@ -5,6 +5,8 @@
 #include "Characters/Player/PlayerInteractionComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Lighting/ActorLightExposureComponent.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
 AStealthCharacter::AStealthCharacter()
@@ -42,6 +44,8 @@ AStealthCharacter::AStealthCharacter()
 	GetCharacterMovement()->AirControl = 0.5f;
 
 	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
+	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
+	LightExposureComponent = CreateDefaultSubobject<UActorLightExposureComponent>(TEXT("Light Exposure Component"));
 }
 
 void AStealthCharacter::BeginPlay()
