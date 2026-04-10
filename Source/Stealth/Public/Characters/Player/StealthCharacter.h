@@ -4,7 +4,7 @@
 #include "GameFramework/Character.h"
 #include "StealthCharacter.generated.h"
 
-class UActorLightExposureComponent;
+class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
 class UPlayerInteractionComponent;
 struct FInputActionValue;
@@ -24,10 +24,10 @@ protected:
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPlayerInteractionComponent> InteractionComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stimuli Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Stimuli", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stimuli Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UActorLightExposureComponent> LightExposureComponent;
+	UPROPERTY(VisibleAnywhere, Category="Components|Data")
+	TObjectPtr<UStealthCharacterData> Data;
 
 protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
@@ -78,6 +78,4 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	[[nodiscard]] const TObjectPtr<UActorLightExposureComponent>& GetLightExposureComponent() const { return LightExposureComponent; }
 };

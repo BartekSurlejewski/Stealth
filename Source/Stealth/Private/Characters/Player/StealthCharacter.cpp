@@ -3,9 +3,10 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/Player/PlayerInteractionComponent.h"
+#include "Characters/Player/StealthCharacterData.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Lighting/ActorLightExposureComponent.h"
+#include "Exposure/PlayerExposureSubsystem.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
@@ -45,7 +46,7 @@ AStealthCharacter::AStealthCharacter()
 
 	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
-	LightExposureComponent = CreateDefaultSubobject<UActorLightExposureComponent>(TEXT("Light Exposure Component"));
+	Data = CreateDefaultSubobject<UStealthCharacterData>(TEXT("Character Data"));
 }
 
 void AStealthCharacter::BeginPlay()

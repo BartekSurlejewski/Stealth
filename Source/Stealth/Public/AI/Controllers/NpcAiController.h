@@ -7,7 +7,7 @@
 
 struct FGameplayTag;
 class UStateTreeAIComponent;
-class ULightExposureSubsystem;
+class UPlayerExposureSubsystem;
 struct FAIStimulus;
 class UAIPerceptionComponent;
 
@@ -47,5 +47,5 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="State", meta=(AllowPrivateAccess = "true"))
 	FNpcCharacterState CharacterState;
 	UPROPERTY()
-	TObjectPtr<ULightExposureSubsystem> LightExposureSubsystem;
+	TObjectPtr<UPlayerExposureSubsystem> LightExposureSubsystem;
 };

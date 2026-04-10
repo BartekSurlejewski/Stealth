@@ -1,8 +1,8 @@
-﻿#include "Lighting/StealthLightComponent.h"
+﻿#include "Exposure/StealthLightComponent.h"
 
 #include "Components/LightComponent.h"
 #include "Components/PointLightComponent.h"
-#include "Lighting/LightExposureSubsystem.h"
+#include "Exposure/PlayerExposureSubsystem.h"
 #include "Stealth/Stealth.h"
 
 
@@ -17,7 +17,7 @@ void UStealthLightComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ULightExposureSubsystem* LightsRegistry = GetWorld()->GetSubsystem<ULightExposureSubsystem>();
+	UPlayerExposureSubsystem* LightsRegistry = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>();
 
 	if (!LightsRegistry)
 	{
@@ -41,7 +41,7 @@ void UStealthLightComponent::BeginPlay()
 
 void UStealthLightComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	ULightExposureSubsystem* LightsRegistry = GetWorld()->GetSubsystem<ULightExposureSubsystem>();
+	UPlayerExposureSubsystem* LightsRegistry = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>();
 	if (LightsRegistry)
 	{
 		LightsRegistry->UnregisterLight(LightHandle);

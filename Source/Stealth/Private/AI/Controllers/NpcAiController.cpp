@@ -5,9 +5,10 @@
 
 #include "Characters/Player/StealthCharacter.h"
 #include "Components/StateTreeAIComponent.h"
-#include "Lighting/LightExposureSubsystem.h"
+#include "Exposure/PlayerExposureSubsystem.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISense_Sight.h"
+#include "Stealth/Stealth.h"
 
 ANpcAiController::ANpcAiController()
 {
@@ -48,14 +49,17 @@ void ANpcAiController::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulu
 
 	if (!LightExposureSubsystem)
 	{
-		LightExposureSubsystem = GetWorld()->GetSubsystem<ULightExposureSubsystem>();
+		LightExposureSubsystem = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>();
 		if (!LightExposureSubsystem)
 		{
 			return;
 		}
 	}
 
-	float ActorVisibilityStrength = Stimulus.Strength * LightExposureSubsystem->GetPlayerLightExposure();
+	UE_LOG(LogStealth, Warning, TEXT("[NPC AI] Target Perception Updated for %s"), *TargetActor->GetName());
+
+	// float ActorVisibilityStrength = Stimulus.Strength * LightExposureSubsystem->CalculateTotalPlayerExposure();
+	float ActorVisibilityStrength = LightExposureSubsystem->GetCurrentTotalExposure();
 	if (FMath::IsNearlyEqual(ActorVisibilityStrength, 0.f, 0.01f))
 	{
 		CharacterState.bSeesPlayer = false;
@@ -67,6 +71,15 @@ void ANpcAiController::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulu
 	else
 	{
 		CharacterState.bSeesPlayer = ActorVisibilityStrength > 0.25f;
+	}
+
+	if (CharacterState.bSeesPlayer)
+	{
+		UE_LOG(LogStealth, Warning, TEXT("[NPC AI] I see player"));
+	}
+	else
+	{
+		UE_LOG(LogStealth, Warning, TEXT("[NPC AI] Don't see player"));
 	}
 
 	FStateTreeEvent Event;
