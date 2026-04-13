@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Core/StealthTickableWorldSubsystem.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "PlayerExposureSubsystem.generated.h"
 
@@ -21,20 +22,13 @@ struct FLightData
 };
 
 UCLASS()
-class STEALTH_API UPlayerExposureSubsystem : public UTickableWorldSubsystem
+class STEALTH_API UPlayerExposureSubsystem : public UStealthTickableWorldSubsystem
 {
 	GENERATED_BODY()
 
 public:
 	virtual void Tick(float DeltaTime) override;
 
-	virtual TStatId GetStatId() const override
-	{
-		return GetStatID();
-	}
-
-	virtual bool IsTickable() const override { return true; }
-	
 	UFUNCTION()
 	int32 RegisterLight(const FLightData& LightData);
 	UFUNCTION()
