@@ -7,6 +7,8 @@
 #include "StealthLightComponent.generated.h"
 
 
+class UPointLightComponent;
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UStealthLightComponent : public UActorComponent
 {
@@ -15,10 +17,12 @@ class STEALTH_API UStealthLightComponent : public UActorComponent
 public:
 	UStealthLightComponent();
 
-protected:
+public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 protected:
 	int32 LightHandle;
+	UPROPERTY()
+	TObjectPtr<UPointLightComponent> LightComponent;
 };

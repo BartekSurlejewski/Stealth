@@ -12,7 +12,6 @@ void UPlayerExposureSubsystem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	CurrentTotalExposure = CalculateTotalPlayerExposure();
-	UE_LOG(LogStealth, Warning, TEXT("[PlayerExposure] %f"), CurrentTotalExposure);
 }
 
 int32 UPlayerExposureSubsystem::RegisterLight(const FLightData& LightData)
@@ -68,6 +67,7 @@ const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 			FHitResult Hit;
 			FCollisionQueryParams Params;
 			Params.AddIgnoredActor(PlayerCharacter);
+			Params.AddIgnoredActor(LightData.OwnerActor);
 
 			bool bBlocked = GetWorld()->LineTraceSingleByChannel(
 				Hit, LightData.Position, PlayerPosition, ECC_Visibility, Params);

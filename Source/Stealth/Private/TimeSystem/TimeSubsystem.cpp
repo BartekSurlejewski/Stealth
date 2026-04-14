@@ -1,6 +1,7 @@
 ﻿#include "TimeSystem/TimeSubsystem.h"
 
 #include "Core/Data/StealthWorldSettings.h"
+#include "Stealth/Stealth.h"
 
 void UTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -38,6 +39,8 @@ void UTimeSubsystem::Tick(float DeltaTime)
 
 		//TODO: Add onNewDay event
 	}
+
+	CheckTimeOfDay();
 }
 
 float UTimeSubsystem::GetTimeOfDayNormalized() const
@@ -73,4 +76,33 @@ void UTimeSubsystem::SetTime(const int32& NewDay, const int32& NewHour, const in
 {
 	Data.CurrentDayNum = NewDay;
 	Data.SecondsElapsedInDay = (NewHour * 3600) + (NewMinute * 60) + NewSecond;
+}
+
+void UTimeSubsystem::CheckTimeOfDay()
+{
+	switch (Data.CurrentTimeOfDay)
+	{
+	case ETimeOfDay::Day:
+		{
+			if (Data.SecondsElapsedInDay <= Data.SunriseSeconds || Data.SecondsElapsedInDay >= Data.SunsetSeconds)
+			{
+				Data.CurrentTimeOfDay = ETimeOfDay::Night;
+				OnTimeOfDayChanged.Broadcast(ETimeOfDay::Night);
+
+				UE_LOG(LogStealth, Log, TEXT("Time of day changed to night"));
+			}
+			break;
+		}
+	case ETimeOfDay::Night:
+		{
+			if (Data.SecondsElapsedInDay >= Data.SunriseSeconds && Data.SecondsElapsedInDay <= Data.SunsetSeconds)
+			{
+				Data.CurrentTimeOfDay = ETimeOfDay::Day;
+				OnTimeOfDayChanged.Broadcast(ETimeOfDay::Day);
+
+				UE_LOG(LogStealth, Log, TEXT("Time of day changed to day"));
+			}
+			break;
+		}
+	}
 }

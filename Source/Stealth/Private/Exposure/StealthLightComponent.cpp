@@ -24,17 +24,28 @@ void UStealthLightComponent::BeginPlay()
 		return;
 	}
 
-	UPointLightComponent* PointLightComponent = GetOwner()->FindComponentByClass<UPointLightComponent>();
-	if (!PointLightComponent)
+	if (!LightComponent)
 	{
-		UE_LOG(LogStealth, Warning, TEXT("StealthLightComponent: No UPointLightComponent on %s"), *GetOwner()->GetName());
-		return;
+		LightComponent = GetOwner()->FindComponentByClass<UPointLightComponent>();
+		if (!LightComponent)
+		{
+			UE_LOG(LogStealth, Warning, TEXT("StealthLightComponent: No UPointLightComponent on %s"), *GetOwner()->GetName());
+			return;
+		}
 	}
 
 	FLightData LightData;
-	LightData.Position = GetOwner()->GetActorLocation();
-	LightData.Radius = PointLightComponent->AttenuationRadius;
-	LightData.Intensity = PointLightComponent->Intensity;
+	if (LightComponent)
+	{
+		LightData.Position = LightComponent->GetComponentLocation();
+	}
+	else
+	{
+		LightData.Position = GetOwner()->GetActorLocation();
+	}
+	LightData.Radius = LightComponent->AttenuationRadius;
+	LightData.Intensity = LightComponent->Intensity;
+	LightData.OwnerActor = GetOwner();
 
 	LightHandle = LightsRegistry->RegisterLight(LightData);
 }

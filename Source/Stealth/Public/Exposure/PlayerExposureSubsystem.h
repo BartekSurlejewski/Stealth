@@ -19,6 +19,7 @@ struct FLightData
 	FVector Position;
 	float Radius;
 	float Intensity;
+	TObjectPtr<AActor> OwnerActor;
 };
 
 UCLASS()
@@ -54,8 +55,4 @@ private:
 	float CurrentTotalExposure = 1;
 	UPROPERTY()
 	TObjectPtr<AStealthCharacter> PlayerCharacter;
-
-public:
-	// UPROPERTY()
-	// TObjectPtr<UActorLightExposureComponent> PlayerlightExposureComponent;
 };
