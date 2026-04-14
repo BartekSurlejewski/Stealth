@@ -19,12 +19,19 @@ bool UStealthTickableWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	const AStealthWorldSettings* rrhWorldSettings = Cast<AStealthWorldSettings>(World->GetWorldSettings());
 	if (!rrhWorldSettings || !rrhWorldSettings->IsGameplayWorld())
 	{
-		UE_LOG(LogStealth, Warning, TEXT("[Stealth Tickable World Subsystem] Not Creating"))
-
 		return false;
 	}
 
-	UE_LOG(LogStealth, Warning, TEXT("[Stealth Tickable World Subsystem] Creating"))
-
 	return true;
+}
+
+void UStealthTickableWorldSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	WorldSettings = Cast<AStealthWorldSettings>(GetWorld()->GetWorldSettings());
+	if (!WorldSettings)
+	{
+		UE_LOG(LogStealth, Error, TEXT("[StealthTickableWorldSubsystem] No world settings"))
+	}
 }

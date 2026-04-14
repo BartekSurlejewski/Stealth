@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -8,9 +6,7 @@
 
 class UAIPerceptionComponent;
 class UNpcPatrolComponent;
-/**
- * 
- */
+
 UCLASS()
 class STEALTH_API ANpcGuardCharacter : public ANpcCharacter
 {

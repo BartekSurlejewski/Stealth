@@ -4,6 +4,8 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "StealthTickableWorldSubsystem.generated.h"
 
+class AStealthWorldSettings;
+
 UCLASS(Abstract)
 class STEALTH_API UStealthTickableWorldSubsystem : public UTickableWorldSubsystem
 {
@@ -18,4 +20,8 @@ public:
 	virtual bool IsTickable() const override { return true; }
 
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+
+protected:
+	TObjectPtr<AStealthWorldSettings> WorldSettings;
 };
