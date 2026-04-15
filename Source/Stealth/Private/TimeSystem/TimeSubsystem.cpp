@@ -35,9 +35,18 @@ void UTimeSubsystem::Tick(float DeltaTime)
 	if (Data.SecondsElapsedInDay >= Data.SECONDS_PER_DAY)
 	{
 		Data.SecondsElapsedInDay -= Data.SECONDS_PER_DAY;
-		Data.CurrentDayNum++;
+		Data.CurrentDay++;
 
 		//TODO: Add onNewDay event
+	}
+
+	Data.CurrentHour = Data.SecondsElapsedInDay / 3600;
+	Data.CurrentMinute = FMath::Fmod(Data.SecondsElapsedInDay, 3600) / 60;
+
+	if (Data.LastMinute != Data.CurrentMinute)
+	{
+		Data.LastMinute = Data.CurrentMinute;
+		OnTimeChanged.Broadcast(Data.CurrentHour, Data.CurrentMinute);
 	}
 
 	CheckTimeOfDay();
@@ -65,16 +74,15 @@ float UTimeSubsystem::GetTimeOfNightNormalized() const
 	return FMath::Clamp((AdjustedT - Rise) / (Set - Rise), 0.f, 1.f);
 }
 
-void UTimeSubsystem::GetClockTime(int32& OutHour, int32& OutMinute, int32& OutSecond) const
+void UTimeSubsystem::GetClockTime(int32& OutHour, int32& OutMinute) const
 {
-	OutHour = Data.SecondsElapsedInDay / 3600;
-	OutMinute = FMath::Fmod(Data.SecondsElapsedInDay, 3600) / 60;
-	OutSecond = FMath::Fmod(Data.SecondsElapsedInDay, 60);
+	OutHour = Data.CurrentHour;
+	OutMinute = Data.CurrentMinute;
 }
 
 void UTimeSubsystem::SetTime(const int32& NewDay, const int32& NewHour, const int32& NewMinute, const int32& NewSecond)
 {
-	Data.CurrentDayNum = NewDay;
+	Data.CurrentDay = NewDay;
 	Data.SecondsElapsedInDay = (NewHour * 3600) + (NewMinute * 60) + NewSecond;
 }
 
