@@ -16,12 +16,19 @@ class STEALTH_API ADailyRegimenManager : public AInfo
 public:
 	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskStarted, UDailyRegimenTask*, DailyRegimenTask);
 
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTaskEnded, UDailyRegimenTask*, DailyRegimenTask, bool, bTaskSucceeded);
+
 	UPROPERTY(BlueprintAssignable)
 	FOnTaskStarted OnTaskStarted;
+	UPROPERTY(BlueprintAssignable)
+	FOnTaskEnded OnTaskEnded;
 
 	/*Methods*/
 public:
 	ADailyRegimenManager();
+
+	UFUNCTION(BlueprintCallable)
+	[[nodiscard]] const TArray<UDailyRegimenTask*>& GetDailyRegimenTasks() const { return DailyRegimenTasks; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -40,7 +47,7 @@ private:
 	void SortTasksByStartTime();
 
 	UFUNCTION()
-	void DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task, bool bWasTaskSuccessful);
+	void DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task);
 	UFUNCTION()
 	void TimeSubsystemOnTimeChanged(int32 Hour, int32 Minute);
 
@@ -48,6 +55,8 @@ private:
 protected:
 	UPROPERTY(Instanced, EditAnywhere)
 	TArray<UDailyRegimenTask*> DailyRegimenTasks;
+
+protected:
 	UPROPERTY()
 	TSoftObjectPtr<UTimeSubsystem> TimeSubsystem;
 	UPROPERTY()
@@ -56,4 +65,6 @@ protected:
 	UDailyRegimenTask* CurrentTask = nullptr;
 	UPROPERTY()
 	UDailyRegimenTask* PendingTask = nullptr;
+	UPROPERTY()
+	bool bCurrentTaskSucceeded = false;
 };

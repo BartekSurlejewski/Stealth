@@ -23,5 +23,5 @@ void UEnterAreaTask::DisposeTask_Implementation()
 
 void UEnterAreaTask::TargetArea_OnActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
-	OnTaskCompleted.Broadcast(this, true);
+	OnTaskCompleted.Broadcast(this);
 }

@@ -22,6 +22,19 @@ void UTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	Data.SunsetSeconds = (WorldSettings->GetSunsetHour() * 3600);
 }
 
+void UTimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+{
+	Super::OnWorldBeginPlay(InWorld);
+
+	ETimeOfDay StartingTimeOfDay = Data.CurrentTimeOfDay;
+	CheckTimeOfDay();
+
+	if (StartingTimeOfDay == Data.CurrentTimeOfDay) // Event was already invoked if time of day changed at the start
+	{
+		OnTimeOfDayChanged.Broadcast(Data.CurrentTimeOfDay);
+	}
+}
+
 void UTimeSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

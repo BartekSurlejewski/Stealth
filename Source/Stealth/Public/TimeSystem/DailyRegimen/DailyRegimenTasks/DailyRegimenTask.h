@@ -10,7 +10,7 @@ class STEALTH_API UDailyRegimenTask : public UObject
 	GENERATED_BODY()
 	/*Delegates*/
 public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTaskCompleted, UDailyRegimenTask*, Task, bool, Succeeded);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskCompleted, UDailyRegimenTask*, Task);
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
 	FOnTaskCompleted OnTaskCompleted;
@@ -29,14 +29,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Time")
 	int32 GetStartTimeAsMinutes() const { return StartHour * 60 + StartMinute; }
 
-	UFUNCTION()
-	void FailTask();
-
 	UFUNCTION(BlueprintPure, Category = "Time")
 	int32 GetEndTimeAsMinutes() const { return EndHour * 60 + EndMinute; }
 
 	UFUNCTION(BlueprintPure, Category = "Time")
-	bool CanStartAtTime(const int32& DayTimeInMinutes) const;
+	bool IsActiveAtTime(const int32& DayTimeInMinutes) const;
 
 	/*Properties*/
 public:

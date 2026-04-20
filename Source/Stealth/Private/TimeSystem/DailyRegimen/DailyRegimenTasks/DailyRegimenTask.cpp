@@ -17,9 +17,21 @@ void UDailyRegimenTask::DisposeTask_Implementation()
 	bIsInitialized = false;
 }
 
-void UDailyRegimenTask::FailTask() { OnTaskCompleted.Broadcast(this, false); }
-
-bool UDailyRegimenTask::CanStartAtTime(const int32& DayTimeInMinutes) const
+bool UDailyRegimenTask::IsActiveAtTime(const int32& DayTimeInMinutes) const
 {
-	return DayTimeInMinutes >= GetStartTimeAsMinutes() && DayTimeInMinutes < GetEndTimeAsMinutes();
+	const int32 StartTimeAsMinutes = GetStartTimeAsMinutes();
+	const int32 EndTimeAsMinutes = GetEndTimeAsMinutes();
+
+	if (StartTimeAsMinutes <= EndTimeAsMinutes)
+	{
+		// Normal same-day task: [Start -------- End]
+		// e.g. 08:00 - 17:00
+		return DayTimeInMinutes >= StartTimeAsMinutes && DayTimeInMinutes < EndTimeAsMinutes;
+	}
+	else
+	{
+		// Overnight task: [---- End] ... [Start ----]
+		// e.g. 20:00 - 06:00 → active if time >= 20:00 OR time < 06:00
+		return DayTimeInMinutes >= StartTimeAsMinutes || DayTimeInMinutes < EndTimeAsMinutes;
+	}
 }

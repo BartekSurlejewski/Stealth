@@ -51,7 +51,7 @@ void ADailyRegimenManager::PrepareTask(UDailyRegimenTask* TaskToPrepare)
 	}
 	int32 CurrentDayTimeAsMinutes = TimeSubsystem->GetCurrentDayTimeAsMinutes();
 
-	if (TaskToPrepare->CanStartAtTime(CurrentDayTimeAsMinutes))
+	if (TaskToPrepare->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
 		InitializeTask(TaskToPrepare);
 		return;
@@ -68,6 +68,7 @@ void ADailyRegimenManager::InitializeTask(UDailyRegimenTask* TaskToInitialize)
 		return;
 	}
 
+	bCurrentTaskSucceeded = false;
 	CurrentTask = TaskToInitialize;
 	CurrentTask->InitializeTask();
 	CurrentTask->OnTaskCompleted.AddDynamic(this, &ADailyRegimenManager::DailyRegimenTask_TaskCompleted);
@@ -109,21 +110,28 @@ void ADailyRegimenManager::SortTasksByStartTime()
 	});
 }
 
-void ADailyRegimenManager::DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task, bool bWasTaskSuccessful)
+void ADailyRegimenManager::DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task)
 {
 	Task->OnTaskCompleted.RemoveAll(this);
-	Task->DisposeTask();
-	CurrentTask = nullptr;
-	PrepareTask(GetNextTask());
+	bCurrentTaskSucceeded = true;
+	OnTaskEnded.Broadcast(Task, true);
 }
 
 void ADailyRegimenManager::TimeSubsystemOnTimeChanged(int32 Hour, int32 Minute)
 {
 	int32 CurrentDayTimeAsMinutes = TimeSubsystem->GetCurrentDayTimeAsMinutes();
 
-	if (CurrentTask && CurrentTask->GetEndTimeAsMinutes() < CurrentDayTimeAsMinutes)
+	if (CurrentTask && !CurrentTask->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
-		CurrentTask->FailTask();
+		if (!bCurrentTaskSucceeded)
+		{
+			OnTaskEnded.Broadcast(CurrentTask, false);
+		}
+
+		CurrentTask->DisposeTask();
+		CurrentTask = nullptr;
+
+		PrepareTask(GetNextTask());
 		return;
 	}
 
@@ -132,7 +140,7 @@ void ADailyRegimenManager::TimeSubsystemOnTimeChanged(int32 Hour, int32 Minute)
 		return;
 	}
 
-	if (PendingTask->CanStartAtTime(CurrentDayTimeAsMinutes))
+	if (PendingTask->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
 		UDailyRegimenTask* TaskToStart = PendingTask;
 		PendingTask = nullptr;
