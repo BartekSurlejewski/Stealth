@@ -1,5 +1,5 @@
 # Stealth Game
-A prototype of a stealth, Thief-inspired, game. Sandbox project for improving my Unreal Engine skills.
+Immersive sim game prototype. Sandbox project for improving my Unreal Engine skills.
 
 ## How To Start
 - Clone the repository
