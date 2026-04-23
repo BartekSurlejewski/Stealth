@@ -20,7 +20,7 @@ struct FTimeSubsystemData
 
 	static constexpr int32 SECONDS_PER_DAY = 86400; // 24 * 60 * 60
 	// How many real seconds = 1 in-game second (e.g. 60 = 1 min real = 1hr game)
-	static constexpr float TIME_SCALE = 900.f;
+	static constexpr float TIME_SCALE = 90.f;
 
 	UPROPERTY()
 	ETimeOfDay CurrentTimeOfDay;
@@ -32,9 +32,9 @@ struct FTimeSubsystemData
 	UPROPERTY()
 	float SecondsElapsedInMinute;
 	UPROPERTY()
-	float SunriseSeconds;
+	float DayStartTimeInSeconds;
 	UPROPERTY()
-	float SunsetSeconds;
+	float DayEndTimeInSeconds;
 
 	UPROPERTY()
 	int32 CurrentDay;

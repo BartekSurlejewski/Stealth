@@ -2,8 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
+#include "GameplayTagContainer.h"
 #include "StealthCharacter.generated.h"
 
+class UBasicAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
 class UPlayerInteractionComponent;
@@ -13,11 +16,12 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 
 UCLASS()
-class STEALTH_API AStealthCharacter : public ACharacter
+class STEALTH_API AStealthCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-
+	/*Properties*/
 protected:
+#pragma region Components
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -26,10 +30,13 @@ protected:
 	TObjectPtr<UPlayerInteractionComponent> InteractionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Stimuli", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
-	UPROPERTY(VisibleAnywhere, Category="Components|Data")
+	UPROPERTY(VisibleAnywhere, Category="Components|Data", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStealthCharacterData> Data;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+#pragma endregion
 
-protected:
+#pragma region Input
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere, Category ="Input")
@@ -40,13 +47,33 @@ protected:
 	TObjectPtr<UInputAction> CrouchAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Input")
 	TObjectPtr<UInputAction> InteractAction;
+	UPROPERTY(EditDefaultsOnly, Category ="Input")
+	TObjectPtr<UInputAction> SprintAction;
+#pragma endregion
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ability System")
+	TObjectPtr<UBasicAttributeSet> AttributeSet;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTag MovingTag;
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTag StaminaRegenTag;
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTag SprintAbilityTag;
+	
+	UPROPERTY()
+	FGameplayTagContainer SprintAbilityTagsContainer;
+	/*Methods*/
 public:
 	AStealthCharacter();
 
-protected:
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 
+protected:
 	void MoveInput(const FInputActionValue& Value);
 
 	void LookInput(const FInputActionValue& Value);
@@ -73,9 +100,13 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSprintStart();
 
-public:
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSprintEnd();
+	
+private:
+	UFUNCTION()
+	void UpdateTags() const;
 };

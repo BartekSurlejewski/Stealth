@@ -18,8 +18,8 @@ void UTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	WorldSettings->GetStartDayTime(StartDay, StartHour, StartMinute);
 	SetTime(StartDay, StartHour, StartMinute, 0);
 
-	Data.SunriseSeconds = (WorldSettings->GetSunriseHour() * 3600);
-	Data.SunsetSeconds = (WorldSettings->GetSunsetHour() * 3600);
+	Data.DayStartTimeInSeconds = (WorldSettings->GetSunriseHour() * 3600);
+	Data.DayEndTimeInSeconds = (WorldSettings->GetSunsetHour() * 3600);
 }
 
 void UTimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
@@ -67,22 +67,26 @@ void UTimeSubsystem::Tick(float DeltaTime)
 
 float UTimeSubsystem::GetTimeOfDayNormalized() const
 {
-	if (Data.SecondsElapsedInDay <= Data.SunriseSeconds || Data.SecondsElapsedInDay >= Data.SunsetSeconds)
+	const float T = Data.SecondsElapsedInDay;
+	const float Rise = Data.DayStartTimeInSeconds - 3600;
+	const float Set = Data.DayEndTimeInSeconds + 3600;
+
+	if (T <= Rise || T >= Set)
 	{
 		return -1.0f;
 	}
-	return FMath::Clamp((Data.SecondsElapsedInDay - Data.SunriseSeconds) / (Data.SunsetSeconds - Data.SunriseSeconds), 0.f, 1.f);
+	return FMath::Clamp((T - Rise) / (Set - Rise), 0.f, 1.f);
 }
 
 float UTimeSubsystem::GetTimeOfNightNormalized() const
 {
 	const float T = Data.SecondsElapsedInDay;
-	const float Rise = Data.SunsetSeconds;
-	const float Set = Data.SunriseSeconds + Data.SECONDS_PER_DAY; // next day's sunrise
+	const float Rise = Data.DayEndTimeInSeconds - 3600;
+	const float Set = Data.DayStartTimeInSeconds + Data.SECONDS_PER_DAY + 3600; // next day's sunrise
 
 	// Remap night window [Sunset, NextSunrise] → [0, 1]
 	// Handle wraparound (T might be before midnight, so shift it)
-	const float AdjustedT = (T < Data.SunriseSeconds) ? (T + Data.SECONDS_PER_DAY) : T;
+	const float AdjustedT = (T < Data.DayStartTimeInSeconds) ? (T + Data.SECONDS_PER_DAY) : T;
 
 	return FMath::Clamp((AdjustedT - Rise) / (Set - Rise), 0.f, 1.f);
 }
@@ -105,7 +109,7 @@ void UTimeSubsystem::CheckTimeOfDay()
 	{
 	case ETimeOfDay::Day:
 		{
-			if (Data.SecondsElapsedInDay <= Data.SunriseSeconds || Data.SecondsElapsedInDay >= Data.SunsetSeconds)
+			if (Data.SecondsElapsedInDay <= Data.DayStartTimeInSeconds || Data.SecondsElapsedInDay >= Data.DayEndTimeInSeconds)
 			{
 				Data.CurrentTimeOfDay = ETimeOfDay::Night;
 				OnTimeOfDayChanged.Broadcast(ETimeOfDay::Night);
@@ -116,7 +120,7 @@ void UTimeSubsystem::CheckTimeOfDay()
 		}
 	case ETimeOfDay::Night:
 		{
-			if (Data.SecondsElapsedInDay >= Data.SunriseSeconds && Data.SecondsElapsedInDay <= Data.SunsetSeconds)
+			if (Data.SecondsElapsedInDay >= Data.DayStartTimeInSeconds && Data.SecondsElapsedInDay <= Data.DayEndTimeInSeconds)
 			{
 				Data.CurrentTimeOfDay = ETimeOfDay::Day;
 				OnTimeOfDayChanged.Broadcast(ETimeOfDay::Day);

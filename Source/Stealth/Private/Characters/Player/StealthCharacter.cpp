@@ -1,7 +1,9 @@
 #include "Characters/Player/StealthCharacter.h"
 
+#include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Characters/AttributeSets/BasicAttributeSet.h"
 #include "Characters/Player/PlayerInteractionComponent.h"
 #include "Characters/Player/StealthCharacterData.h"
 #include "Components/CapsuleComponent.h"
@@ -47,11 +49,24 @@ AStealthCharacter::AStealthCharacter()
 	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
 	Data = CreateDefaultSubobject<UStealthCharacterData>(TEXT("Character Data"));
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
+	AttributeSet = CreateDefaultSubobject<UBasicAttributeSet>("Attribute Set");
 }
 
 void AStealthCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);
+}
+
+void AStealthCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
 }
 
 //~Begin Input
@@ -125,11 +140,68 @@ void AStealthCharacter::DoInteract()
 	InteractionComponent->Interact();
 }
 
+void AStealthCharacter::DoSprintStart()
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->TryActivateAbilitiesByTag(SprintAbilityTagsContainer);
+}
+
+void AStealthCharacter::DoSprintEnd()
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->CancelAbilities(&SprintAbilityTagsContainer);
+	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(SprintAbilityTagsContainer);
+}
+
+void AStealthCharacter::UpdateTags() const
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	bool bIsMoving = GetVelocity().SizeSquared() > 100.f;
+	bool bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(SprintAbilityTag);
+
+	bool bHasMovingTag = AbilitySystemComponent->HasMatchingGameplayTag(MovingTag);
+	bool bHasRegenStaminaTag = AbilitySystemComponent->HasMatchingGameplayTag(StaminaRegenTag);
+
+	// Only update when state changes — avoid spamming ASC every frame
+	if (bIsMoving && !bHasMovingTag)
+	{
+		AbilitySystemComponent->AddLooseGameplayTag(MovingTag);
+	}
+	else if (!bIsMoving && bHasMovingTag)
+	{
+		AbilitySystemComponent->RemoveLooseGameplayTag(MovingTag);
+	}
+
+	bool bShouldRegenStamina = !bIsSprinting || !bIsMoving;
+	if (bShouldRegenStamina && !bHasRegenStaminaTag)
+	{
+		AbilitySystemComponent->AddLooseGameplayTag(StaminaRegenTag);
+	}
+	else if (!bShouldRegenStamina && bHasRegenStaminaTag)
+	{
+		AbilitySystemComponent->RemoveLooseGameplayTag(StaminaRegenTag);
+	}
+}
+
 //~End Input
 
 void AStealthCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	UpdateTags();
 }
 
 void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -153,9 +225,13 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AStealthCharacter::DoCrouchStart);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoCrouchEnd);
 
-		//Interaction
+		// Interaction
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoInteract);
 		InteractionComponent->SetInteractInputAction(InteractAction);
+
+		// Sprint
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSprintStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoSprintEnd);
 	}
 	else
 	{
@@ -164,4 +240,9 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 			       "'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."
 		       ), *GetNameSafe(this));
 	}
+}
+
+UAbilitySystemComponent* AStealthCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
