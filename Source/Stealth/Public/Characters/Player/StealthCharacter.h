@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "StealthCharacter.generated.h"
 
-class UBasicAttributeSet;
+class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
 class UPlayerInteractionComponent;
@@ -52,7 +52,7 @@ protected:
 #pragma endregion
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ability System")
-	TObjectPtr<UBasicAttributeSet> AttributeSet;
+	TObjectPtr<UStealthCharacterAttributeSet> AttributeSet;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTag MovingTag;
@@ -101,12 +101,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();
 	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintStart();
+	virtual void DoSprintInputStart();
 
 	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintEnd();
+	virtual void DoSprintInputEnd();
 	
 private:
 	UFUNCTION()
 	void UpdateTags() const;
+	UFUNCTION()
+	void EndSprint() const;
 };

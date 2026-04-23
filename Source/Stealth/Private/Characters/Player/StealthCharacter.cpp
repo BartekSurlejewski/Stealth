@@ -3,12 +3,11 @@
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Characters/AttributeSets/BasicAttributeSet.h"
+#include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
 #include "Characters/Player/PlayerInteractionComponent.h"
 #include "Characters/Player/StealthCharacterData.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Exposure/PlayerExposureSubsystem.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
@@ -50,7 +49,7 @@ AStealthCharacter::AStealthCharacter()
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
 	Data = CreateDefaultSubobject<UStealthCharacterData>(TEXT("Character Data"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
-	AttributeSet = CreateDefaultSubobject<UBasicAttributeSet>("Attribute Set");
+	AttributeSet = CreateDefaultSubobject<UStealthCharacterAttributeSet>("Attribute Set");
 }
 
 void AStealthCharacter::BeginPlay()
@@ -140,7 +139,7 @@ void AStealthCharacter::DoInteract()
 	InteractionComponent->Interact();
 }
 
-void AStealthCharacter::DoSprintStart()
+void AStealthCharacter::DoSprintInputStart()
 {
 	if (!AbilitySystemComponent)
 	{
@@ -150,15 +149,9 @@ void AStealthCharacter::DoSprintStart()
 	AbilitySystemComponent->TryActivateAbilitiesByTag(SprintAbilityTagsContainer);
 }
 
-void AStealthCharacter::DoSprintEnd()
+void AStealthCharacter::DoSprintInputEnd()
 {
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->CancelAbilities(&SprintAbilityTagsContainer);
-	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(SprintAbilityTagsContainer);
+	EndSprint();
 }
 
 void AStealthCharacter::UpdateTags() const
@@ -195,6 +188,17 @@ void AStealthCharacter::UpdateTags() const
 	}
 }
 
+void AStealthCharacter::EndSprint() const
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->CancelAbilities(&SprintAbilityTagsContainer);
+	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(SprintAbilityTagsContainer);
+}
+
 //~End Input
 
 void AStealthCharacter::Tick(float DeltaTime)
@@ -202,6 +206,10 @@ void AStealthCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateTags();
+	if (AttributeSet->GetStamina() <= 0)
+	{
+		EndSprint();
+	}
 }
 
 void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -230,8 +238,8 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		InteractionComponent->SetInteractInputAction(InteractAction);
 
 		// Sprint
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSprintStart);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoSprintEnd);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSprintInputStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoSprintInputEnd);
 	}
 	else
 	{
