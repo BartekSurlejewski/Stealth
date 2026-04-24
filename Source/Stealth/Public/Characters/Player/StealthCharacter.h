@@ -60,9 +60,13 @@ protected:
 	FGameplayTag StaminaRegenTag;
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTag SprintAbilityTag;
-	
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTag CrouchAbilityTag;
+
 	UPROPERTY()
 	FGameplayTagContainer SprintAbilityTagsContainer;
+	UPROPERTY()
+	FGameplayTagContainer CrouchAbilityTagsContainer;
 	/*Methods*/
 public:
 	AStealthCharacter();
@@ -90,22 +94,19 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Input")
-	void DoCrouchStart();
-	virtual void DoCrouchStart_Implementation();
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Input")
-	void DoCrouchEnd();
-	virtual void DoCrouchEnd_Implementation();
-
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintInputStart();
 
 	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSprintInputStart();
+	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSprintInputEnd();
-	
+
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoCrouchInputStart();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoCrouchInputEnd();
+
 private:
 	UFUNCTION()
 	void UpdateTags() const;

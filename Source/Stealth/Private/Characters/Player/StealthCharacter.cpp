@@ -55,7 +55,9 @@ AStealthCharacter::AStealthCharacter()
 void AStealthCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
 	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);
+	CrouchAbilityTagsContainer.AddTag(CrouchAbilityTag);
 }
 
 void AStealthCharacter::PossessedBy(AController* NewController)
@@ -119,16 +121,6 @@ void AStealthCharacter::DoJumpEnd()
 	StopJumping();
 }
 
-void AStealthCharacter::DoCrouchStart_Implementation()
-{
-	Crouch(false);
-}
-
-void AStealthCharacter::DoCrouchEnd_Implementation()
-{
-	UnCrouch(false);
-}
-
 void AStealthCharacter::DoInteract()
 {
 	if (!InteractionComponent)
@@ -152,6 +144,26 @@ void AStealthCharacter::DoSprintInputStart()
 void AStealthCharacter::DoSprintInputEnd()
 {
 	EndSprint();
+}
+
+void AStealthCharacter::DoCrouchInputStart()
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchAbilityTagsContainer);
+}
+
+void AStealthCharacter::DoCrouchInputEnd()
+{
+	if (!AbilitySystemComponent)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->CancelAbilities(&CrouchAbilityTagsContainer);
 }
 
 void AStealthCharacter::UpdateTags() const
@@ -229,10 +241,6 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthCharacter::LookInput);
 
-		// Crouching
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AStealthCharacter::DoCrouchStart);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoCrouchEnd);
-
 		// Interaction
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoInteract);
 		InteractionComponent->SetInteractInputAction(InteractAction);
@@ -240,6 +248,10 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		// Sprint
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSprintInputStart);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoSprintInputEnd);
+
+		// Crouching
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AStealthCharacter::DoCrouchInputStart);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoCrouchInputEnd);
 	}
 	else
 	{
