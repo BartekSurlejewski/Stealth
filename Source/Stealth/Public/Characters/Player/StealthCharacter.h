@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "StealthCharacter.generated.h"
 
+class UStealthCharacterAbilitiesComponent;
 class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
@@ -30,10 +31,10 @@ protected:
 	TObjectPtr<UPlayerInteractionComponent> InteractionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Stimuli", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
-	UPROPERTY(VisibleAnywhere, Category="Components|Data", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStealthCharacterData> Data;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
 #pragma endregion
 
 #pragma region Input
@@ -54,28 +55,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ability System")
 	TObjectPtr<UStealthCharacterAttributeSet> AttributeSet;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Tags")
-	FGameplayTag MovingTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags")
-	FGameplayTag StaminaRegenTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags")
-	FGameplayTag SprintAbilityTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags")
-	FGameplayTag CrouchAbilityTag;
-
-	UPROPERTY()
-	FGameplayTagContainer SprintAbilityTagsContainer;
-	UPROPERTY()
-	FGameplayTagContainer CrouchAbilityTagsContainer;
 	/*Methods*/
 public:
 	AStealthCharacter();
 
-	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
+
+public:
+	[[nodiscard]] const TObjectPtr<UStealthCharacterAttributeSet>& GetAttributeSet() const { return AttributeSet; }
 
 protected:
 	void MoveInput(const FInputActionValue& Value);
@@ -96,20 +85,4 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintInputStart();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintInputEnd();
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoCrouchInputStart();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoCrouchInputEnd();
-
-private:
-	UFUNCTION()
-	void UpdateTags() const;
-	UFUNCTION()
-	void EndSprint() const;
 };

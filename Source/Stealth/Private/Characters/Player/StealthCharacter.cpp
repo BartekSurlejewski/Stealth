@@ -5,7 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
 #include "Characters/Player/PlayerInteractionComponent.h"
-#include "Characters/Player/StealthCharacterData.h"
+#include "Characters/Player/StealthCharacterAbilitiesComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -13,7 +13,7 @@
 
 AStealthCharacter::AStealthCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
 
@@ -47,18 +47,11 @@ AStealthCharacter::AStealthCharacter()
 
 	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
-	Data = CreateDefaultSubobject<UStealthCharacterData>(TEXT("Character Data"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
 	AttributeSet = CreateDefaultSubobject<UStealthCharacterAttributeSet>("Attribute Set");
+	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterAbilitiesComponent>("Stealth Character Abilities Component");
 }
 
-void AStealthCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
-	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);
-	CrouchAbilityTagsContainer.AddTag(CrouchAbilityTag);
-}
 
 void AStealthCharacter::PossessedBy(AController* NewController)
 {
@@ -131,98 +124,8 @@ void AStealthCharacter::DoInteract()
 	InteractionComponent->Interact();
 }
 
-void AStealthCharacter::DoSprintInputStart()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->TryActivateAbilitiesByTag(SprintAbilityTagsContainer);
-}
-
-void AStealthCharacter::DoSprintInputEnd()
-{
-	EndSprint();
-}
-
-void AStealthCharacter::DoCrouchInputStart()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchAbilityTagsContainer);
-}
-
-void AStealthCharacter::DoCrouchInputEnd()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->CancelAbilities(&CrouchAbilityTagsContainer);
-}
-
-void AStealthCharacter::UpdateTags() const
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	bool bIsMoving = GetVelocity().SizeSquared() > 100.f;
-	bool bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(SprintAbilityTag);
-
-	bool bHasMovingTag = AbilitySystemComponent->HasMatchingGameplayTag(MovingTag);
-	bool bHasRegenStaminaTag = AbilitySystemComponent->HasMatchingGameplayTag(StaminaRegenTag);
-
-	// Only update when state changes — avoid spamming ASC every frame
-	if (bIsMoving && !bHasMovingTag)
-	{
-		AbilitySystemComponent->AddLooseGameplayTag(MovingTag);
-	}
-	else if (!bIsMoving && bHasMovingTag)
-	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(MovingTag);
-	}
-
-	bool bShouldRegenStamina = !bIsSprinting || !bIsMoving;
-	if (bShouldRegenStamina && !bHasRegenStaminaTag)
-	{
-		AbilitySystemComponent->AddLooseGameplayTag(StaminaRegenTag);
-	}
-	else if (!bShouldRegenStamina && bHasRegenStaminaTag)
-	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(StaminaRegenTag);
-	}
-}
-
-void AStealthCharacter::EndSprint() const
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->CancelAbilities(&SprintAbilityTagsContainer);
-	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(SprintAbilityTagsContainer);
-}
-
 //~End Input
 
-void AStealthCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	UpdateTags();
-	if (AttributeSet->GetStamina() <= 0)
-	{
-		EndSprint();
-	}
-}
 
 void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -246,12 +149,16 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		InteractionComponent->SetInteractInputAction(InteractAction);
 
 		// Sprint
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSprintInputStart);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoSprintInputEnd);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(),
+		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputStart);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, StealthCharacterAbilitiesComponent.Get(),
+		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputEnd);
 
 		// Crouching
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &AStealthCharacter::DoCrouchInputStart);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoCrouchInputEnd);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(),
+		                                   &UStealthCharacterAbilitiesComponent::DoCrouchInputStart);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, StealthCharacterAbilitiesComponent.Get(),
+		                                   &UStealthCharacterAbilitiesComponent::DoCrouchInputEnd);
 	}
 	else
 	{

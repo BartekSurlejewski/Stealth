@@ -1,5 +1,6 @@
 ﻿#include "TimeSystem/DailyRegimen/DailyRegimenTasks/EnterAreaTask.h"
 
+#include "Characters/Player/StealthCharacter.h"
 #include "Engine/TriggerVolume.h"
 
 void UEnterAreaTask::InitializeTask_Implementation()
@@ -23,5 +24,8 @@ void UEnterAreaTask::DisposeTask_Implementation()
 
 void UEnterAreaTask::TargetArea_OnActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
-	OnTaskCompleted.Broadcast(this);
+	if (AStealthCharacter* OverlappingStealthCharacter = Cast<AStealthCharacter>(OtherActor))
+	{
+		OnTaskCompleted.Broadcast(this);
+	}
 }
