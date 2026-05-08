@@ -5,7 +5,7 @@ UNpcPatrolComponent::UNpcPatrolComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-AActor* UNpcPatrolComponent::GetTarget()
+AActor* UNpcPatrolComponent::GetNextTarget()
 {
 	if (PatrolTargets.Num() == 0)
 	{

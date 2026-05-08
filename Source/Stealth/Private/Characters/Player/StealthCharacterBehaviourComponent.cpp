@@ -1,16 +1,17 @@
-﻿#include "Characters/Player/StealthCharacterAbilitiesComponent.h"
+﻿#include "Characters/Player/StealthCharacterBehaviourComponent.h"
 
 #include "AbilitySystemComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
 #include "Characters/Player/StealthCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
-UStealthCharacterAbilitiesComponent::UStealthCharacterAbilitiesComponent()
+UStealthCharacterBehaviourComponent::UStealthCharacterBehaviourComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UStealthCharacterAbilitiesComponent::BeginPlay()
+void UStealthCharacterBehaviourComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -23,9 +24,10 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 
 	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);
 	CrouchAbilityTagsContainer.AddTag(CrouchAbilityTag);
+	JumpAbilityTagsContainer.AddTag(JumpAbilityTag);
 }
 
-void UStealthCharacterAbilitiesComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UStealthCharacterBehaviourComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -36,7 +38,7 @@ void UStealthCharacterAbilitiesComponent::TickComponent(float DeltaTime, enum EL
 	}
 }
 
-void UStealthCharacterAbilitiesComponent::DoSprintInputStart()
+void UStealthCharacterBehaviourComponent::DoSprintInputStart()
 {
 	if (AbilitySystemComponent == nullptr)
 	{
@@ -46,12 +48,12 @@ void UStealthCharacterAbilitiesComponent::DoSprintInputStart()
 	AbilitySystemComponent->TryActivateAbilitiesByTag(SprintAbilityTagsContainer);
 }
 
-void UStealthCharacterAbilitiesComponent::DoSprintInputEnd()
+void UStealthCharacterBehaviourComponent::DoSprintInputEnd()
 {
 	EndSprint();
 }
 
-void UStealthCharacterAbilitiesComponent::DoCrouchInputStart()
+void UStealthCharacterBehaviourComponent::DoCrouchInputStart()
 {
 	if (AbilitySystemComponent == nullptr)
 	{
@@ -61,7 +63,7 @@ void UStealthCharacterAbilitiesComponent::DoCrouchInputStart()
 	AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchAbilityTagsContainer);
 }
 
-void UStealthCharacterAbilitiesComponent::DoCrouchInputEnd()
+void UStealthCharacterBehaviourComponent::DoCrouchInputEnd()
 {
 	if (AbilitySystemComponent == nullptr)
 	{
@@ -71,7 +73,27 @@ void UStealthCharacterAbilitiesComponent::DoCrouchInputEnd()
 	AbilitySystemComponent->CancelAbilities(&CrouchAbilityTagsContainer);
 }
 
-void UStealthCharacterAbilitiesComponent::EndSprint() const
+void UStealthCharacterBehaviourComponent::DoJumpStart()
+{
+	if (AbilitySystemComponent == nullptr)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->TryActivateAbilitiesByTag(JumpAbilityTagsContainer);
+}
+
+void UStealthCharacterBehaviourComponent::DoJumpEnd()
+{
+	if (AbilitySystemComponent == nullptr)
+	{
+		return;
+	}
+
+	AbilitySystemComponent->CancelAbilities(&JumpAbilityTagsContainer);
+}
+
+void UStealthCharacterBehaviourComponent::EndSprint() const
 {
 	if (AbilitySystemComponent == nullptr)
 	{
@@ -82,27 +104,38 @@ void UStealthCharacterAbilitiesComponent::EndSprint() const
 	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(SprintAbilityTagsContainer);
 }
 
-void UStealthCharacterAbilitiesComponent::UpdateTags() const
+void UStealthCharacterBehaviourComponent::UpdateTags() const
 {
 	if (AbilitySystemComponent == nullptr)
 	{
 		return;
 	}
 
+	bool isFalling = OwningCharacter->GetCharacterMovement()->IsFalling();
 	bool bIsMoving = OwningCharacter->GetVelocity().SizeSquared() > 100.f;
 	bool bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(SprintAbilityTag);
 
-	bool bHasMovingTag = AbilitySystemComponent->HasMatchingGameplayTag(MovingTag);
+	bool bHasMovingTag = AbilitySystemComponent->HasMatchingGameplayTag(IsMovingTag);
 	bool bHasRegenStaminaTag = AbilitySystemComponent->HasMatchingGameplayTag(StaminaRegenTag);
+	bool bHasFallingStaminaTag = AbilitySystemComponent->HasMatchingGameplayTag(IsFallingTag);
 
 	// Only update when state changes — avoid spamming ASC every frame
+	if (isFalling && !bHasFallingStaminaTag)
+	{
+		AbilitySystemComponent->AddLooseGameplayTag(IsFallingTag);
+	}
+	else if (!isFalling && bHasFallingStaminaTag)
+	{
+		AbilitySystemComponent->RemoveLooseGameplayTag(IsFallingTag);
+	}
+
 	if (bIsMoving && !bHasMovingTag)
 	{
-		AbilitySystemComponent->AddLooseGameplayTag(MovingTag);
+		AbilitySystemComponent->AddLooseGameplayTag(IsMovingTag);
 	}
 	else if (!bIsMoving && bHasMovingTag)
 	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(MovingTag);
+		AbilitySystemComponent->RemoveLooseGameplayTag(IsMovingTag);
 	}
 
 	bool bShouldRegenStamina = !bIsSprinting || !bIsMoving;

@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "StealthCharacter.generated.h"
 
-class UStealthCharacterAbilitiesComponent;
+class UStealthCharacterBehaviourComponent;
 class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
@@ -34,7 +34,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
+	TObjectPtr<UStealthCharacterBehaviourComponent> StealthCharacterAbilitiesComponent;
 #pragma endregion
 
 #pragma region Input
@@ -77,11 +77,11 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
 
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpStart();
-
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
+	// UFUNCTION(BlueprintCallable, Category="Input")
+	// virtual void DoJumpStart();
+	//
+	// UFUNCTION(BlueprintCallable, Category="Input")
+	// virtual void DoJumpEnd();
 
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();

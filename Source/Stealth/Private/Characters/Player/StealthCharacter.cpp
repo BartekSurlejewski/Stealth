@@ -5,7 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
 #include "Characters/Player/PlayerInteractionComponent.h"
-#include "Characters/Player/StealthCharacterAbilitiesComponent.h"
+#include "Characters/Player/StealthCharacterBehaviourComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
@@ -49,7 +49,7 @@ AStealthCharacter::AStealthCharacter()
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
 	AttributeSet = CreateDefaultSubobject<UStealthCharacterAttributeSet>("Attribute Set");
-	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterAbilitiesComponent>("Stealth Character Abilities Component");
+	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterBehaviourComponent>("Stealth Character Abilities Component");
 }
 
 
@@ -102,18 +102,6 @@ void AStealthCharacter::DoMove(float Right, float Forward)
 	}
 }
 
-void AStealthCharacter::DoJumpStart()
-{
-	// pass Jump to the character
-	Jump();
-}
-
-void AStealthCharacter::DoJumpEnd()
-{
-	// pass StopJumping to the character
-	StopJumping();
-}
-
 void AStealthCharacter::DoInteract()
 {
 	if (!InteractionComponent)
@@ -134,10 +122,6 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AStealthCharacter::DoJumpStart);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AStealthCharacter::DoJumpEnd);
-
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AStealthCharacter::MoveInput);
 
@@ -150,15 +134,19 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Sprint
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(),
-		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputStart);
+		                                   &UStealthCharacterBehaviourComponent::DoSprintInputStart);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, StealthCharacterAbilitiesComponent.Get(),
-		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputEnd);
+		                                   &UStealthCharacterBehaviourComponent::DoSprintInputEnd);
 
 		// Crouching
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(),
-		                                   &UStealthCharacterAbilitiesComponent::DoCrouchInputStart);
+		                                   &UStealthCharacterBehaviourComponent::DoCrouchInputStart);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, StealthCharacterAbilitiesComponent.Get(),
-		                                   &UStealthCharacterAbilitiesComponent::DoCrouchInputEnd);
+		                                   &UStealthCharacterBehaviourComponent::DoCrouchInputEnd);
+
+		// Jumping
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(), &UStealthCharacterBehaviourComponent::DoJumpStart);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, StealthCharacterAbilitiesComponent.Get(), &UStealthCharacterBehaviourComponent::DoJumpEnd);
 	}
 	else
 	{

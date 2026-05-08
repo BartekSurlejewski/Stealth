@@ -5,15 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
-#include "StealthCharacterAbilitiesComponent.generated.h"
-
+#include "StealthCharacterBehaviourComponent.generated.h"
 
 class UStealthCharacterAttributeSet;
 class AStealthCharacter;
 class UAbilitySystemComponent;
 
+// Handles the GAS abilities connected to StealthCharacter and the character status
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STEALTH_API UStealthCharacterAbilitiesComponent : public UActorComponent
+class STEALTH_API UStealthCharacterBehaviourComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -30,17 +30,23 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTag CrouchAbilityTag;
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
-	FGameplayTag MovingTag;
+	FGameplayTag JumpAbilityTag;
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTag IsMovingTag;
 	UPROPERTY(EditDefaultsOnly, Category = "Tags")
 	FGameplayTag StaminaRegenTag;
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTag IsFallingTag;
 
 	UPROPERTY()
 	FGameplayTagContainer SprintAbilityTagsContainer;
 	UPROPERTY()
 	FGameplayTagContainer CrouchAbilityTagsContainer;
+	UPROPERTY()
+	FGameplayTagContainer JumpAbilityTagsContainer;
 
 public:
-	UStealthCharacterAbilitiesComponent();
+	UStealthCharacterBehaviourComponent();
 
 protected:
 
@@ -56,6 +62,10 @@ public:
 	virtual void DoCrouchInputStart();
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoCrouchInputEnd();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoJumpStart();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoJumpEnd();
 
 private:
 	UFUNCTION()

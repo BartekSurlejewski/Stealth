@@ -24,7 +24,9 @@ protected:
 	UPROPERTY()
 	TObjectPtr<ANpcAiController> NpcController;
 
+	UPROPERTY()
 	FTimerHandle PatrolTimer;
+	UPROPERTY()
 	int32 CurrentTargetIndex = 0;
 
 public:
@@ -32,5 +34,5 @@ public:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	AActor* GetTarget();
+	AActor* GetNextTarget();
 };
