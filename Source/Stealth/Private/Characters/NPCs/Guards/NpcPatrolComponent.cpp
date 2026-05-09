@@ -1,4 +1,4 @@
-#include "Characters/NPCs/NpcPatrolComponent.h"
+#include "Characters/NPCs/Guards/NpcPatrolComponent.h"
 
 UNpcPatrolComponent::UNpcPatrolComponent()
 {

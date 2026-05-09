@@ -4,10 +4,11 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
-#include "Characters/Player/PlayerInteractionComponent.h"
-#include "Characters/Player/StealthCharacterBehaviourComponent.h"
+#include "Characters/Player/Components/PlayerInteractionComponent.h"
+#include "Characters/Player/Components/StealthCharacterBehaviourComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Inventory/InventoryComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
@@ -45,11 +46,11 @@ AStealthCharacter::AStealthCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
 
+	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterBehaviourComponent>("Stealth Character Behaviour Component");
 	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
 	AttributeSet = CreateDefaultSubobject<UStealthCharacterAttributeSet>("Attribute Set");
-	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterBehaviourComponent>("Stealth Character Abilities Component");
 }
 
 

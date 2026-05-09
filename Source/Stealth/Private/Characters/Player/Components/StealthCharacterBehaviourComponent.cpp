@@ -1,4 +1,4 @@
-﻿#include "Characters/Player/StealthCharacterBehaviourComponent.h"
+﻿#include "Characters/Player/Components/StealthCharacterBehaviourComponent.h"
 
 #include "AbilitySystemComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"

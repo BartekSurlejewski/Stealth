@@ -15,7 +15,6 @@ protected:
 	UPROPERTY();
 	TObjectPtr<ANpcAiController> AiController;
 	
-
 	ANpcCharacter();
 
 protected:

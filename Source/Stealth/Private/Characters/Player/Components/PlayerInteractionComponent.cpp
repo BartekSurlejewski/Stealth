@@ -1,4 +1,5 @@
-#include "Characters/Player/PlayerInteractionComponent.h"
+
+#include "Characters/Player/Components/PlayerInteractionComponent.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"

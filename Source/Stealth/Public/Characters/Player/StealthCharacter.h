@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "StealthCharacter.generated.h"
 
+class UInventoryComponent;
 class UStealthCharacterBehaviourComponent;
 class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
@@ -76,12 +77,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
-
-	// UFUNCTION(BlueprintCallable, Category="Input")
-	// virtual void DoJumpStart();
-	//
-	// UFUNCTION(BlueprintCallable, Category="Input")
-	// virtual void DoJumpEnd();
 
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoInteract();

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AI/Controllers/NpcAiController.h"
+#include "Characters/NPCs/NpcAiController.h"
 
 #include "Characters/Player/StealthCharacter.h"
 #include "Components/StateTreeAIComponent.h"
@@ -58,8 +58,7 @@ void ANpcAiController::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulu
 
 	UE_LOG(LogStealth, Warning, TEXT("[NPC AI] Target Perception Updated for %s"), *TargetActor->GetName());
 
-	// float ActorVisibilityStrength = Stimulus.Strength * LightExposureSubsystem->CalculateTotalPlayerExposure();
-	float ActorVisibilityStrength = LightExposureSubsystem->GetCurrentTotalExposure();
+	const float ActorVisibilityStrength = LightExposureSubsystem->GetCurrentTotalExposure();
 	if (FMath::IsNearlyEqual(ActorVisibilityStrength, 0.f, 0.01f))
 	{
 		CharacterState.bSeesPlayer = false;

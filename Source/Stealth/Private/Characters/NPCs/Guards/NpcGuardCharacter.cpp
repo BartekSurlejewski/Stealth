@@ -1,7 +1,7 @@
-#include "Characters/NPCs/NpcGuardCharacter.h"
+#include "Characters/NPCs/Guards/NpcGuardCharacter.h"
 
-#include "Characters/NPCs/NpcPatrolComponent.h"
-#include "Perception/AIPerceptionComponent.h"
+#include "Characters/NPCs/Guards/NpcPatrolComponent.h"
+
 
 ANpcGuardCharacter::ANpcGuardCharacter()
 {

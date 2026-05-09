@@ -1,30 +1,47 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "Characters/Player/StealthPlayerController.h"
+
+#include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputMappingContext.h"
+#include "Inventory/InventoryComponent.h"
+
+AStealthPlayerController::AStealthPlayerController()
+{
+	PrimaryActorTick.bCanEverTick = false;
+
+	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
+}
 
 void AStealthPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	UE_LOG(LogTemp, Warning, TEXT("PC SetupInputComponent called"));
 	// only add IMCs for local player controllers
 	if (IsLocalPlayerController())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Is Local Player Controller"));
 		// Add Input Mapping Context
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Got Enhanced Input Subsystem"));
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-			
-			UE_LOG(LogTemp, Warning, TEXT("Added mapping context: %s"), *DefaultMappingContext->GetName());
 		}
 		else
 		{
 			UE_LOG(LogTemp, Error, TEXT("Failed to get Enhanced Input Subsystem!"));
 		}
+
+		BindInputActions();
 	}
 }
+
+void AStealthPlayerController::BindInputActions()
+{
+	UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(InputComponent);
+	if (!EIC)
+	{
+		return;
+	}
+
+	// Inventory
+	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnOpenInventoryInput);
+}
+
+void AStealthPlayerController::OnOpenInventoryInput() {}

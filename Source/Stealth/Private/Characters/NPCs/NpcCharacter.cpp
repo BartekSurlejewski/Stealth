@@ -1,6 +1,6 @@
 #include "Characters/NPCs/NpcCharacter.h"
 
-#include "AI/Controllers/NpcAiController.h"
+#include "Characters/NPCs/NpcAiController.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
