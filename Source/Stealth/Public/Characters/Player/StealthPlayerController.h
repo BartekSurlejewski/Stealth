@@ -17,6 +17,9 @@ public:
 	AStealthPlayerController();
 
 protected:
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void OnUnPossess() override;
+	
 	virtual void SetupInputComponent() override;
 	UFUNCTION(Category="Input")
 	void BindInputActions();

@@ -2,13 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Characters/NPCs/NpcCharacter.h"
-#include "NpcGuardCharacter.generated.h"
+#include "GuardNpcCharacter.generated.h"
 
 class UAIPerceptionComponent;
 class UNpcPatrolComponent;
 
 UCLASS()
-class STEALTH_API ANpcGuardCharacter : public ANpcCharacter
+class STEALTH_API AGuardNpcCharacter : public ANpcCharacter
 {
 	GENERATED_BODY()
 
@@ -17,5 +17,5 @@ protected:
 	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
 
 public:
-	ANpcGuardCharacter();
+	AGuardNpcCharacter();
 };

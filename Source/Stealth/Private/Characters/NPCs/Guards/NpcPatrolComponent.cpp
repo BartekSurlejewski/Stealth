@@ -5,20 +5,18 @@ UNpcPatrolComponent::UNpcPatrolComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-AActor* UNpcPatrolComponent::GetNextTarget()
+AActor* UNpcPatrolComponent::GetCurrentTarget() const
 {
-	if (PatrolTargets.Num() == 0)
+	if (PatrolTargets.IsEmpty())
 	{
 		return nullptr;
 	}
 
-	if (CurrentTargetIndex >= PatrolTargets.Num() || CurrentTargetIndex < 0)
-	{
-		CurrentTargetIndex = 0;
-	}
+	const int32 SafeIndex = CurrentTargetIndex % PatrolTargets.Num();
+	return PatrolTargets[SafeIndex];
+}
 
-	TObjectPtr<AActor> CurrentTarget = PatrolTargets[CurrentTargetIndex];
+void UNpcPatrolComponent::IncrementTargetIndex()
+{
 	CurrentTargetIndex = (CurrentTargetIndex + 1) % PatrolTargets.Num();
-
-	return CurrentTarget;
 }

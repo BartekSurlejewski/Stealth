@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Characters/NPCs/NpcContextComponent.h"
 #include "Components/ActorComponent.h"
 #include "GuardNpcContextComponent.generated.h"
 
@@ -18,13 +19,11 @@ enum class EGuardAlertLevel : uint8
 };
 
 UCLASS(ClassGroup="NPC", meta=(BlueprintSpawnableComponent))
-class STEALTH_API UGuardNpcContextComponent : public UActorComponent
+class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 {
 	GENERATED_BODY()
 
 public:
-	UGuardNpcContextComponent();
-
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
@@ -41,18 +40,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	float SuspicionLevel = 0.f;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	FVector LastKnownPlayerPos = FVector::ZeroVector;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	FVector LastHeardSoundLocation = FVector::ZeroVector;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	bool bPlayerInDirectSight = false;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	bool bPlayerInPeripheralSight = false;
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	float SearchTimer = 0.f;
@@ -78,14 +65,12 @@ public:
 	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
 
 	// Perception callbacks
-	void OnSightStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+	void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier);
 	void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
 
 private:
 	UPROPERTY()
-	TSoftObjectPtr<UNpcPatrolComponent> PatrolComponent;
-	UPROPERTY()
-	TSoftObjectPtr<UStateTreeComponent> StateTreeComponent;
+	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag SearchExpiredTag;

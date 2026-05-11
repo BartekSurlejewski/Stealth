@@ -10,20 +10,12 @@
 
 
 class UStateTreeComponent;
-// Sets default values for this component's properties
-UGuardNpcContextComponent::UGuardNpcContextComponent()
-{
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickInterval = 0.05f; // 20 Hz
-}
-
 
 void UGuardNpcContextComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	PatrolComponent = GetOwner()->FindComponentByClass<UNpcPatrolComponent>();
-	StateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeComponent>();
 }
 
 
@@ -49,7 +41,7 @@ AActor* UGuardNpcContextComponent::GetCurrentPatrolPoint() const
 		return nullptr;
 	}
 
-	return PatrolComponent->GetNextTarget();
+	return PatrolComponent->GetCurrentTarget();
 }
 
 void UGuardNpcContextComponent::ForceAlert(FVector AtLocation)
@@ -66,19 +58,22 @@ void UGuardNpcContextComponent::BeginSearch()
 	SearchTimer = Profile ? Profile->SearchDuration : 20.f;
 }
 
-void UGuardNpcContextComponent::OnSightStimulus(AActor* Actor, const FAIStimulus& Stimulus)
+void UGuardNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier)
 {
-	APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	const APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	if (Actor != Player)
 	{
 		return;
 	}
 
-	if (Stimulus.WasSuccessfullySensed())
+	const float EffectiveStrength = Stimulus.Strength * ExposureMultiplier;
+
+	//TODO: add defining effectiveStrength threshold without hardcoding it
+	if (Stimulus.WasSuccessfullySensed() && EffectiveStrength >= 0.05f)
 	{
 		LastKnownPlayerPos = Stimulus.StimulusLocation;
-		bPlayerInDirectSight = Stimulus.Strength >= 0.8f;
-		bPlayerInPeripheralSight = Stimulus.Strength < 0.8f;
+		bPlayerInDirectSight = EffectiveStrength >= 0.8f;
+		bPlayerInPeripheralSight = EffectiveStrength < 0.8f;
 	}
 	else
 	{
@@ -190,13 +185,13 @@ float UGuardNpcContextComponent::GetSuspicionModifier(AActor* Target) const
 	{
 		return 1.f;
 	}
-	float Mod = 1.f;
+	float Modifier = 1.f;
 	ACharacter* C = Cast<ACharacter>(Target);
 
 	if (C && C->GetCharacterMovement()->IsCrouching())
 	{
-		Mod *= Profile->CrouchMultiplier;
+		Modifier *= Profile->CrouchSuspicionMultiplier;
 	}
 
-	return Mod;
+	return Modifier;
 }

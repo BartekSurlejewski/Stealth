@@ -6,30 +6,50 @@
 
 AStealthPlayerController::AStealthPlayerController()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
+}
+
+void AStealthPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+
+	if (!IsLocalPlayerController())
+	{
+		return;
+	}
+
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	{
+		Subsystem->ClearAllMappings();
+		Subsystem->AddMappingContext(DefaultMappingContext, 0);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Enhanced Input Subsystem!"));
+	}
+}
+
+void AStealthPlayerController::OnUnPossess()
+{
+	// Clean up mappings when unpossessing
+	if (IsLocalPlayerController())
+	{
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(DefaultMappingContext);
+		}
+	}
+
+	Super::OnUnPossess();
 }
 
 void AStealthPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	// only add IMCs for local player controllers
-	if (IsLocalPlayerController())
-	{
-		// Add Input Mapping Context
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to get Enhanced Input Subsystem!"));
-		}
-
-		BindInputActions();
-	}
+	BindInputActions();
 }
 
 void AStealthPlayerController::BindInputActions()

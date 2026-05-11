@@ -41,8 +41,8 @@ public:
 
 	// Modifiers
 	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
-	float CrouchMultiplier = 0.5f;
+	float CrouchSuspicionMultiplier = 0.5f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
-	float ShadowMultiplier = 0.3f;
+	float ShadowSuspicionMultiplier = 0.3f;
 };

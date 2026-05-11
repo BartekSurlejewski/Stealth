@@ -32,7 +32,8 @@ protected:
 public:
 	UNpcPatrolComponent();
 
-public:
 	UFUNCTION(BlueprintCallable)
-	AActor* GetNextTarget();
+	AActor* GetCurrentTarget() const;
+	UFUNCTION(BlueprintCallable)
+	void IncrementTargetIndex();
 };

@@ -1,9 +1,9 @@
-#include "Characters/NPCs/Guards/NpcGuardCharacter.h"
+#include "Characters/NPCs/Guards/GuardNpcCharacter.h"
 
 #include "Characters/NPCs/Guards/NpcPatrolComponent.h"
 
 
-ANpcGuardCharacter::ANpcGuardCharacter()
+AGuardNpcCharacter::AGuardNpcCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 

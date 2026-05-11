@@ -11,19 +11,7 @@ class UPlayerExposureSubsystem;
 struct FAIStimulus;
 class UAIPerceptionComponent;
 
-USTRUCT(BlueprintType)
-struct FNpcCharacterState
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="State")
-	bool bSeesPlayer = false;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="State")
-	bool bIsAwareOfPlayer = false;
-};
-
-UCLASS()
+UCLASS(Abstract)
 class STEALTH_API ANpcAiController : public AAIController
 {
 	GENERATED_BODY()
@@ -32,11 +20,13 @@ public:
 	ANpcAiController();
 
 protected:
-	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION()
-	void OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus);
+	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	// UFUNCTION()
+	// void OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
@@ -44,8 +34,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="State", meta=(AllowPrivateAccess = "true"))
-	FNpcCharacterState CharacterState;
 	UPROPERTY()
 	TObjectPtr<UPlayerExposureSubsystem> LightExposureSubsystem;
 };
