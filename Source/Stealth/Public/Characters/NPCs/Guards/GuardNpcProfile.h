@@ -24,6 +24,9 @@ public:
 	float SuspicionThreshold_Alert = 100.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
+	float SuspicionDuration = 30.f;
+
+	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
 	float SearchDuration = 20.f;
 
 	// Modifiers

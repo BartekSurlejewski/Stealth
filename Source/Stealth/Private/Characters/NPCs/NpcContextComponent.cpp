@@ -6,7 +6,7 @@
 UNpcContextComponent::UNpcContextComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickInterval = 0.05f; // 20 Hz
+	PrimaryComponentTick.TickInterval = 0.1f; // 10 Hz
 }
 
 

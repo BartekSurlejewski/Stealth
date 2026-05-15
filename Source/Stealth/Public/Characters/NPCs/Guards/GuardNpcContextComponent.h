@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "GuardNpcContextComponent.generated.h"
 
+class AStealthPlayerState;
 class UStateTreeComponent;
 class UNpcPatrolComponent;
 struct FAIStimulus;
@@ -20,7 +21,6 @@ enum class EGuardBehaviourState : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight, bool, IsPlayerInPeripheralSight);
-
 
 UCLASS(ClassGroup="NPC", meta=(BlueprintSpawnableComponent))
 class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
@@ -45,6 +45,8 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	float SearchTimer = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
+	float SuspicionTimer = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	int32 GlobalAlarmLevel = 0;
@@ -58,17 +60,22 @@ private:
 	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
 	UPROPERTY()
 	TSoftObjectPtr<APawn> PlayerPawn;
+	UPROPERTY()
+	TSoftObjectPtr<AStealthPlayerState> PlayerState;
 
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag SearchExpiredTag;
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
-	FGameplayTag AlertThresholdMetTag;
+	FGameplayTag GotSuspiciousTag;
+	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
+	FGameplayTag AlertedTag;
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag GlobalAlarmTag;
 
 	/*Methods*/
 public:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	UFUNCTION(BlueprintPure)
@@ -78,14 +85,7 @@ public:
 
 	// External systems API
 	UFUNCTION(BlueprintCallable)
-	void SetBehaviourState(const EGuardBehaviourState& NewBehaviourState)
-	{
-		if (BehaviourState != NewBehaviourState)
-		{
-			BehaviourState = NewBehaviourState;
-			OnBehaviourStateChanged.Broadcast(BehaviourState);
-		}
-	}
+	void SetBehaviourState(const EGuardBehaviourState& NewBehaviourState);
 
 	UFUNCTION(BlueprintCallable)
 	void ForceAlert(FVector AtLocation);
@@ -95,6 +95,9 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
+
+	UFUNCTION(BlueprintPure)
+	bool IsSuspicionExpired() const { return SuspicionTimer <= 0.f; }
 
 	UFUNCTION(BlueprintPure)
 	bool IsOnWalkingPatrol() const;
@@ -107,8 +110,16 @@ public:
 	void LookAtPlayer();
 
 private:
+	UFUNCTION()
+	void OnPlayerPerformedIllegalAction();
+	UFUNCTION()
+	void OnIsInRestrictedAreaChanged(bool bIsInRestrictedArea);
+
 	void SendGuardEvent(FGameplayTag Tag) const;
 	void OnAlarmChanged(int32 NewLevel, const FVector& SourceLocation);
 	float GetSuspicionModifier(AActor* Target) const;
+
+	//TODO: think of moving to some subsystem not to hold reference for each NPC
 	APawn* GetPlayerPawn();
+	AStealthPlayerState* GetPlayerState();
 };

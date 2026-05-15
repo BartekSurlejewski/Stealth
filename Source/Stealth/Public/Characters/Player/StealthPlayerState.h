@@ -6,6 +6,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnIsInRestrictedAreaChanged, bool, IsInRestricterArea);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPerformedIllegalAction);
+
 UCLASS()
 class STEALTH_API AStealthPlayerState : public APlayerState
 {
@@ -13,8 +15,11 @@ class STEALTH_API AStealthPlayerState : public APlayerState
 
 	/*Events*/
 public:
+	//TODO: Create some kind of legality subsystem?
 	UPROPERTY(BlueprintAssignable)
 	FOnIsInRestrictedAreaChanged OnIsInRestrictedAreaChanged;
+	UPROPERTY(BlueprintAssignable)
+	FOnPerformedIllegalAction OnPerformedIllegalAction;
 
 	/*Properties*/
 private:

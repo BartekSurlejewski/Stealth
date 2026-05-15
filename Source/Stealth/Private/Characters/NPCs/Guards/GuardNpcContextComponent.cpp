@@ -3,6 +3,7 @@
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/GuardNpcProfile.h"
 #include "Characters/NPCs/Guards/NpcPatrolComponent.h"
+#include "Characters/Player/StealthPlayerState.h"
 #include "Components/StateTreeComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -18,6 +19,23 @@ void UGuardNpcContextComponent::BeginPlay()
 	Super::BeginPlay();
 
 	PatrolComponent = NpcAiController->GetPawn()->FindComponentByClass<UNpcPatrolComponent>();
+
+	if (GetPlayerState())
+	{
+		GetPlayerState()->OnPerformedIllegalAction.AddDynamic(this, &UGuardNpcContextComponent::OnPlayerPerformedIllegalAction);
+		GetPlayerState()->OnIsInRestrictedAreaChanged.AddDynamic(this, &UGuardNpcContextComponent::OnIsInRestrictedAreaChanged);
+	}
+}
+
+void UGuardNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (GetPlayerState())
+	{
+		GetPlayerState()->OnPerformedIllegalAction.RemoveAll(this);
+		GetPlayerState()->OnIsInRestrictedAreaChanged.RemoveAll(this);
+	}
 }
 
 //TODO: Add changing to suspicious state when guard sees player doing something illegal, 
@@ -26,7 +44,26 @@ void UGuardNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (BehaviourState == EGuardBehaviourState::Search && SearchTimer > 0.f)
+	if (BehaviourState == EGuardBehaviourState::Patrol && bPlayerInDirectSight && GetPlayerState()->GetIsInRestrictedArea())
+	{
+		// Player is seen and is in restricted area!
+		SendGuardEvent(GotSuspiciousTag);
+		UE_LOG(LogStealth, Log, TEXT("[%s] Player is in restricted area, seems sus!"), *GetOwner()->GetName());
+	}
+	else if (BehaviourState == EGuardBehaviourState::Suspicious)
+	{
+		if (!bPlayerInDirectSight || !GetPlayerState()->GetIsInRestrictedArea())
+		{
+			SuspicionTimer -= DeltaTime;
+			UE_LOG(LogStealth, Log, TEXT("[%s] Suspicion timer: %f"), *GetOwner()->GetName(), SuspicionTimer);
+			if (SuspicionTimer <= 0.f)
+			{
+				SendGuardEvent(SearchExpiredTag);
+				UE_LOG(LogStealth, Log, TEXT("[%s] Suspicion expired"), *GetOwner()->GetName());
+			}
+		}
+	}
+	else if (BehaviourState == EGuardBehaviourState::Search && SearchTimer > 0.f)
 	{
 		SearchTimer -= DeltaTime;
 		if (SearchTimer <= 0.f)
@@ -56,11 +93,32 @@ void UGuardNpcContextComponent::IncrementPatrolIndex() const
 	PatrolComponent->IncrementTargetIndex();
 }
 
+void UGuardNpcContextComponent::SetBehaviourState(const EGuardBehaviourState& NewBehaviourState)
+{
+	UE_LOG(LogStealth, Log, TEXT("[%s] Changing state to %hhd"), *GetOwner()->GetName(), NewBehaviourState);
+
+	if (BehaviourState != NewBehaviourState)
+	{
+		BehaviourState = NewBehaviourState;
+		OnBehaviourStateChanged.Broadcast(BehaviourState);
+	}
+
+	//TODO: Add a class for each state logic to avoid constant if-checks
+	if (BehaviourState == EGuardBehaviourState::Suspicious)
+	{
+		SuspicionTimer = Profile ? Profile->SuspicionDuration : 30.f;
+	}
+	else if (BehaviourState == EGuardBehaviourState::Search)
+	{
+		SearchTimer = Profile ? Profile->SearchDuration : 20.f;
+	}
+}
+
 
 void UGuardNpcContextComponent::ForceAlert(FVector AtLocation)
 {
 	LastKnownPlayerPos = AtLocation;
-	SendGuardEvent(AlertThresholdMetTag);
+	SendGuardEvent(GotSuspiciousTag);
 }
 
 void UGuardNpcContextComponent::BeginSearch()
@@ -128,7 +186,39 @@ void UGuardNpcContextComponent::LookAtPlayer()
 		return;
 	}
 
-	NpcAiController->SetFocus(GetPlayerPawn());
+	FVector DirectionToPlayer = PlayerPawn->GetActorLocation() - NpcAiController->GetPawn()->GetActorLocation();
+	FRotator LookAtRotation = DirectionToPlayer.Rotation();
+	// Only rotate on Yaw axis, keep current Pitch and Roll
+	LookAtRotation.Pitch = 0.f;
+	LookAtRotation.Roll = 0.f;
+
+	NpcAiController->GetPawn()->SetActorRotation(LookAtRotation);
+}
+
+void UGuardNpcContextComponent::OnPlayerPerformedIllegalAction()
+{
+	if (!bPlayerInDirectSight)
+	{
+		// Guard doesn't see player, do nothing
+		return;
+	}
+
+	if (BehaviourState == EGuardBehaviourState::Patrol)
+	{
+		SendGuardEvent(GotSuspiciousTag);
+	}
+	else if (BehaviourState == EGuardBehaviourState::Suspicious)
+	{
+		SendGuardEvent(AlertedTag);
+	}
+}
+
+void UGuardNpcContextComponent::OnIsInRestrictedAreaChanged(bool bIsInRestrictedArea)
+{
+	if (bIsInRestrictedArea && bPlayerInDirectSight && BehaviourState == EGuardBehaviourState::Suspicious)
+	{
+		SuspicionTimer = Profile ? Profile->SuspicionDuration : 30.f;
+	}
 }
 
 void UGuardNpcContextComponent::SendGuardEvent(const FGameplayTag Tag) const
@@ -179,4 +269,14 @@ APawn* UGuardNpcContextComponent::GetPlayerPawn()
 	}
 
 	return PlayerPawn.Get();
+}
+
+AStealthPlayerState* UGuardNpcContextComponent::GetPlayerState()
+{
+	if (PlayerState == nullptr)
+	{
+		PlayerState = GetPlayerPawn()->GetPlayerState<AStealthPlayerState>();
+	}
+
+	return PlayerState.Get();
 }
