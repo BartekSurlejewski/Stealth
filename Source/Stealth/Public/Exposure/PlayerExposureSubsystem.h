@@ -7,6 +7,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "PlayerExposureSubsystem.generated.h"
 
+class UTimeSubsystem;
 class AStealthCharacter;
 class UActorLightExposureComponent;
 class UWorld;
@@ -19,6 +20,7 @@ struct FLightData
 	FVector Position;
 	float Radius;
 	float Intensity;
+	UPROPERTY()
 	TObjectPtr<AActor> OwnerActor;
 };
 
@@ -29,6 +31,7 @@ class STEALTH_API UPlayerExposureSubsystem : public UStealthTickableWorldSubsyst
 
 public:
 	virtual void Tick(float DeltaTime) override;
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	UFUNCTION()
 	int32 RegisterLight(const FLightData& LightData);
@@ -47,6 +50,8 @@ private:
 	const float CalculateTotalPlayerExposure();
 
 private:
+	UPROPERTY()
+	TSoftObjectPtr<UTimeSubsystem> TimeSubsystem;
 	UPROPERTY()
 	TArray<FLightData> Lights;
 	UPROPERTY()

@@ -20,7 +20,7 @@ struct FTimeSubsystemData
 
 	static constexpr int32 SECONDS_PER_DAY = 86400; // 24 * 60 * 60
 	// How many real seconds = 1 in-game second (e.g. 60 = 1 min real = 1hr game)
-	static constexpr float TIME_SCALE = 90.f;
+	static constexpr float IN_GAME_SECONDS_PER_REAL_SECOND = 90.f;
 
 	UPROPERTY()
 	ETimeOfDay CurrentTimeOfDay;
@@ -82,17 +82,27 @@ public:
 	float GetTimeOfNightNormalized() const;
 	UFUNCTION(BlueprintCallable)
 	ETimeOfDay GetCurrentTimeOfDay() const { return Data.CurrentTimeOfDay; };
+	bool IsTimeOfDay(ETimeOfDay TimeOfDay) const;
 	UFUNCTION(BlueprintCallable)
 	void GetClockTime(int32& OutHour, int32& OutMinute) const;
 	UFUNCTION(BlueprintCallable)
 	void SetTime(const int32& NewDay, const int32& NewHour, const int32& NewMinute, const int32& NewSecond);
+	UFUNCTION(BlueprintCallable)
+	void SetClockTimeScale(float NewClockTimeScale);
 
 protected:
 	UFUNCTION()
 	void CheckTimeOfDay();
 
+private:
+	UFUNCTION()
+	void RegisterCheats();
+	UFUNCTION()
+	void SetClockTimeScale_Parse(const TArray<FString>& Args);
 	/*Properties*/
 private:
 	UPROPERTY()
 	FTimeSubsystemData Data;
+	UPROPERTY()
+	float ClockTimeScale = 1.0;
 };

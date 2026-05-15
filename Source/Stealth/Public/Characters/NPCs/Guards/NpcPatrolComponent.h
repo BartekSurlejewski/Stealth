@@ -23,9 +23,8 @@ protected:
 	TArray<TObjectPtr<AActor>> PatrolTargets;
 	UPROPERTY()
 	TObjectPtr<ANpcAiController> NpcController;
-
-	UPROPERTY()
-	FTimerHandle PatrolTimer;
+	UPROPERTY(EditAnywhere, Category = "Patrolling")
+	bool bIsOnWalkingPatrol;
 	UPROPERTY()
 	int32 CurrentTargetIndex = 0;
 
@@ -36,4 +35,9 @@ public:
 	AActor* GetCurrentTarget() const;
 	UFUNCTION(BlueprintCallable)
 	void IncrementTargetIndex();
+	UFUNCTION(BlueprintPure)
+	bool IsOnWalkingPatrol() const;
+
+	UFUNCTION(BlueprintSetter)
+	void SetWalkingPatrol(bool newIsOnWalkingPatrol);
 };

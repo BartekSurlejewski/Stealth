@@ -20,6 +20,8 @@ void UTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	Data.DayStartTimeInSeconds = (WorldSettings->GetSunriseHour() * 3600);
 	Data.DayEndTimeInSeconds = (WorldSettings->GetSunsetHour() * 3600);
+
+	RegisterCheats();
 }
 
 void UTimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
@@ -43,7 +45,7 @@ void UTimeSubsystem::Tick(float DeltaTime)
 	{
 		return;
 	}
-	Data.SecondsElapsedInDay += DeltaTime * Data.TIME_SCALE;
+	Data.SecondsElapsedInDay += DeltaTime * Data.IN_GAME_SECONDS_PER_REAL_SECOND * ClockTimeScale;
 
 	if (Data.SecondsElapsedInDay >= Data.SECONDS_PER_DAY)
 	{
@@ -91,6 +93,11 @@ float UTimeSubsystem::GetTimeOfNightNormalized() const
 	return FMath::Clamp((AdjustedT - Rise) / (Set - Rise), 0.f, 1.f);
 }
 
+bool UTimeSubsystem::IsTimeOfDay(ETimeOfDay TimeOfDay) const
+{
+	return GetCurrentTimeOfDay() == TimeOfDay;
+}
+
 void UTimeSubsystem::GetClockTime(int32& OutHour, int32& OutMinute) const
 {
 	OutHour = Data.CurrentHour;
@@ -102,6 +109,8 @@ void UTimeSubsystem::SetTime(const int32& NewDay, const int32& NewHour, const in
 	Data.CurrentDay = NewDay;
 	Data.SecondsElapsedInDay = (NewHour * 3600) + (NewMinute * 60) + NewSecond;
 }
+
+void UTimeSubsystem::SetClockTimeScale(const float NewClockTimeScale) { ClockTimeScale = NewClockTimeScale; }
 
 void UTimeSubsystem::CheckTimeOfDay()
 {
@@ -131,3 +140,24 @@ void UTimeSubsystem::CheckTimeOfDay()
 		}
 	}
 }
+
+
+#pragma  region Cheats
+
+void UTimeSubsystem::RegisterCheats()
+{
+	IConsoleCommand* SetInGameTimeSpeed = IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("Cheat.Time.SetClockTimeScale"),
+		TEXT("Change in-game clock time scale"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &UTimeSubsystem::SetClockTimeScale_Parse),
+		ECVF_Cheat);
+}
+
+void UTimeSubsystem::SetClockTimeScale_Parse(const TArray<FString>& Args)
+{
+	float NewClockTimeScale = FCString::Atof(*Args[0]);
+	SetClockTimeScale(NewClockTimeScale);
+}
+
+
+#pragma endregion

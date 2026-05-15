@@ -119,4 +119,5 @@ void UPlayerInteractionComponent::Interact() const
 	}
 
 	IInteractable::Execute_Interact(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	
 }

@@ -1,5 +1,6 @@
 ﻿#include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
 
+#include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/GuardNpcProfile.h"
 #include "Characters/NPCs/Guards/NpcPatrolComponent.h"
 #include "Components/StateTreeComponent.h"
@@ -15,16 +16,16 @@ void UGuardNpcContextComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PatrolComponent = GetOwner()->FindComponentByClass<UNpcPatrolComponent>();
+	PatrolComponent = NpcAiController->GetPawn()->FindComponentByClass<UNpcPatrolComponent>();
 }
 
-
+//TODO: Add changing to suspicious state when guard sees player doing something illegal, 
+// then to Alert state when player does it again in a given time period
 void UGuardNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	TickSuspicion(DeltaTime);
 
-	if (AlertLevel == EGuardAlertLevel::Search && SearchTimer > 0.f)
+	if (BehaviourState == EGuardBehaviourState::Search && SearchTimer > 0.f)
 	{
 		SearchTimer -= DeltaTime;
 		if (SearchTimer <= 0.f)
@@ -44,24 +45,41 @@ AActor* UGuardNpcContextComponent::GetCurrentPatrolPoint() const
 	return PatrolComponent->GetCurrentTarget();
 }
 
+void UGuardNpcContextComponent::IncrementPatrolIndex() const
+{
+	if (!PatrolComponent)
+	{
+		return;
+	}
+
+	PatrolComponent->IncrementTargetIndex();
+}
+
+
 void UGuardNpcContextComponent::ForceAlert(FVector AtLocation)
 {
 	LastKnownPlayerPos = AtLocation;
-	AlertLevel = EGuardAlertLevel::Alerted;
-	if (Profile) SuspicionLevel = Profile->SuspicionThreshold_Alert;
 	SendGuardEvent(AlertThresholdMetTag);
 }
 
 void UGuardNpcContextComponent::BeginSearch()
 {
-	AlertLevel = EGuardAlertLevel::Search;
 	SearchTimer = Profile ? Profile->SearchDuration : 20.f;
+}
+
+bool UGuardNpcContextComponent::IsOnWalkingPatrol() const
+{
+	if (!PatrolComponent)
+	{
+		return false;
+	}
+
+	return PatrolComponent->IsOnWalkingPatrol();
 }
 
 void UGuardNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier)
 {
-	const APawn* Player = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (Actor != Player)
+	if (Actor != GetPlayerPawn())
 	{
 		return;
 	}
@@ -90,69 +108,21 @@ void UGuardNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimul
 	}
 
 	LastHeardSoundLocation = Stimulus.StimulusLocation;
-	SuspicionLevel = FMath::Min(Profile->SuspicionThreshold_Alert,
-	                            SuspicionLevel + Stimulus.Strength * 50.f);
 
-	if (AlertLevel <= EGuardAlertLevel::Suspicious)
+	if (BehaviourState <= EGuardBehaviourState::Suspicious)
 	{
 		LastKnownPlayerPos = Stimulus.StimulusLocation;
 	}
-
-	UpdateAlertLevel();
 }
 
-void UGuardNpcContextComponent::TickSuspicion(float DeltaTime)
+void UGuardNpcContextComponent::LookAtPlayer()
 {
-	if (!Profile)
+	if (!NpcAiController)
 	{
 		return;
 	}
 
-	float Delta = 0.f;
-
-	if (bPlayerInDirectSight)
-	{
-		Delta += Profile->SuspicionGainPerSecond_Sight
-			* GetSuspicionModifier(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-			* DeltaTime;
-	}
-	else if (bPlayerInPeripheralSight)
-	{
-		Delta += Profile->SuspicionGainPerSecond_Peripheral
-			* GetSuspicionModifier(UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-			* DeltaTime;
-	}
-	else if (AlertLevel <= EGuardAlertLevel::Suspicious)
-	{
-		Delta -= Profile->SuspicionDecayPerSecond * DeltaTime;
-	}
-
-	SuspicionLevel = FMath::Clamp(SuspicionLevel + Delta,
-	                              0.f, Profile->SuspicionThreshold_Alert);
-
-	UpdateAlertLevel();
-}
-
-void UGuardNpcContextComponent::UpdateAlertLevel()
-{
-	if (!Profile || GlobalAlarmLevel >= 2 || AlertLevel == EGuardAlertLevel::Alarm || AlertLevel >= EGuardAlertLevel::Alerted)
-	{
-		return;
-	}
-
-	if (SuspicionLevel >= Profile->SuspicionThreshold_Alert && AlertLevel != EGuardAlertLevel::Alerted)
-	{
-		AlertLevel = EGuardAlertLevel::Alerted;
-		SendGuardEvent(AlertThresholdMetTag);
-	}
-	else if (SuspicionLevel > 0.f)
-	{
-		AlertLevel = EGuardAlertLevel::Suspicious;
-	}
-	else
-	{
-		AlertLevel = EGuardAlertLevel::Patrol;
-	}
+	NpcAiController->SetFocus(GetPlayerPawn());
 }
 
 void UGuardNpcContextComponent::SendGuardEvent(const FGameplayTag Tag) const
@@ -169,12 +139,11 @@ void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVect
 	GlobalAlarmLevel = NewLevel;
 	if (NewLevel >= 2)
 	{
-		if (AlertLevel <= EGuardAlertLevel::Suspicious)
+		if (BehaviourState <= EGuardBehaviourState::Suspicious)
 		{
 			LastKnownPlayerPos = SourceLocation;
 		}
 
-		AlertLevel = EGuardAlertLevel::Alarm;
 		SendGuardEvent(GlobalAlarmTag);
 	}
 }
@@ -194,4 +163,14 @@ float UGuardNpcContextComponent::GetSuspicionModifier(AActor* Target) const
 	}
 
 	return Modifier;
+}
+
+APawn* UGuardNpcContextComponent::GetPlayerPawn()
+{
+	if (PlayerPawn == nullptr)
+	{
+		PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	}
+
+	return PlayerPawn.Get();
 }

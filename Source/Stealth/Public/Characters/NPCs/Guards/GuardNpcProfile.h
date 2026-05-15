@@ -10,19 +10,6 @@ class STEALTH_API UGuardNpcProfile : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	// Perception
-	UPROPERTY(EditDefaultsOnly, Category="Perception")
-	float SightRadius = 1500.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Perception")
-	float LoseSightRadius = 1800.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Perception")
-	float PeripheralVisionAngleDegrees = 60.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Perception")
-	float HearingRadius = 1000.f;
-
 	// Suspicion
 	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
 	float SuspicionGainPerSecond_Sight = 40.f;

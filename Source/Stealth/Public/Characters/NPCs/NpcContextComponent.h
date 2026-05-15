@@ -6,6 +6,8 @@
 #include "NpcContextComponent.generated.h"
 
 
+class ANpcAiController;
+
 UCLASS(Abstract, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UNpcContextComponent : public UActorComponent
 {
@@ -13,7 +15,7 @@ class STEALTH_API UNpcContextComponent : public UActorComponent
 
 public:
 	UNpcContextComponent();
-	void BeginPlay() override;
+	virtual void BeginPlay() override;
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	FVector LastKnownPlayerPos = FVector::ZeroVector;
@@ -30,4 +32,6 @@ public:
 protected:
 	UPROPERTY()
 	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
+	UPROPERTY()
+	TObjectPtr<ANpcAiController> NpcAiController;
 };

@@ -11,10 +11,13 @@ class STEALTH_API AGuardNpcAiController : public ANpcAiController
 {
 	GENERATED_BODY()
 
+public:
+	AGuardNpcAiController();
+
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus) override;
 
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGuardNpcContextComponent> GuardContext;
 };

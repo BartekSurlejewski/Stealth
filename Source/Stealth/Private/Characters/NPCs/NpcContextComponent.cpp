@@ -1,5 +1,6 @@
 ﻿#include "Characters/NPCs/NpcContextComponent.h"
 
+#include "Characters/NPCs/NpcAiController.h"
 
 
 UNpcContextComponent::UNpcContextComponent()
@@ -14,4 +15,5 @@ void UNpcContextComponent::BeginPlay()
 	Super::BeginPlay();
 
 	StateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeAIComponent>();
+	NpcAiController = Cast<ANpcAiController>(GetOwner());
 }

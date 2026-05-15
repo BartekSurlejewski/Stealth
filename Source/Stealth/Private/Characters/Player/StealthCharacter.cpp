@@ -6,6 +6,7 @@
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
 #include "Characters/Player/Components/PlayerInteractionComponent.h"
 #include "Characters/Player/Components/StealthCharacterBehaviourComponent.h"
+#include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Inventory/InventoryComponent.h"
@@ -48,6 +49,7 @@ AStealthCharacter::AStealthCharacter()
 
 	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterBehaviourComponent>("Stealth Character Behaviour Component");
 	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
+	CollisionsComponent = CreateDefaultSubobject<UStealthCharacterCollisionsComponent>(TEXT("Collisions Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
 	AttributeSet = CreateDefaultSubobject<UStealthCharacterAttributeSet>("Attribute Set");
@@ -61,6 +63,26 @@ void AStealthCharacter::PossessedBy(AController* NewController)
 	if (AbilitySystemComponent)
 	{
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+}
+
+void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (CollisionsComponent)
+	{
+		CollisionsComponent->OnBeginOverlap(OtherActor);
+	}
+}
+
+void AStealthCharacter::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorEndOverlap(OtherActor);
+
+	if (CollisionsComponent)
+	{
+		CollisionsComponent->OnEndOverlap(OtherActor);
 	}
 }
 

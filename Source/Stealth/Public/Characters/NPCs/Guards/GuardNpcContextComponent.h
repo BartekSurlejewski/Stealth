@@ -6,40 +6,37 @@
 #include "Components/ActorComponent.h"
 #include "GuardNpcContextComponent.generated.h"
 
-
 class UStateTreeComponent;
 class UNpcPatrolComponent;
 struct FAIStimulus;
 class UGuardNpcProfile;
 
 UENUM(BlueprintType)
-enum class EGuardAlertLevel : uint8
+enum class EGuardBehaviourState : uint8
 {
 	Patrol, Suspicious, Alerted, Search, Alarm
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
 
 UCLASS(ClassGroup="NPC", meta=(BlueprintSpawnableComponent))
 class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 {
 	GENERATED_BODY()
 
+	/*Events*/
 public:
-	virtual void BeginPlay() override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+	UPROPERTY(BlueprintAssignable)
+	FOnBehaviourStateChanged OnBehaviourStateChanged;
 
+	/*Properties*/
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Guard")
 	TObjectPtr<UGuardNpcProfile> Profile;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Guard")
-	TArray<TObjectPtr<AActor>> PatrolPoints;
-
 	// State (read from State Tree)
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	EGuardAlertLevel AlertLevel = EGuardAlertLevel::Patrol;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	float SuspicionLevel = 0.f;
+	EGuardBehaviourState BehaviourState = EGuardBehaviourState::Patrol;
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	float SearchTimer = 0.f;
@@ -51,26 +48,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category="Guard|Patrol")
 	int32 CurrentPatrolIndex = 0;
 
-	UFUNCTION(BlueprintPure)
-	AActor* GetCurrentPatrolPoint() const;
-
-	// External systems API
-	UFUNCTION(BlueprintCallable)
-	void ForceAlert(FVector AtLocation);
-
-	UFUNCTION(BlueprintCallable)
-	void BeginSearch();
-
-	UFUNCTION(BlueprintPure)
-	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
-
-	// Perception callbacks
-	void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier);
-	void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
-
 private:
 	UPROPERTY()
 	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
+	UPROPERTY()
+	TSoftObjectPtr<APawn> PlayerPawn;
 
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag SearchExpiredTag;
@@ -79,9 +61,49 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag GlobalAlarmTag;
 
-	void TickSuspicion(float DeltaTime);
-	void UpdateAlertLevel();
+	/*Methods*/
+public:
+	virtual void BeginPlay() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
+	                           FActorComponentTickFunction* ThisTickFunction) override;
+	UFUNCTION(BlueprintPure)
+	AActor* GetCurrentPatrolPoint() const;
+	UFUNCTION(BlueprintCallable)
+	void IncrementPatrolIndex() const;
+
+	// External systems API
+	UFUNCTION(BlueprintCallable)
+	void SetBehaviourState(const EGuardBehaviourState& NewBehaviourState)
+	{
+		if (BehaviourState != NewBehaviourState)
+		{
+			BehaviourState = NewBehaviourState;
+			OnBehaviourStateChanged.Broadcast(BehaviourState);
+		}
+	}
+
+	UFUNCTION(BlueprintCallable)
+	void ForceAlert(FVector AtLocation);
+
+	UFUNCTION(BlueprintCallable)
+	void BeginSearch();
+
+	UFUNCTION(BlueprintPure)
+	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
+	
+	UFUNCTION(BlueprintPure)
+	bool IsOnWalkingPatrol() const;
+
+	// Perception callbacks
+	void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier);
+	void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+
+	UFUNCTION(BlueprintCallable)
+	void LookAtPlayer();
+
+private:
 	void SendGuardEvent(FGameplayTag Tag) const;
 	void OnAlarmChanged(int32 NewLevel, const FVector& SourceLocation);
 	float GetSuspicionModifier(AActor* Target) const;
+	APawn* GetPlayerPawn();
 };

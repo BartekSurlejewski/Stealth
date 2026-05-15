@@ -1,7 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "Core/StealthTickableWorldSubsystem.h"
+﻿#include "Core/StealthTickableWorldSubsystem.h"
 
 #include "Core/Data/StealthWorldSettings.h"
 #include "Stealth/Stealth.h"

@@ -20,3 +20,10 @@ void UNpcPatrolComponent::IncrementTargetIndex()
 {
 	CurrentTargetIndex = (CurrentTargetIndex + 1) % PatrolTargets.Num();
 }
+
+bool UNpcPatrolComponent::IsOnWalkingPatrol() const { return bIsOnWalkingPatrol; }
+
+void UNpcPatrolComponent::SetWalkingPatrol(bool newIsOnWalkingPatrol)
+{
+	bIsOnWalkingPatrol = newIsOnWalkingPatrol;
+}

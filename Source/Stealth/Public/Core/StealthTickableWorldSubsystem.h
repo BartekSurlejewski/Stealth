@@ -23,5 +23,6 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
 protected:
+	UPROPERTY()
 	TObjectPtr<AStealthWorldSettings> WorldSettings;
 };

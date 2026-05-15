@@ -4,6 +4,7 @@
 #include "Characters/NPCs/NpcCharacter.h"
 #include "GuardNpcCharacter.generated.h"
 
+class UGuardNpcContextComponent;
 class UAIPerceptionComponent;
 class UNpcPatrolComponent;
 

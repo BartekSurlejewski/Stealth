@@ -25,8 +25,6 @@ protected:
 
 	UFUNCTION()
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-	// UFUNCTION()
-	// void OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")

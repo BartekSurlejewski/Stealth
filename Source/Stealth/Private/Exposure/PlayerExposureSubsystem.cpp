@@ -1,17 +1,22 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "Exposure/PlayerExposureSubsystem.h"
+﻿#include "Exposure/PlayerExposureSubsystem.h"
 
 #include "Characters/Player/StealthCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Stealth/Stealth.h"
+#include "TimeSystem/TimeSubsystem.h"
 
 void UPlayerExposureSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	CurrentTotalExposure = CalculateTotalPlayerExposure();
+}
+
+void UPlayerExposureSubsystem::OnWorldBeginPlay(UWorld& InWorld)
+{
+	Super::OnWorldBeginPlay(InWorld);
+
+	TimeSubsystem = GetWorld()->GetSubsystem<UTimeSubsystem>();
 }
 
 int32 UPlayerExposureSubsystem::RegisterLight(const FLightData& LightData)
@@ -45,6 +50,13 @@ void UPlayerExposureSubsystem::UpdateLight(int32 Handle, const FLightData& Light
 
 const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 {
+	//TODO: Add calculating the light exposure when player is in the room during day
+	// Return max light exposure during the day
+	if (TimeSubsystem != nullptr && TimeSubsystem->IsTimeOfDay(ETimeOfDay::Day))
+	{
+		return 1.0;
+	}
+
 	FVector PlayerPosition = PlayerCharacter->GetActorLocation();
 
 	float Accumulated = 0.f;
@@ -62,26 +74,24 @@ const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 		Falloff *= LightData.Intensity;
 
 		// Phase 2 — occlusion: line trace only for lights that passed phase 1
-		// if (L.bCastsShadow)
+		FHitResult Hit;
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(PlayerCharacter);
+		Params.AddIgnoredActor(LightData.OwnerActor);
+
+		bool bBlocked = GetWorld()->LineTraceSingleByChannel(
+			Hit, LightData.Position, PlayerPosition, ECC_Visibility, Params);
+
+		//TODO: Remove drawing debug lines
+		if (bBlocked)
 		{
-			FHitResult Hit;
-			FCollisionQueryParams Params;
-			Params.AddIgnoredActor(PlayerCharacter);
-			Params.AddIgnoredActor(LightData.OwnerActor);
-
-			bool bBlocked = GetWorld()->LineTraceSingleByChannel(
-				Hit, LightData.Position, PlayerPosition, ECC_Visibility, Params);
-
-			if (bBlocked)
-			{
-				DrawDebugLine(GetWorld(), LightData.Position, PlayerPosition, FColor::Red, false, 0.6, 0, 1);
-				// not zero — let a tiny bleed through
-				Falloff *= 0.005f;
-			}
-			else
-			{
-				DrawDebugLine(GetWorld(), LightData.Position, PlayerPosition, FColor::Green, false, 0.3, 0, 1);
-			}
+			DrawDebugLine(GetWorld(), LightData.Position, PlayerPosition, FColor::Red, false, 0.6, 0, 1);
+			// not zero — let a tiny bleed through
+			Falloff *= 0.005f;
+		}
+		else
+		{
+			DrawDebugLine(GetWorld(), LightData.Position, PlayerPosition, FColor::Green, false, 0.3, 0, 1);
 		}
 
 		Accumulated = FMath::Clamp(Accumulated + Falloff, 0.f, 1.f);
@@ -107,8 +117,6 @@ const float UPlayerExposureSubsystem::CalculateTotalPlayerExposure()
 	float LightExposure = CalculatePlayerLightExposure();
 
 	float TotalExposure = LightExposure * (PlayerCharacter->IsCrouched() ? 0.5f : 1); //TODO: move to some general gameplay settings;
-
-	// UE_LOG(LogStealth, Warning, TEXT("PlayerExposure: %f"), TotalExposure);
 
 	return TotalExposure;
 }
