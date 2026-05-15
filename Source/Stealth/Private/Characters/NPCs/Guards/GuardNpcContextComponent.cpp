@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "Stealth/Stealth.h"
 
 
 class UStateTreeComponent;
@@ -69,6 +70,7 @@ void UGuardNpcContextComponent::BeginSearch()
 
 bool UGuardNpcContextComponent::IsOnWalkingPatrol() const
 {
+	//TODO: this won't work at the scene start, since state tree seems to call it before BeginPlay. Fix somehow
 	if (!PatrolComponent)
 	{
 		return false;
@@ -98,11 +100,15 @@ void UGuardNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAISt
 		bPlayerInDirectSight = false;
 		bPlayerInPeripheralSight = false;
 	}
+
+	UE_LOG(LogStealth, Log, TEXT("[%s] Player in direct sight: %s"), *GetOwner()->GetName(), bPlayerInDirectSight ? TEXT("true") : TEXT("false"));
+	UE_LOG(LogStealth, Log, TEXT("[%s] Player in peripheral sight: %s"), *GetOwner()->GetName(), bPlayerInDirectSight ? TEXT("true") : TEXT("false"));
+	OnPlayerInSightChanged.Broadcast(bPlayerInDirectSight, bPlayerInPeripheralSight);
 }
 
 void UGuardNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (!Stimulus.WasSuccessfullySensed() || !Profile)
+	if (!Stimulus.WasSuccessfullySensed() || Actor != GetPlayerPawn())
 	{
 		return;
 	}

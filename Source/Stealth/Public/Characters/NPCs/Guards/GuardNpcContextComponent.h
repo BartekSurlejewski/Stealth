@@ -19,6 +19,9 @@ enum class EGuardBehaviourState : uint8
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight, bool, IsPlayerInPeripheralSight);
+
+
 UCLASS(ClassGroup="NPC", meta=(BlueprintSpawnableComponent))
 class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 {
@@ -28,6 +31,8 @@ class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnBehaviourStateChanged OnBehaviourStateChanged;
+	UPROPERTY(BlueprintAssignable)
+	FOnPlayerInSightChanged OnPlayerInSightChanged;
 
 	/*Properties*/
 public:
@@ -90,7 +95,7 @@ public:
 
 	UFUNCTION(BlueprintPure)
 	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
-	
+
 	UFUNCTION(BlueprintPure)
 	bool IsOnWalkingPatrol() const;
 
