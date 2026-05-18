@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayTagContainer.h"
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Components/ActorComponent.h"
 #include "GuardNpcContextComponent.generated.h"
@@ -10,47 +9,18 @@ class AStealthPlayerState;
 class UStateTreeComponent;
 class UNpcPatrolComponent;
 struct FAIStimulus;
-class UGuardNpcProfile;
-
-UENUM(BlueprintType)
-enum class EGuardBehaviourState : uint8
-{
-	Patrol, Suspicious, Alerted, Search, Alarm
-};
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight, bool, IsPlayerInPeripheralSight);
+class UNpcProfile;
 
 UCLASS(ClassGroup="NPC", meta=(BlueprintSpawnableComponent))
 class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 {
 	GENERATED_BODY()
 
-	/*Events*/
-public:
-	UPROPERTY(BlueprintAssignable)
-	FOnBehaviourStateChanged OnBehaviourStateChanged;
-	UPROPERTY(BlueprintAssignable)
-	FOnPlayerInSightChanged OnPlayerInSightChanged;
-
 	/*Properties*/
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Guard")
-	TObjectPtr<UGuardNpcProfile> Profile;
-
 	// State (read from State Tree)
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	EGuardBehaviourState BehaviourState = EGuardBehaviourState::Patrol;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	float SearchTimer = 0.f;
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	float SuspicionDownTimer = 0.f;
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	float SuspicionToAlertTimer = 0.f;
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	float AlertedWithoutSeeingTimer = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	int32 GlobalAlarmLevel = 0;
@@ -62,28 +32,12 @@ public:
 private:
 	UPROPERTY()
 	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
-	UPROPERTY()
-	TSoftObjectPtr<APawn> PlayerPawn;
-	UPROPERTY()
-	TSoftObjectPtr<AStealthPlayerState> PlayerState;
-
-	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
-	FGameplayTag SearchExpiredTag;
-	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
-	FGameplayTag GotSuspiciousTag;
-	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
-	FGameplayTag AlertedTag;
-	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
-	FGameplayTag PlayerLostTag;
-	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
-	FGameplayTag GlobalAlarmTag;
 
 	/*Methods*/
 public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
-	                           FActorComponentTickFunction* ThisTickFunction) override;
+
 	UFUNCTION(BlueprintPure)
 	AActor* GetCurrentPatrolPoint() const;
 	UFUNCTION(BlueprintCallable)
@@ -93,26 +47,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetBehaviourState(const EGuardBehaviourState& NewBehaviourState);
 
-	UFUNCTION(BlueprintCallable)
-	void ForceAlert(FVector AtLocation);
-
-	UFUNCTION(BlueprintCallable)
-	void BeginSearch();
-
-	UFUNCTION(BlueprintPure)
-	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
-
-	UFUNCTION(BlueprintPure)
-	bool IsSuspicionExpired() const { return SuspicionDownTimer <= 0.f; }
-
 	UFUNCTION(BlueprintPure)
 	bool IsOnWalkingPatrol() const;
-
-	// Perception callbacks
-	UFUNCTION()
-	void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier);
-	UFUNCTION()
-	void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
 
 	UFUNCTION(BlueprintCallable)
 	void LookAtPlayer();
@@ -121,13 +57,7 @@ private:
 	UFUNCTION()
 	void OnPlayerPerformedIllegalAction();
 	UFUNCTION()
-	void OnIsInRestrictedAreaChanged(bool bIsInRestrictedArea);
-	UFUNCTION()
-	void SendGuardEvent(FGameplayTag Tag) const;
+	void OnIsPlayerInRestrictedAreaChanged(bool bIsInRestrictedArea);
 	UFUNCTION()
 	void OnAlarmChanged(int32 NewLevel, const FVector& SourceLocation);
-
-	//TODO: think of moving to some subsystem not to hold reference for each NPC
-	APawn* GetPlayerPawn();
-	AStealthPlayerState* GetPlayerState();
 };

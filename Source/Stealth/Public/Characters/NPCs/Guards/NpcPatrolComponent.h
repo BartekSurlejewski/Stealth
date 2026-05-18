@@ -21,6 +21,8 @@ class STEALTH_API UNpcPatrolComponent : public UActorComponent
 protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "Patrolling")
 	TArray<TObjectPtr<AActor>> PatrolTargets;
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Patrolling")
+	TObjectPtr<AActor> StandingPatrolSpot;
 	UPROPERTY()
 	TObjectPtr<ANpcAiController> NpcController;
 	UPROPERTY(EditAnywhere, Category = "Patrolling")

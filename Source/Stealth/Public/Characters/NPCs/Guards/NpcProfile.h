@@ -2,10 +2,10 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "GuardNpcProfile.generated.h"
+#include "NpcProfile.generated.h"
 
 UCLASS()
-class STEALTH_API UGuardNpcProfile : public UDataAsset
+class STEALTH_API UNpcProfile : public UDataAsset
 {
 	GENERATED_BODY()
 
@@ -23,14 +23,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
 	float SuspicionThreshold_Alert = 100.f;
 
-	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
-	float SuspicionDuration = 30.f;
-
-	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
-	float SearchDuration = 20.f;
-	
-	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
-	float AlertWithoutSeeingDuration = 10.f;
+	UPROPERTY(EditDefaultsOnly, Category="Perception")
+	float LosePlayerSightGracePeriod = 1.0f;
 
 	// Modifiers
 	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
