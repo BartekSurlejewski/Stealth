@@ -44,6 +44,11 @@ void UGuardNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	if (bPlayerInDirectSight || bPlayerInPeripheralSight)
+	{
+		LastKnownPlayerPos = GetPlayerPawn()->GetActorLocation();
+	}
+
 	if (BehaviourState == EGuardBehaviourState::Patrol && bPlayerInDirectSight && GetPlayerState()->GetIsInRestrictedArea())
 	{
 		// Player is seen and is in restricted area!
@@ -54,12 +59,37 @@ void UGuardNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	{
 		if (!bPlayerInDirectSight || !GetPlayerState()->GetIsInRestrictedArea())
 		{
-			SuspicionTimer -= DeltaTime;
-			UE_LOG(LogStealth, Log, TEXT("[%s] Suspicion timer: %f"), *GetOwner()->GetName(), SuspicionTimer);
-			if (SuspicionTimer <= 0.f)
+			SuspicionDownTimer -= DeltaTime;
+			UE_LOG(LogStealth, Log, TEXT("[%s] Suspicion timer: %f"), *GetOwner()->GetName(), SuspicionDownTimer);
+			if (SuspicionDownTimer <= 0.f)
 			{
 				SendGuardEvent(SearchExpiredTag);
 				UE_LOG(LogStealth, Log, TEXT("[%s] Suspicion expired"), *GetOwner()->GetName());
+			}
+		}
+		else if (bPlayerInDirectSight && GetPlayerState()->GetIsInRestrictedArea())
+		{
+			SuspicionToAlertTimer -= DeltaTime;
+			UE_LOG(LogStealth, Log, TEXT("[%s] Suspicion to alert timer: %f"), *GetOwner()->GetName(), SuspicionToAlertTimer);
+			if (SuspicionToAlertTimer <= 0.f)
+			{
+				SendGuardEvent(AlertedTag);
+				UE_LOG(LogStealth, Log, TEXT("[%s] Changing from suspicious to alerted"), *GetOwner()->GetName());
+			}
+		}
+	}
+	else if (BehaviourState == EGuardBehaviourState::Alerted)
+	{
+		if (bPlayerInDirectSight)
+		{
+			AlertedWithoutSeeingTimer = Profile->AlertWithoutSeeingDuration;
+		}
+		else
+		{
+			AlertedWithoutSeeingTimer -= DeltaTime;
+			if (AlertedWithoutSeeingTimer <= 0.f)
+			{
+				SendGuardEvent(PlayerLostTag);
 			}
 		}
 	}
@@ -106,14 +136,14 @@ void UGuardNpcContextComponent::SetBehaviourState(const EGuardBehaviourState& Ne
 	//TODO: Add a class for each state logic to avoid constant if-checks
 	if (BehaviourState == EGuardBehaviourState::Suspicious)
 	{
-		SuspicionTimer = Profile ? Profile->SuspicionDuration : 30.f;
+		SuspicionDownTimer = Profile ? Profile->SuspicionDuration : 30.f;
+		SuspicionToAlertTimer = Profile ? Profile->SuspicionDuration : 30.f;
 	}
 	else if (BehaviourState == EGuardBehaviourState::Search)
 	{
 		SearchTimer = Profile ? Profile->SearchDuration : 20.f;
 	}
 }
-
 
 void UGuardNpcContextComponent::ForceAlert(FVector AtLocation)
 {
@@ -145,11 +175,10 @@ void UGuardNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAISt
 	}
 
 	const float EffectiveStrength = Stimulus.Strength * ExposureMultiplier;
-
 	//TODO: add defining effectiveStrength threshold without hardcoding it
 	if (Stimulus.WasSuccessfullySensed() && EffectiveStrength >= 0.05f)
 	{
-		LastKnownPlayerPos = Stimulus.StimulusLocation;
+		// LastKnownPlayerPos = Stimulus.StimulusLocation;
 		bPlayerInDirectSight = EffectiveStrength >= 0.8f;
 		bPlayerInPeripheralSight = EffectiveStrength < 0.8f;
 	}
@@ -217,7 +246,8 @@ void UGuardNpcContextComponent::OnIsInRestrictedAreaChanged(bool bIsInRestricted
 {
 	if (bIsInRestrictedArea && bPlayerInDirectSight && BehaviourState == EGuardBehaviourState::Suspicious)
 	{
-		SuspicionTimer = Profile ? Profile->SuspicionDuration : 30.f;
+		SuspicionDownTimer = Profile ? Profile->SuspicionDuration : 30.f;
+		SuspicionToAlertTimer = Profile ? Profile->SuspicionDuration : 30.f;
 	}
 }
 
@@ -242,23 +272,6 @@ void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVect
 
 		SendGuardEvent(GlobalAlarmTag);
 	}
-}
-
-float UGuardNpcContextComponent::GetSuspicionModifier(AActor* Target) const
-{
-	if (!Target || !Profile)
-	{
-		return 1.f;
-	}
-	float Modifier = 1.f;
-	ACharacter* C = Cast<ACharacter>(Target);
-
-	if (C && C->GetCharacterMovement()->IsCrouching())
-	{
-		Modifier *= Profile->CrouchSuspicionMultiplier;
-	}
-
-	return Modifier;
 }
 
 APawn* UGuardNpcContextComponent::GetPlayerPawn()

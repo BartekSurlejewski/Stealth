@@ -46,7 +46,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	float SearchTimer = 0.f;
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	float SuspicionTimer = 0.f;
+	float SuspicionDownTimer = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
+	float SuspicionToAlertTimer = 0.f;
+	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
+	float AlertedWithoutSeeingTimer = 0.f;
 
 	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
 	int32 GlobalAlarmLevel = 0;
@@ -69,6 +73,8 @@ private:
 	FGameplayTag GotSuspiciousTag;
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag AlertedTag;
+	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
+	FGameplayTag PlayerLostTag;
 	UPROPERTY(EditDefaultsOnly, Category="Guard|State|Tags")
 	FGameplayTag GlobalAlarmTag;
 
@@ -97,13 +103,15 @@ public:
 	bool IsSearchExpired() const { return SearchTimer <= 0.f; }
 
 	UFUNCTION(BlueprintPure)
-	bool IsSuspicionExpired() const { return SuspicionTimer <= 0.f; }
+	bool IsSuspicionExpired() const { return SuspicionDownTimer <= 0.f; }
 
 	UFUNCTION(BlueprintPure)
 	bool IsOnWalkingPatrol() const;
 
 	// Perception callbacks
+	UFUNCTION()
 	void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier);
+	UFUNCTION()
 	void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
 
 	UFUNCTION(BlueprintCallable)
@@ -114,10 +122,10 @@ private:
 	void OnPlayerPerformedIllegalAction();
 	UFUNCTION()
 	void OnIsInRestrictedAreaChanged(bool bIsInRestrictedArea);
-
+	UFUNCTION()
 	void SendGuardEvent(FGameplayTag Tag) const;
+	UFUNCTION()
 	void OnAlarmChanged(int32 NewLevel, const FVector& SourceLocation);
-	float GetSuspicionModifier(AActor* Target) const;
 
 	//TODO: think of moving to some subsystem not to hold reference for each NPC
 	APawn* GetPlayerPawn();

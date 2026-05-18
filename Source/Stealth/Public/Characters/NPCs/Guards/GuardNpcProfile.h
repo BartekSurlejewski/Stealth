@@ -28,6 +28,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
 	float SearchDuration = 20.f;
+	
+	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
+	float AlertWithoutSeeingDuration = 10.f;
 
 	// Modifiers
 	UPROPERTY(EditDefaultsOnly, Category="Modifiers")
