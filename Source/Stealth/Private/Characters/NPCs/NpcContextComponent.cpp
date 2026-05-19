@@ -70,7 +70,6 @@ void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulu
 		SendStateTreeEvent(SuspiciousActivityTag);
 	}
 
-	UE_LOG(LogStealth, Log, TEXT("[%s] Player in sight: %s"), *GetOwner()->GetName(), bPlayerInSight ? TEXT("true") : TEXT("false"));
 	OnPlayerInSightChanged.Broadcast(bPlayerInSight);
 }
 
@@ -81,6 +80,7 @@ void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& S
 		return;
 	}
 
+	UE_LOG(LogStealth, Log, TEXT("Heard player at %s"), *Stimulus.StimulusLocation.ToString());
 	LastHeardSoundLocation = Stimulus.StimulusLocation;
 }
 
