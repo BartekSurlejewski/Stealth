@@ -39,7 +39,7 @@ private:
 	void PrepareTask(UDailyRegimenTask* TaskToPrepare);
 	UFUNCTION()
 	void InitializeTask(UDailyRegimenTask* TaskToInitialize);
-	UFUNCTION()
+	UFUNCTION(BlueprintCallable)
 	UDailyRegimenTask* GetNextTask();
 	UFUNCTION()
 	UDailyRegimenTask* GetNextTaskByTime();

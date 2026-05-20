@@ -43,7 +43,7 @@ public:
 protected:
 	UPROPERTY()
 	bool bIsInitialized;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Time", meta=(ClampMin = "0", ClampMax = "23"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Time", meta=(ClampMin = "0", ClampMax = "23"))
 	int32 StartHour;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Time", meta=(ClampMin = "0", ClampMax = "59"))
 	int32 StartMinute;

@@ -68,6 +68,8 @@ void ADailyRegimenManager::InitializeTask(UDailyRegimenTask* TaskToInitialize)
 		return;
 	}
 
+	CurrentTaskIndex = DailyRegimenTasks.Find(TaskToInitialize);
+
 	bCurrentTaskSucceeded = false;
 	CurrentTask = TaskToInitialize;
 	CurrentTask->InitializeTask();
@@ -114,7 +116,6 @@ void ADailyRegimenManager::DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Tas
 {
 	Task->OnTaskCompleted.RemoveAll(this);
 	bCurrentTaskSucceeded = true;
-	OnTaskEnded.Broadcast(Task, true);
 }
 
 void ADailyRegimenManager::TimeSubsystemOnTimeChanged(int32 Hour, int32 Minute)
@@ -123,10 +124,7 @@ void ADailyRegimenManager::TimeSubsystemOnTimeChanged(int32 Hour, int32 Minute)
 
 	if (CurrentTask && !CurrentTask->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
-		if (!bCurrentTaskSucceeded)
-		{
-			OnTaskEnded.Broadcast(CurrentTask, false);
-		}
+		OnTaskEnded.Broadcast(CurrentTask, bCurrentTaskSucceeded);
 
 		CurrentTask->DisposeTask();
 		CurrentTask = nullptr;
