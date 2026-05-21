@@ -80,7 +80,6 @@ void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& S
 		return;
 	}
 
-	UE_LOG(LogStealth, Log, TEXT("Heard player at %s"), *Stimulus.StimulusLocation.ToString());
 	LastHeardSoundLocation = Stimulus.StimulusLocation;
 }
 

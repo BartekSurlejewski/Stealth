@@ -1,6 +1,8 @@
 #include "Interactables/Pickup.h"
 
+#include "Characters/Player/StealthCharacter.h"
 #include "Components/SphereComponent.h"
+#include "Inventory/InventoryComponent.h"
 
 APickup::APickup()
 {
@@ -43,4 +45,9 @@ void APickup::SetHighlighted_Implementation(bool bHighlight)
 FText APickup::GetInteractionPrompt_Implementation() const
 {
 	return InteractPrompt;
+}
+
+UItemDefinition* APickup::GetInventoryItem_Implementation() const
+{
+	return ItemDefinition;
 }

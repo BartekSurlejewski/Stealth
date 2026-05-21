@@ -4,7 +4,8 @@
 #include "UObject/Class.h"
 #include "Item.generated.h"
 
-
+class IInteractable;
+class UPaperSprite;
 // Base class for custom item logic
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class STEALTH_API UItemEffect : public UObject
@@ -35,14 +36,16 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText Name;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	FText Description;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bIsStackable = false;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bIsConsumable;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 1))
 	int32 MaxStackSize = 99;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-	TSoftObjectPtr<UTexture2D> ItemImage;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
+	TSoftObjectPtr<UPaperSprite> ItemImage;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta=(MustImplement = "/Script/Stealth.Pickable"))
 	TSubclassOf<AActor> ItemActorClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Behaviour")
 	TSubclassOf<UItemEffect> EffectClass;
@@ -54,7 +57,7 @@ struct FInventoryItem
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	TSoftObjectPtr<UItemDefinition> ItemDefinition;
+	TObjectPtr<UItemDefinition> ItemDefinition;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	int32 Amount;
 

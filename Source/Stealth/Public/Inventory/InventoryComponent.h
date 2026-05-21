@@ -33,6 +33,7 @@ public:
 	/*Methods*/
 public:
 	UInventoryComponent();
+	virtual void BeginPlay() override;
 
 	// --- Core API ---
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
@@ -57,9 +58,6 @@ public:
 	{
 		return Items;
 	}
-
-protected:
-	virtual void BeginPlay() override;
 
 private:
 	// Returns pointer to existing slot or nullptr

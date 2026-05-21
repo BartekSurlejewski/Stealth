@@ -3,6 +3,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryComponent.h"
+#include "Inventory/Item.h"
+#include "Stealth/Stealth.h"
 
 AStealthPlayerController::AStealthPlayerController()
 {
@@ -64,4 +66,11 @@ void AStealthPlayerController::BindInputActions()
 	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnOpenInventoryInput);
 }
 
-void AStealthPlayerController::OnOpenInventoryInput() {}
+void AStealthPlayerController::OnOpenInventoryInput()
+{
+	UE_LOG(LogStealth, Log, TEXT("[Inventory]"))
+	for (auto Item : InventoryComponent->GetItems())
+	{
+		UE_LOG(LogStealth, Log, TEXT("Item: %s - %i"), *Item.ItemDefinition->Name.ToString(), Item.Amount)
+	}
+}

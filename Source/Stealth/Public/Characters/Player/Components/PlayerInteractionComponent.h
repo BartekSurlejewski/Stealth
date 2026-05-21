@@ -7,6 +7,7 @@
 #include "PlayerInteractionComponent.generated.h"
 
 
+class UInventoryComponent;
 class UCameraComponent;
 class UInputAction;
 
@@ -27,6 +28,8 @@ private:
 	UPROPERTY()
 	TSoftObjectPtr<UCameraComponent> CachedCamera;
 	UPROPERTY()
+	TSoftObjectPtr<UInventoryComponent> InventoryComponent;
+	UPROPERTY()
 	TObjectPtr<AActor> LookAtInteractableActor;
 	UPROPERTY()
 	TObjectPtr<UInputAction> InteractInputAction;
@@ -35,11 +38,12 @@ private:
 
 public:
 	UPlayerInteractionComponent();
+	virtual void BeginPlay() override;
+	
 	UFUNCTION(BlueprintCallable)
 	FKey GetCurrentInteractKey() const;
 
 protected:
-	virtual void BeginPlay() override;
 	UFUNCTION(Blueprintable)
 	FKey GetKeyForInputAction(const UInputAction* InputAction) const;
 

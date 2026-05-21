@@ -1,4 +1,3 @@
-
 #include "Characters/Player/Components/PlayerInteractionComponent.h"
 
 #include "EnhancedInputSubsystems.h"
@@ -6,6 +5,8 @@
 #include "Characters/Player/StealthCharacter.h"
 #include "GameFramework/Character.h"
 #include "Interactables/Interactable.h"
+#include "Inventory/InventoryComponent.h"
+#include "Inventory/Pickable.h"
 
 UPlayerInteractionComponent::UPlayerInteractionComponent()
 {
@@ -30,6 +31,8 @@ void UPlayerInteractionComponent::BeginPlay()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("[Interaction Component] No camera found on %s"), *OwnerCharacter->GetName());
 		}
+
+		InventoryComponent = OwnerCharacter->GetController()->FindComponentByClass<UInventoryComponent>();
 	}
 
 	OnInteractableLookedAt.Broadcast(LookAtInteractableActor);
@@ -119,5 +122,9 @@ void UPlayerInteractionComponent::Interact() const
 	}
 
 	IInteractable::Execute_Interact(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
-	
+
+	if (InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
+	{
+		InventoryComponent->AddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor));
+	}
 }
