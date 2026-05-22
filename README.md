@@ -8,9 +8,13 @@ Immersive sim game prototype. Sandbox project for improving my Unreal Engine ski
 - Start game in editor
 
 ## Implemented Features Include:
-- Simple movement
-- Simple NPC AI using StateTree - NPC follows predefined patrol path and if they see player, they start to follow them
-- Interactables system, using IInteractable interface
+- Movement
+- Gameplay Ability System - sprinting, crouching, interactions, stamina consumption and restoration
+- NPC AI using StateTree
+- Perception system - NPCs react when they see or hear player
+- Daily tasks system
+- Interactables system using IInteractable interface
+- Inventory system
 - HUD system
 - Lights affecting player's visibility
 - Day/Night cycle
