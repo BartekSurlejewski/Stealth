@@ -32,6 +32,7 @@ void UPlayerInteractionComponent::BeginPlay()
 			UE_LOG(LogTemp, Warning, TEXT("[Interaction Component] No camera found on %s"), *OwnerCharacter->GetName());
 		}
 
+		//TODO: Think of some better way of passing interacted item to inventory for separation of concerns
 		InventoryComponent = OwnerCharacter->GetController()->FindComponentByClass<UInventoryComponent>();
 	}
 

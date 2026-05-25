@@ -24,8 +24,12 @@ void UStealthCharacterCollisionsComponent::OnBeginOverlap(AActor* OtherActor)
 	{
 		if (OtherActor->ActorHasTag("IllegalArea") && PlayerState)
 		{
-			PlayerState->SetIsInRestrictedArea(true);
-			UE_LOG(LogTemp, Warning, TEXT("Player entered illegal area!"));
+			IllegalAreaCollidersOverlapCount++;
+			if (IllegalAreaCollidersOverlapCount == 1)
+			{
+				PlayerState->SetIsInRestrictedArea(true);
+				UE_LOG(LogTemp, Warning, TEXT("Player entered illegal area!"));
+			}
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Player Overlapped by %s"), *OtherActor->GetName());
 	}
@@ -37,8 +41,12 @@ void UStealthCharacterCollisionsComponent::OnEndOverlap(AActor* OtherActor)
 	{
 		if (OtherActor->ActorHasTag("IllegalArea") && PlayerState)
 		{
-			PlayerState->SetIsInRestrictedArea(false);
-			UE_LOG(LogTemp, Warning, TEXT("Player left illegal area!"));
+			IllegalAreaCollidersOverlapCount--;
+			if (IllegalAreaCollidersOverlapCount == 0)
+			{
+				PlayerState->SetIsInRestrictedArea(false);
+				UE_LOG(LogTemp, Warning, TEXT("Player left illegal area!"));
+			}
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Player End Overlap with %s"), *OtherActor->GetName());
 	}

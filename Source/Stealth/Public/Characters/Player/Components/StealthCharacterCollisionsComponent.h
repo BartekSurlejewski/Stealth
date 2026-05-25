@@ -16,7 +16,6 @@ public:
 	UStealthCharacterCollisionsComponent();
 	virtual void BeginPlay() override;
 	
-	
 	UFUNCTION()
 	void OnBeginOverlap(AActor* OtherActor);
 	UFUNCTION()
@@ -25,4 +24,6 @@ public:
 private:
 	UPROPERTY()
 	TObjectPtr<AStealthPlayerState> PlayerState;
+	UPROPERTY()
+	int IllegalAreaCollidersOverlapCount = 0;
 };
