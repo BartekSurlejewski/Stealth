@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "Item.h"
+#include "Items/ItemDefinition.h"
 #include "UObject/Interface.h"
 #include "Pickable.generated.h"
 

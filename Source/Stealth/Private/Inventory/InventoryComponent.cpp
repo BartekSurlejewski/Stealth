@@ -1,6 +1,8 @@
 ﻿#include "Inventory/InventoryComponent.h"
 
-#include "Inventory/Item.h"
+#include "Inventory/Items/InventoryItem.h"
+#include "Inventory/Items/ItemDefinition.h"
+#include "Inventory/Items/ItemEffect.h"
 
 
 UInventoryComponent::UInventoryComponent()
@@ -75,7 +77,7 @@ bool UInventoryComponent::RemoveItem(const UItemDefinition* ItemDefinition, int3
 		{
 			UnequipItem(ItemDefinition);
 		}
-		
+
 		Items.RemoveSingle(*Slot);
 	}
 

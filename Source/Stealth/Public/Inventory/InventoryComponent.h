@@ -2,11 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Items/InventoryItem.h"
 #include "InventoryComponent.generated.h"
 
 class UItemEffect;
 class UItemDefinition;
-struct FInventoryItem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
@@ -54,7 +54,7 @@ public:
 	bool IsFull() const;
 
 	UFUNCTION(BlueprintPure, Category = "Inventory")
-	const TArray<FInventoryItem>& GetItems() const
+	TArray<FInventoryItem> GetItems() const
 	{
 		return Items;
 	}

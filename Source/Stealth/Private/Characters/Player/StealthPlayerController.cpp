@@ -3,7 +3,8 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/Item.h"
+#include "Inventory/Items/InventoryItem.h"
+#include "Inventory/Items/ItemDefinition.h"
 #include "Stealth/Stealth.h"
 
 AStealthPlayerController::AStealthPlayerController()
@@ -68,8 +69,29 @@ void AStealthPlayerController::BindInputActions()
 
 void AStealthPlayerController::OnOpenInventoryInput()
 {
+	bIsInMenu = !bIsInMenu;
+	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+	{
+		//TODO: Add some manager/subsystem for managing UI menus
+		if (bIsInMenu)
+		{
+			SetShowMouseCursor(true);
+			Subsystem->RemoveMappingContext(DefaultMappingContext);
+			Subsystem->AddMappingContext(MenuMappingContext, 0);
+		}
+		else
+		{
+			SetShowMouseCursor(false);
+			Subsystem->RemoveMappingContext(MenuMappingContext);
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+		}
+	}
+
+	OnInventoryInput.Broadcast();
+
 	UE_LOG(LogStealth, Log, TEXT("[Inventory]"))
-	for (auto Item : InventoryComponent->GetItems())
+	for (const auto Item : InventoryComponent->GetItems())
 	{
 		UE_LOG(LogStealth, Log, TEXT("Item: %s - %i"), *Item.ItemDefinition->Name.ToString(), Item.Amount)
 	}
