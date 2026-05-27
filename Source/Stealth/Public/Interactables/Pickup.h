@@ -16,16 +16,18 @@ class STEALTH_API APickup : public AActor, public IInteractable, public IPickabl
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Pickup")
+	UPROPERTY(EditAnywhere, Category="Pickup")
 	TObjectPtr<UItemDefinition> ItemDefinition;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup")
+	int Amount = 1;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USphereComponent> SphereCollision;
 	UPROPERTY(EditAnywhere, Category="Pickup")
 	FText InteractPrompt;
 
 public:
-	// Sets default values for this actor's properties
 	APickup();
+	void Initialize(UItemDefinition& NewItemDefinition, const int NewAmount);
 
 	//~Begin IInteractable Interface
 	virtual void Interact_Implementation(AStealthCharacter* Interactor) override;
@@ -35,5 +37,6 @@ public:
 
 	//~Begin IPickable Interface
 	virtual UItemDefinition* GetInventoryItem_Implementation() const override;
+	virtual int GetAmount_Implementation() const override;
 	//~End IPickable Interface
 };

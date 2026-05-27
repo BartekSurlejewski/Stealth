@@ -126,6 +126,6 @@ void UPlayerInteractionComponent::Interact() const
 
 	if (InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
 	{
-		InventoryComponent->AddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor));
+		InventoryComponent->AddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), IPickable::Execute_GetAmount(LookAtInteractableActor));
 	}
 }

@@ -20,4 +20,6 @@ class STEALTH_API IPickable
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
 	UItemDefinition* GetInventoryItem() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
+	int GetAmount() const;
 };

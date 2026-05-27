@@ -27,6 +27,12 @@ APickup::APickup()
 	Mesh->SetCollisionProfileName(FName("NoCollision"));
 }
 
+void APickup::Initialize(UItemDefinition& NewItemDefinition, const int NewAmount)
+{
+	this->ItemDefinition = &NewItemDefinition;
+	this->Amount = NewAmount;
+}
+
 void APickup::Interact_Implementation(AStealthCharacter* Interactor)
 {
 	// hide this mesh
@@ -44,10 +50,22 @@ void APickup::SetHighlighted_Implementation(bool bHighlight)
 
 FText APickup::GetInteractionPrompt_Implementation() const
 {
-	return InteractPrompt;
+	if (InteractPrompt.IsEmpty())
+	{
+		return ItemDefinition->Name;
+	}
+	else
+	{
+		return InteractPrompt;
+	}
 }
 
 UItemDefinition* APickup::GetInventoryItem_Implementation() const
 {
 	return ItemDefinition;
+}
+
+int APickup::GetAmount_Implementation() const
+{
+	return Amount;
 }
