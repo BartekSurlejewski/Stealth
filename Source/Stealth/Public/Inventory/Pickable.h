@@ -18,8 +18,10 @@ class STEALTH_API IPickable
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintNativeEvent)
+	void Initialize(UItemDefinition* NewItemDefinition, const int NewQuantity, const FText& InteractPromptText = FText::GetEmpty());
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
 	UItemDefinition* GetInventoryItem() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
-	int GetAmount() const;
+	int GetQuantity() const;
 };

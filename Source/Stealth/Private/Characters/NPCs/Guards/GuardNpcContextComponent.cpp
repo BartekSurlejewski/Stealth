@@ -3,8 +3,8 @@
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/NpcPatrolComponent.h"
 #include "Characters/Player/StealthPlayerState.h"
-#include "Components/StateTreeComponent.h"
-#include "Perception/AIPerceptionTypes.h"
+// #include "Components/StateTreeComponent.h"
+// #include "Perception/AIPerceptionTypes.h"
 #include "Stealth/Stealth.h"
 
 

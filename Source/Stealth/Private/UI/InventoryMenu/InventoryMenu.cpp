@@ -77,15 +77,17 @@ void UInventoryMenu::DropButton_OnClicked()
 	}
 
 	//TODO: Rework
-	CurrentInventory->RemoveItem(SelectedItem.ItemDefinition, SelectedItem.Amount);
-	auto MatchingSlot = InventoryItemsSlots.FindByPredicate([&](const UInventoryMenuItemSlot* ItemSlot)
+	if (CurrentInventory->TryRemoveItem(SelectedItem.ItemDefinition, SelectedItem.Quantity, true))
 	{
-		return ItemSlot->GetInventoryItem().ItemDefinition == SelectedItem.ItemDefinition && ItemSlot->GetInventoryItem().Amount == SelectedItem.Amount;
-	});
+		auto MatchingSlot = InventoryItemsSlots.FindByPredicate([&](const UInventoryMenuItemSlot* ItemSlot)
+		{
+			return ItemSlot->GetInventoryItem().ItemDefinition == SelectedItem.ItemDefinition && ItemSlot->GetInventoryItem().Quantity == SelectedItem.Quantity;
+		});
 
-	if (MatchingSlot)
-	{
-		UInventoryMenuItemSlot* InventorySlot = *MatchingSlot;
-		InventorySlot->Clear();
+		if (MatchingSlot)
+		{
+			UInventoryMenuItemSlot* InventorySlot = *MatchingSlot;
+			InventorySlot->Clear();
+		}
 	}
 }

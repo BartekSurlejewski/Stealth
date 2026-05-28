@@ -18,15 +18,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText Description;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-	bool bIsStackable = false;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bIsConsumable;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta = (ClampMin = 1))
-	int32 MaxStackSize = 99;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	TObjectPtr<UPaperSprite> ItemImage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta=(MustImplement = "/Script/Stealth.Pickable"))
-	TSubclassOf<AActor> ItemActorClass;
+	TSubclassOf<AActor> PickupActorClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Behaviour")
 	TSubclassOf<UItemEffect> EffectClass;
 };

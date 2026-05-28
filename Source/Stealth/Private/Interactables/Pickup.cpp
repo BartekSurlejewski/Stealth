@@ -1,36 +1,20 @@
 #include "Interactables/Pickup.h"
 
-#include "Characters/Player/StealthCharacter.h"
-#include "Components/SphereComponent.h"
-#include "Inventory/InventoryComponent.h"
-
 APickup::APickup()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
 	// create the root
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
-	// create the collision sphere
-	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision"));
-	SphereCollision->SetupAttachment(RootComponent);
-	SphereCollision->SetRelativeLocation(FVector(0.0f, 0.0f, 0.0f));
-	SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SphereCollision->SetCollisionObjectType(ECC_WorldStatic);
-	SphereCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
-	SphereCollision->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
-	SphereCollision->bFillCollisionUnderneathForNavmesh = true;
 
 	// create the mesh
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(SphereCollision);
-
-	Mesh->SetCollisionProfileName(FName("NoCollision"));
-}
-
-void APickup::Initialize(UItemDefinition& NewItemDefinition, const int NewAmount)
-{
-	this->ItemDefinition = &NewItemDefinition;
-	this->Amount = NewAmount;
+	Mesh->SetupAttachment(RootComponent);
+	Mesh->SetSimulatePhysics(true);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetCollisionObjectType(ECC_PhysicsBody);
+	Mesh->SetCollisionResponseToAllChannels(ECR_Block); // collide with world geometry
+	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
 void APickup::Interact_Implementation(AStealthCharacter* Interactor)
@@ -50,14 +34,22 @@ void APickup::SetHighlighted_Implementation(bool bHighlight)
 
 FText APickup::GetInteractionPrompt_Implementation() const
 {
-	if (InteractPrompt.IsEmpty())
+	const FText& BaseName = InteractPrompt.IsEmpty() ? ItemDefinition->Name : InteractPrompt;
+
+	if (Quantity > 1)
 	{
-		return ItemDefinition->Name;
+		return FText::Format(NSLOCTEXT("Pickup", "PromptWithQuantity", "{0} x{1}"), BaseName, FText::AsNumber(Quantity));
 	}
-	else
-	{
-		return InteractPrompt;
-	}
+
+	return BaseName;
+}
+
+
+void APickup::Initialize_Implementation(UItemDefinition* NewItemDefinition, const int NewQuantity, const FText& NewInteractPrompt)
+{
+	this->ItemDefinition = NewItemDefinition;
+	this->Quantity = NewQuantity;
+	this->InteractPrompt = NewInteractPrompt;
 }
 
 UItemDefinition* APickup::GetInventoryItem_Implementation() const
@@ -65,7 +57,7 @@ UItemDefinition* APickup::GetInventoryItem_Implementation() const
 	return ItemDefinition;
 }
 
-int APickup::GetAmount_Implementation() const
+int APickup::GetQuantity_Implementation() const
 {
-	return Amount;
+	return Quantity;
 }

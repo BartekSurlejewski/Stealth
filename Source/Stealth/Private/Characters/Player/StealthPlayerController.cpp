@@ -3,6 +3,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Inventory/InventoryComponent.h"
+#include "Inventory/Pickable.h"
 #include "Inventory/Items/InventoryItem.h"
 #include "Inventory/Items/ItemDefinition.h"
 #include "Stealth/Stealth.h"
@@ -12,9 +13,9 @@ AStealthPlayerController::AStealthPlayerController()
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
 }
 
-void AStealthPlayerController::OnPossess(APawn* InPawn)
+void AStealthPlayerController::BeginPlay()
 {
-	Super::OnPossess(InPawn);
+	Super::BeginPlay();
 
 	if (!IsLocalPlayerController())
 	{
@@ -31,21 +32,34 @@ void AStealthPlayerController::OnPossess(APawn* InPawn)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to get Enhanced Input Subsystem!"));
 	}
+
+	InventoryComponent->OnItemRemoved.AddDynamic(this, &AStealthPlayerController::InventoryComponent_OnItemRemoved);
 }
 
-void AStealthPlayerController::OnUnPossess()
+void AStealthPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Clean up mappings when unpossessing
 	if (IsLocalPlayerController())
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 		{
-			Subsystem->RemoveMappingContext(DefaultMappingContext);
+			Subsystem->ClearAllMappings();
 		}
 	}
 
-	Super::OnUnPossess();
+	InventoryComponent->OnItemRemoved.RemoveAll(this);
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AStealthPlayerController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+}
+
+void AStealthPlayerController::OnUnPossess()
+{
+	// Clean up mappings when unpossessing
 }
 
 void AStealthPlayerController::SetupInputComponent()
@@ -93,6 +107,33 @@ void AStealthPlayerController::OnOpenInventoryInput()
 	UE_LOG(LogStealth, Log, TEXT("[Inventory]"))
 	for (const auto Item : InventoryComponent->GetItems())
 	{
-		UE_LOG(LogStealth, Log, TEXT("Item: %s - %i"), *Item.ItemDefinition->Name.ToString(), Item.Amount)
+		UE_LOG(LogStealth, Log, TEXT("Item: %s - %i"), *Item.ItemDefinition->Name.ToString(), Item.Quantity)
+	}
+}
+
+void AStealthPlayerController::InventoryComponent_OnItemRemoved(const FInventoryItem& Item, int Quantity, bool bShouldDrop)
+{
+	if (bShouldDrop)
+	{
+		TSubclassOf<AActor> ActorToDropClass = Item.ItemDefinition->PickupActorClass;
+		if (!ActorToDropClass)
+		{
+			return;
+		}
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		const FVector PickableSpawnLocation = GetPawn()->GetActorLocation() + GetPawn()->GetActorForwardVector() * 100.f;
+		const FRotator PickableSpawnRotation = FRotator::ZeroRotator;
+
+		AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(ActorToDropClass, PickableSpawnLocation, PickableSpawnRotation, SpawnParams);
+		if (!SpawnedActor)
+		{
+			return;
+		}
+		if (SpawnedActor->Implements<UPickable>())
+		{
+			IPickable::Execute_Initialize(SpawnedActor, Item.ItemDefinition, Item.Quantity, Item.ItemDefinition->Name);
+		}
 	}
 }

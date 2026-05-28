@@ -9,7 +9,6 @@
 #include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Inventory/InventoryComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
@@ -24,6 +23,7 @@ AStealthCharacter::AStealthCharacter()
 	FirstPersonMesh->SetOnlyOwnerSee(false);
 	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
 	FirstPersonMesh->SetCollisionProfileName(FName("BlockAll"));
+	FirstPersonMesh->SetCollisionObjectType(ECC_Pawn);
 
 	// Create the Camera Component	
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
@@ -40,6 +40,7 @@ AStealthCharacter::AStealthCharacter()
 	GetMesh()->SetCastShadow(true);
 	GetMesh()->SetCastHiddenShadow(true);
 	GetMesh()->bCastDynamicShadow = true;
+	GetMesh()->SetCollisionObjectType(ECC_Pawn);
 
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
 

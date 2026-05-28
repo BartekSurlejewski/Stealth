@@ -16,28 +16,20 @@ void UInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-bool UInventoryComponent::AddItem(UItemDefinition* ItemDefinition, int32 AmountToAdd)
+bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32 QuantityToAdd)
 {
-	if (!ItemDefinition || AmountToAdd <= 0)
+	if (!ItemDefinition || QuantityToAdd <= 0)
 	{
 		return false;
 	}
 
 	// Try stacking into an existing slot first
-	if (ItemDefinition->bIsStackable)
+	if (FInventoryItem* ExistingSlot = FindItemSlot(ItemDefinition))
 	{
-		if (FInventoryItem* ExistingSlot = FindItemSlot(ItemDefinition))
-		{
-			const int32 SpaceLeft = ItemDefinition->MaxStackSize - ExistingSlot->Amount;
-			const int32 AmountToAddClamped = FMath::Min(AmountToAdd, SpaceLeft);
-
-			if (AmountToAddClamped <= 0) return false; // stack full
-
-			ExistingSlot->Amount += AmountToAddClamped;
-			OnInventoryChanged.Broadcast();
-			OnItemAdded.Broadcast(*ExistingSlot);
-			return true;
-		}
+		ExistingSlot->Quantity += QuantityToAdd;
+		OnInventoryChanged.Broadcast();
+		OnItemAdded.Broadcast(*ExistingSlot, QuantityToAdd);
+		return true;
 	}
 
 	// Need a new slot
@@ -48,45 +40,45 @@ bool UInventoryComponent::AddItem(UItemDefinition* ItemDefinition, int32 AmountT
 
 	FInventoryItem NewItem;
 	NewItem.ItemDefinition = ItemDefinition;
-	NewItem.Amount = FMath::Min(AmountToAdd, ItemDefinition->bIsStackable ? ItemDefinition->MaxStackSize : 1);
+	NewItem.Quantity = QuantityToAdd;
 
 	Items.Add(NewItem);
 	OnInventoryChanged.Broadcast();
-	OnItemAdded.Broadcast(NewItem);
+	OnItemAdded.Broadcast(NewItem, QuantityToAdd);
 	return true;
 }
 
-bool UInventoryComponent::RemoveItem(const UItemDefinition* ItemDefinition, int32 AmountToRemove)
+bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, const int32 QuantityToRemove, bool bShouldDrop)
 {
-	if (!ItemDefinition || AmountToRemove <= 0) return false;
+	if (!ItemDefinition || QuantityToRemove <= 0) return false;
 
 	FInventoryItem* Slot = FindItemSlot(ItemDefinition);
 	if (!Slot) return false;
-	if (Slot->Amount < AmountToRemove) return false;
+	if (Slot->Quantity < QuantityToRemove) return false;
 
 	// Cache for delegate before we modify/remove
 	FInventoryItem RemovedSnapshot = *Slot;
-	RemovedSnapshot.Amount = AmountToRemove;
+	RemovedSnapshot.Quantity = QuantityToRemove;
 
-	Slot->Amount -= AmountToRemove;
+	Slot->Quantity -= QuantityToRemove;
 
-	if (Slot->Amount <= 0)
+	if (Slot->Quantity <= 0)
 	{
 		// Unequip if this was the equipped item
 		if (EquippedItemDefinition == ItemDefinition)
 		{
-			UnequipItem(ItemDefinition);
+			TryUnequipItem(ItemDefinition);
 		}
 
 		Items.RemoveSingle(*Slot);
 	}
 
 	OnInventoryChanged.Broadcast();
-	OnItemRemoved.Broadcast(RemovedSnapshot);
+	OnItemRemoved.Broadcast(RemovedSnapshot, QuantityToRemove, bShouldDrop);
 	return true;
 }
 
-bool UInventoryComponent::UseItem(const UItemDefinition* ItemDefinition)
+bool UInventoryComponent::TryUseItem(const UItemDefinition* ItemDefinition)
 {
 	if (!ItemDefinition || !HasItem(ItemDefinition)) return false;
 
@@ -100,20 +92,20 @@ bool UInventoryComponent::UseItem(const UItemDefinition* ItemDefinition)
 	// (drive this from the definition if you want non-consumables to be usable too)
 	if (ItemDefinition->bIsConsumable)
 	{
-		RemoveItem(ItemDefinition, 1);
+		TryRemoveItem(ItemDefinition, 1);
 	}
 
 	return true;
 }
 
-bool UInventoryComponent::EquipItem(UItemDefinition* ItemDefinition)
+bool UInventoryComponent::TryEquipItem(UItemDefinition* ItemDefinition)
 {
 	if (!ItemDefinition || !HasItem(ItemDefinition)) return false;
 
 	// Unequip current item first
 	if (EquippedItemDefinition)
 	{
-		UnequipItem(EquippedItemDefinition);
+		TryUnequipItem(EquippedItemDefinition);
 	}
 
 	UItemEffect* Effect = CreateEffect(ItemDefinition);
@@ -128,7 +120,7 @@ bool UInventoryComponent::EquipItem(UItemDefinition* ItemDefinition)
 	return true;
 }
 
-bool UInventoryComponent::UnequipItem(const UItemDefinition* ItemDefinition)
+bool UInventoryComponent::TryUnequipItem(const UItemDefinition* ItemDefinition)
 {
 	if (!ItemDefinition || EquippedItemDefinition != ItemDefinition) return false;
 
@@ -143,18 +135,18 @@ bool UInventoryComponent::UnequipItem(const UItemDefinition* ItemDefinition)
 	return true;
 }
 
-bool UInventoryComponent::HasItem(const UItemDefinition* ItemDefinition, int32 Amount) const
+bool UInventoryComponent::HasItem(const UItemDefinition* ItemDefinition, int32 Quantity) const
 {
-	return GetItemAmount(ItemDefinition) >= Amount;
+	return GetItemQuantity(ItemDefinition) >= Quantity;
 }
 
-int32 UInventoryComponent::GetItemAmount(const UItemDefinition* ItemDefinition) const
+int32 UInventoryComponent::GetItemQuantity(const UItemDefinition* ItemDefinition) const
 {
 	for (const FInventoryItem& Slot : Items)
 	{
 		if (Slot.ItemDefinition == ItemDefinition)
 		{
-			return Slot.Amount;
+			return Slot.Quantity;
 		}
 	}
 	return 0;

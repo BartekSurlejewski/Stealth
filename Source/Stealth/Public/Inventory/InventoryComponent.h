@@ -10,9 +10,9 @@ class UItemDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemAdded, const FInventoryItem&, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemAdded, const FInventoryItem&, Item, int, Quantity);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemRemoved, const FInventoryItem&, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemRemoved, const FInventoryItem&, Item, int, Quantity, bool, bShouldDrop);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UInventoryComponent : public UActorComponent
@@ -37,19 +37,19 @@ public:
 
 	// --- Core API ---
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool AddItem(UItemDefinition* ItemDefinition, int32 AmountToAdd = 1);
+	bool TryAddItem(UItemDefinition* ItemDefinition, int32 QuantityToAdd = 1);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool RemoveItem(const UItemDefinition* ItemDefinition, int32 AmountToRemove = 1);
+	bool TryRemoveItem(const UItemDefinition* ItemDefinition, int32 QuantityToRemove = 1, bool bShouldDrop = false);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool UseItem(const UItemDefinition* ItemDefinition);
+	bool TryUseItem(const UItemDefinition* ItemDefinition);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool EquipItem(UItemDefinition* ItemDefinition);
+	bool TryEquipItem(UItemDefinition* ItemDefinition);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool UnequipItem(const UItemDefinition* ItemDefinition);
+	bool TryUnequipItem(const UItemDefinition* ItemDefinition);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool HasItem(const UItemDefinition* ItemDefinition, int32 Amount = 1) const;
+	bool HasItem(const UItemDefinition* ItemDefinition, int32 Quantity = 1) const;
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	int32 GetItemAmount(const UItemDefinition* ItemDefinition) const;
+	int32 GetItemQuantity(const UItemDefinition* ItemDefinition) const;
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	bool IsFull() const;
 

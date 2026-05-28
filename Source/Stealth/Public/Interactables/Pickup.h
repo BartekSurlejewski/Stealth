@@ -19,16 +19,12 @@ protected:
 	UPROPERTY(EditAnywhere, Category="Pickup")
 	TObjectPtr<UItemDefinition> ItemDefinition;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Pickup")
-	int Amount = 1;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USphereComponent> SphereCollision;
+	int Quantity = 1;
 	UPROPERTY(EditAnywhere, Category="Pickup")
 	FText InteractPrompt;
 
 public:
 	APickup();
-	void Initialize(UItemDefinition& NewItemDefinition, const int NewAmount);
-
 	//~Begin IInteractable Interface
 	virtual void Interact_Implementation(AStealthCharacter* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
@@ -36,7 +32,8 @@ public:
 	//~End IInteractable Interface
 
 	//~Begin IPickable Interface
+	virtual void Initialize_Implementation(UItemDefinition* NewItemDefinition, const int NewQuantity, const FText& NewInteractPrompt = FText::GetEmpty()) override;
 	virtual UItemDefinition* GetInventoryItem_Implementation() const override;
-	virtual int GetAmount_Implementation() const override;
+	virtual int GetQuantity_Implementation() const override;
 	//~End IPickable Interface
 };

@@ -13,7 +13,7 @@ struct STEALTH_API FInventoryItem
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
 	TObjectPtr<UItemDefinition> ItemDefinition;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	int32 Amount;
+	int32 Quantity;
 
 	bool operator==(const FInventoryItem& Other) const
 	{

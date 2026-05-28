@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Inventory/Items/InventoryItem.h"
 #include "StealthPlayerController.generated.h"
 
 class UInputAction;
@@ -22,8 +23,10 @@ public:
 	/*Methods*/
 public:
 	AStealthPlayerController();
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 protected:
+	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void OnUnPossess() override;
 
@@ -32,6 +35,10 @@ protected:
 	void BindInputActions();
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void OnOpenInventoryInput();
+
+	//Event Handlers
+	UFUNCTION()
+	void InventoryComponent_OnItemRemoved(const FInventoryItem& Item, int Quantity, bool bShouldDrop);
 
 	/*Properties*/
 protected:
