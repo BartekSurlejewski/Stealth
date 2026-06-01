@@ -2,6 +2,7 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Characters/Player/StealthCharacter.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Pickable.h"
 #include "Inventory/Items/InventoryItem.h"
@@ -20,6 +21,12 @@ void AStealthPlayerController::BeginPlay()
 	if (!IsLocalPlayerController())
 	{
 		return;
+	}
+
+	PlayerCharacter = Cast<AStealthCharacter>(GetPawn());
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogStealth, Error, TEXT("PlayerController: Couldn't cast player character to AStealthCharacter."));
 	}
 
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -111,29 +118,22 @@ void AStealthPlayerController::OnOpenInventoryInput()
 	}
 }
 
-void AStealthPlayerController::InventoryComponent_OnItemRemoved(const FInventoryItem& Item, int Quantity, bool bShouldDrop)
+void AStealthPlayerController::InventoryComponent_OnItemRemoved(FInventoryItem& Item, int Quantity, int QuantityInInventory, bool bShouldDrop)
 {
-	if (bShouldDrop)
+	if (!bShouldDrop || !PlayerCharacter)
 	{
-		TSubclassOf<AActor> ActorToDropClass = Item.ItemDefinition->PickupActorClass;
-		if (!ActorToDropClass)
-		{
-			return;
-		}
+		return;
+	}
 
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		const FVector PickableSpawnLocation = GetPawn()->GetActorLocation() + GetPawn()->GetActorForwardVector() * 100.f;
-		const FRotator PickableSpawnRotation = FRotator::ZeroRotator;
+	TSubclassOf<AActor> ActorToDropClass = Item.ItemDefinition->PickupActorClass;
+	if (!ActorToDropClass)
+	{
+		return;
+	}
 
-		AActor* SpawnedActor = GetWorld()->SpawnActor<AActor>(ActorToDropClass, PickableSpawnLocation, PickableSpawnRotation, SpawnParams);
-		if (!SpawnedActor)
-		{
-			return;
-		}
-		if (SpawnedActor->Implements<UPickable>())
-		{
-			IPickable::Execute_Initialize(SpawnedActor, Item.ItemDefinition, Item.Quantity, Item.ItemDefinition->Name);
-		}
+	AActor* SpawnedActor = PlayerCharacter->TryDropItem(ActorToDropClass);
+	if (SpawnedActor && SpawnedActor->Implements<UPickable>())
+	{
+		IPickable::Execute_Initialize(SpawnedActor, Item.ItemDefinition, Item.Quantity, Item.ItemDefinition->Name);
 	}
 }

@@ -10,9 +10,9 @@ class UItemDefinition;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemAdded, const FInventoryItem&, Item, int, Quantity);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemAdded, FInventoryItem&, Item, int, AddedQuantity, int, QuantityInInventory);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemRemoved, const FInventoryItem&, Item, int, Quantity, bool, bShouldDrop);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnItemRemoved, FInventoryItem&, Item, int, RemovedQuantity, int, QuantityInInventory, bool, bShouldDrop);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UInventoryComponent : public UActorComponent

@@ -67,7 +67,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;;
+	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
+	UFUNCTION(BlueprintCallable)
+	AActor* TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const;
 
 public:
 	[[nodiscard]] const TObjectPtr<UStealthCharacterAttributeSet>& GetAttributeSet() const { return AttributeSet; }

@@ -5,6 +5,8 @@
 #include "Characters/Player/StealthCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayEffect.h"
+#include "Inventory/InventoryComponent.h"
+#include "Inventory/Items/ItemDefinition.h"
 
 
 UStealthCharacterAbilitiesComponent::UStealthCharacterAbilitiesComponent()
@@ -21,6 +23,7 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 	{
 		AbilitySystemComponent = OwningCharacter->GetAbilitySystemComponent();
 		AttributeSet = OwningCharacter->GetAttributeSet();
+		PlayerInventoryComponent = OwningCharacter->GetController()->FindComponentByClass<UInventoryComponent>();
 	}
 
 	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);
@@ -29,6 +32,9 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 
 	GrantAbilities(StartingAbilities);
 	ApplyGameplayEffectsToSelf(StartingEffects);
+
+	PlayerInventoryComponent->OnItemAdded.AddDynamic(this, &UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemAdded);
+	PlayerInventoryComponent->OnItemRemoved.AddDynamic(this, &UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemRemoved);
 }
 
 void UStealthCharacterAbilitiesComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -60,7 +66,6 @@ TArray<FGameplayAbilitySpecHandle> UStealthCharacterAbilitiesComponent::GrantAbi
 		FGameplayAbilitySpecHandle SpecHandle = AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(Ability, 1, -1, OwningCharacter));
 		GrantedAbilityHandles.Add(SpecHandle);
 	}
-
 	return GrantedAbilityHandles;
 }
 
@@ -233,4 +238,25 @@ void UStealthCharacterAbilitiesComponent::UpdateTags() const
 	{
 		AbilitySystemComponent->RemoveLooseGameplayTag(StaminaRegenTag);
 	}
+}
+
+void UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemAdded(FInventoryItem& Item, int AddedQuantity, int QuantityInInventory)
+{
+	if (AddedQuantity <= 0 || QuantityInInventory <= 0 || OnAddItemsGrantedAbilities.Find(Item.ItemDefinition))
+	{
+		return;
+	}
+
+	OnAddItemsGrantedAbilities.Add(Item.ItemDefinition, FAbilityHandleList{GrantAbilities(Item.ItemDefinition->AbilitiesToGrantOnAdd)});
+}
+
+void UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemRemoved(FInventoryItem& Item, int RemovedQuantity, int QuantityInInventory, bool bShouldDrop)
+{
+	if (RemovedQuantity <= 0 || QuantityInInventory > 0 || !OnAddItemsGrantedAbilities.Find(Item.ItemDefinition))
+	{
+		return;
+	}
+
+	RemoveAbilities(OnAddItemsGrantedAbilities[Item.ItemDefinition].Handles);
+	OnAddItemsGrantedAbilities.Remove(Item.ItemDefinition);
 }

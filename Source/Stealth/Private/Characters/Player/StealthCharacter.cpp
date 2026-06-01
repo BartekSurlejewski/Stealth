@@ -9,6 +9,7 @@
 #include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Inventory/Pickable.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
@@ -85,6 +86,16 @@ void AStealthCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	{
 		CollisionsComponent->OnEndOverlap(OtherActor);
 	}
+}
+
+AActor* AStealthCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const
+{
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	const FVector PickableSpawnLocation = GetActorLocation() + GetActorForwardVector() * 100.f;
+	const FRotator PickableSpawnRotation = FRotator::ZeroRotator;
+
+	return GetWorld()->SpawnActor<AActor>(ItemToDropClass, PickableSpawnLocation, PickableSpawnRotation, SpawnParams);
 }
 
 //~Begin Input

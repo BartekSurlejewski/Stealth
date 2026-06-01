@@ -5,6 +5,7 @@
 #include "Inventory/Items/InventoryItem.h"
 #include "StealthPlayerController.generated.h"
 
+class AStealthCharacter;
 class UInputAction;
 class UInventoryComponent;
 class UInputMappingContext;
@@ -38,7 +39,7 @@ protected:
 
 	//Event Handlers
 	UFUNCTION()
-	void InventoryComponent_OnItemRemoved(const FInventoryItem& Item, int Quantity, bool bShouldDrop);
+	void InventoryComponent_OnItemRemoved(FInventoryItem& Item, int Quantity, int QuantityInInventory, bool bShouldDrop);
 
 	/*Properties*/
 protected:
@@ -56,4 +57,6 @@ protected:
 private:
 	UPROPERTY()
 	bool bIsInMenu = false;
+	UPROPERTY()
+	TObjectPtr<AStealthCharacter> PlayerCharacter;
 };

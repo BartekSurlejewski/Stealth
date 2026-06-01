@@ -5,13 +5,25 @@
 #include "Components/ActorComponent.h"
 #include "ActiveGameplayEffectHandle.h"
 #include "GameplayAbilitySpecHandle.h"
+#include "Inventory/Items/InventoryItem.h"
 #include "StealthCharacterAbilitiesComponent.generated.h"
 
+class UInventoryComponent;
 class UGameplayEffect;
 class UGameplayAbility;
 class UStealthCharacterAttributeSet;
 class AStealthCharacter;
 class UAbilitySystemComponent;
+
+// Used for map storage
+USTRUCT()
+struct FAbilityHandleList
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<FGameplayAbilitySpecHandle> Handles;
+};
 
 // Handles the GAS abilities connected to StealthCharacter and the character status
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -22,10 +34,12 @@ class STEALTH_API UStealthCharacterAbilitiesComponent : public UActorComponent
 private:
 	UPROPERTY()
 	TObjectPtr<AStealthCharacter> OwningCharacter;
-	UPROPERTY(VisibleAnywhere, Category="Ability System", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-	UPROPERTY(VisibleAnywhere, Category = "Ability System", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY()
 	TObjectPtr<UStealthCharacterAttributeSet> AttributeSet;
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> PlayerInventoryComponent;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag SprintAbilityTag;
@@ -46,6 +60,9 @@ private:
 	FGameplayTagContainer CrouchAbilityTagsContainer;
 	UPROPERTY()
 	FGameplayTagContainer JumpAbilityTagsContainer;
+
+	UPROPERTY()
+	TMap<TObjectPtr<UItemDefinition>, FAbilityHandleList> OnAddItemsGrantedAbilities;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Ability System", meta = (AllowPrivateAccess = "true"))
@@ -85,4 +102,9 @@ private:
 	void EndSprint() const;
 	UFUNCTION()
 	void UpdateTags() const;
+
+	UFUNCTION()
+	void InventoryComponent_OnItemAdded(FInventoryItem& Item, int AddedQuantity, int QuantityInInventory);
+	UFUNCTION()
+	void InventoryComponent_OnItemRemoved(FInventoryItem& Item, int RemovedQuantity, int QuantityInInventory, bool bShouldDrop);
 };

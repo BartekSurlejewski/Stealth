@@ -28,7 +28,7 @@ bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32 Quan
 	{
 		ExistingSlot->Quantity += QuantityToAdd;
 		OnInventoryChanged.Broadcast();
-		OnItemAdded.Broadcast(*ExistingSlot, QuantityToAdd);
+		OnItemAdded.Broadcast(*ExistingSlot, QuantityToAdd, ExistingSlot->Quantity);
 		return true;
 	}
 
@@ -44,23 +44,29 @@ bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32 Quan
 
 	Items.Add(NewItem);
 	OnInventoryChanged.Broadcast();
-	OnItemAdded.Broadcast(NewItem, QuantityToAdd);
+	OnItemAdded.Broadcast(NewItem, QuantityToAdd, NewItem.Quantity);
 	return true;
 }
 
 bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, const int32 QuantityToRemove, bool bShouldDrop)
 {
-	if (!ItemDefinition || QuantityToRemove <= 0) return false;
+	if (!ItemDefinition || QuantityToRemove <= 0)
+	{
+		return false;
+	}
 
 	FInventoryItem* Slot = FindItemSlot(ItemDefinition);
-	if (!Slot) return false;
+	if (!Slot)
+	{
+		return false;
+	}
 	if (Slot->Quantity < QuantityToRemove) return false;
 
 	// Cache for delegate before we modify/remove
 	FInventoryItem RemovedSnapshot = *Slot;
 	RemovedSnapshot.Quantity = QuantityToRemove;
 
-	Slot->Quantity -= QuantityToRemove;
+	Slot->Quantity = FMath::Max(0, Slot->Quantity - QuantityToRemove);
 
 	if (Slot->Quantity <= 0)
 	{
@@ -74,7 +80,7 @@ bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, c
 	}
 
 	OnInventoryChanged.Broadcast();
-	OnItemRemoved.Broadcast(RemovedSnapshot, QuantityToRemove, bShouldDrop);
+	OnItemRemoved.Broadcast(RemovedSnapshot, QuantityToRemove, Slot->Quantity, bShouldDrop);
 	return true;
 }
 

@@ -4,6 +4,7 @@
 #include "Engine/DataAsset.h"
 #include "ItemDefinition.generated.h"
 
+class UGameplayAbility;
 class UItemEffect;
 class UPaperSprite;
 
@@ -25,4 +26,8 @@ public:
 	TSubclassOf<AActor> PickupActorClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Behaviour")
 	TSubclassOf<UItemEffect> EffectClass;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrantOnAdd;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrantOnEquip;
 };
