@@ -23,7 +23,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual void Initialize(UInventoryComponent* Inventory);
+	void Initialize(UInventoryComponent* Inventory);
 
 protected:
 	UFUNCTION(BlueprintCallable)

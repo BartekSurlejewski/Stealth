@@ -11,12 +11,12 @@ public class Stealth : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "AIModule", "StateTreeModule",
-			"GameplayStateTreeModule", "Paper2D", "Paper2DEditor"
+			"GameplayStateTreeModule", "GameplayAbilities", "Paper2D", "Paper2DEditor"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"UnrealEd", "PropertyEditor", "GameplayAbilities", "GameplayTasks", "GameplayTags"
+			"UnrealEd", "PropertyEditor", "GameplayTasks", "GameplayTags"
 		});
 
 		PublicIncludePaths.AddRange(new string[]

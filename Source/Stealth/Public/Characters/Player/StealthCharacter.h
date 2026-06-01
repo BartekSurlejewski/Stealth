@@ -8,7 +8,7 @@
 
 class UStealthCharacterCollisionsComponent;
 class UInventoryComponent;
-class UStealthCharacterBehaviourComponent;
+class UStealthCharacterAbilitiesComponent;
 class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
@@ -38,7 +38,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStealthCharacterBehaviourComponent> StealthCharacterAbilitiesComponent;
+	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
 #pragma endregion
 
 #pragma region Input
