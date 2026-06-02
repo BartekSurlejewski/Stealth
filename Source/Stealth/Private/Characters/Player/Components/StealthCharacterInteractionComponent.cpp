@@ -3,6 +3,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerState.h"
 #include "Interactables/Interactable.h"
@@ -39,6 +40,7 @@ void UStealthCharacterInteractionComponent::BeginPlay()
 
 		//TODO: Think of some better way of passing interacted item to inventory for separation of concerns
 		InventoryComponent = OwnerCharacter->GetPlayerState()->FindComponentByClass<UInventoryComponent>();
+		AbilitiesComponent = OwnerCharacter->FindComponentByClass<UStealthCharacterAbilitiesComponent>();
 	}
 
 	OnInteractableLookedAt.Broadcast(LookAtInteractableActor);
@@ -127,8 +129,18 @@ void UStealthCharacterInteractionComponent::PrimaryInteract() const
 		return;
 	}
 
-	IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	FGameplayTagContainer RequiredAbilitiesTag = IInteractable::Execute_GetPrimaryInteractionRequiredAbilityTag(LookAtInteractableActor);
 
+	if (RequiredAbilitiesTag.IsEmpty())
+	{
+		IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	}
+	else if (AbilitiesComponent && AbilitiesComponent->TryActivateAbilitiesWithTag(RequiredAbilitiesTag))
+	{
+		IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	}
+
+	//TODO: Move adding to inventory to some other place
 	if (InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
 	{
 		InventoryComponent->TryAddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), IPickable::Execute_GetQuantity(LookAtInteractableActor));
@@ -142,5 +154,14 @@ void UStealthCharacterInteractionComponent::SecondaryInteract() const
 		return;
 	}
 
-	IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	FGameplayTagContainer RequiredAbilitiesTag = IInteractable::Execute_GetSecondaryInteractionRequiredAbilityTag(LookAtInteractableActor);
+
+	if (RequiredAbilitiesTag.IsEmpty())
+	{
+		IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	}
+	else if (AbilitiesComponent && AbilitiesComponent->TryActivateAbilitiesWithTag(RequiredAbilitiesTag))
+	{
+		IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	}
 }

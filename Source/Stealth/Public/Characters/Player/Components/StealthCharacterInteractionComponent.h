@@ -5,6 +5,7 @@
 #include "StealthCharacterInteractionComponent.generated.h"
 
 
+class UStealthCharacterAbilitiesComponent;
 class UInventoryComponent;
 class UCameraComponent;
 class UInputAction;
@@ -24,9 +25,11 @@ private:
 	UPROPERTY(EditAnywhere, Category ="Pickup", meta = (ClampMin = 0, ClampMax = 100000, Units = "cm"))
 	float MaxInteractionDistance = 300.0f;
 	UPROPERTY()
-	TSoftObjectPtr<UCameraComponent> CachedCamera;
+	TObjectPtr<UCameraComponent> CachedCamera;
 	UPROPERTY()
-	TSoftObjectPtr<UInventoryComponent> InventoryComponent;
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+	UPROPERTY()
+	TObjectPtr<UStealthCharacterAbilitiesComponent> AbilitiesComponent;
 	UPROPERTY()
 	TObjectPtr<AActor> LookAtInteractableActor;
 	UPROPERTY()

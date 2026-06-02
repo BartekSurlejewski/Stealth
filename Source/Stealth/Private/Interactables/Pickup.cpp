@@ -51,16 +51,15 @@ FText APickup::GetSecondaryInteractionPrompt_Implementation() const
 	return IInteractable::GetSecondaryInteractionPrompt_Implementation();
 }
 
-TSubclassOf<UGameplayAbility> APickup::GetPrimaryInteractionRequiredAbility_Implementation() const
+FGameplayTagContainer APickup::GetPrimaryInteractionRequiredAbilityTag_Implementation() const
 {
-	return IInteractable::GetPrimaryInteractionRequiredAbility_Implementation();
+	return IInteractable::GetPrimaryInteractionRequiredAbilityTag_Implementation();
 }
 
-TSubclassOf<UGameplayAbility> APickup::GetSecondaryInteractionRequiredAbility_Implementation() const
+FGameplayTagContainer APickup::GetSecondaryInteractionRequiredAbilityTag_Implementation() const
 {
-	return IInteractable::GetSecondaryInteractionRequiredAbility_Implementation();
+	return IInteractable::GetSecondaryInteractionRequiredAbilityTag_Implementation();
 }
-
 
 void APickup::Initialize_Implementation(UItemDefinition* NewItemDefinition, const int NewQuantity, const FText& NewInteractPrompt)
 {

@@ -83,6 +83,8 @@ public:
 	TArray<FActiveGameplayEffectHandle> ApplyGameplayEffectsToSelf(TArray<TSubclassOf<UGameplayEffect>> EffectsToApply);
 	UFUNCTION(BlueprintCallable, Category="Ability System")
 	void RemoveGameplayEffects(TArray<FActiveGameplayEffectHandle> EffectHandlesToRemove);
+	UFUNCTION(BlueprintCallable, Category="Ability System")
+	bool TryActivateAbilitiesWithTag(const FGameplayTagContainer& TagContainer);
 
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSprintInputStart();

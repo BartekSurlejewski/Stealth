@@ -130,6 +130,11 @@ void UStealthCharacterAbilitiesComponent::RemoveGameplayEffects(TArray<FActiveGa
 	}
 }
 
+bool UStealthCharacterAbilitiesComponent::TryActivateAbilitiesWithTag(const FGameplayTagContainer& TagContainer)
+{
+	return AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
 void UStealthCharacterAbilitiesComponent::DoSprintInputStart()
 {
 	if (!AbilitySystemComponent)
