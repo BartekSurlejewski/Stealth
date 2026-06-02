@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Interactable.generated.h"
 
+class UGameplayAbility;
 class AStealthCharacter;
 
 UINTERFACE(MinimalAPI, BlueprintType)
@@ -17,13 +18,25 @@ class STEALTH_API IInteractable
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	void Interact(AStealthCharacter* Interactor);
+	void PrimaryInteract(AStealthCharacter* Interactor);
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	void SecondaryInteract(AStealthCharacter* Interactor);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	void SetHighlighted(bool bHighlight);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	FText GetInteractionPrompt() const;
+	FText GetPrimaryInteractionPrompt() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	FText GetSecondaryInteractionPrompt() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	TSubclassOf<UGameplayAbility> GetPrimaryInteractionRequiredAbility() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	TSubclassOf<UGameplayAbility> GetSecondaryInteractionRequiredAbility() const;
 
-	virtual void Interact_Implementation(AStealthCharacter* Interactor) = 0;
+	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) = 0;
+	virtual void SecondaryInteract_Implementation(AStealthCharacter* Interactor) = 0;
 	virtual void SetHighlighted_Implementation(bool bHighlight) {};
-	virtual FText GetInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
+	virtual FText GetPrimaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
+	virtual FText GetSecondaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
+	virtual TSubclassOf<UGameplayAbility> GetPrimaryInteractionRequiredAbility_Implementation() const { return nullptr; }
+	virtual TSubclassOf<UGameplayAbility> GetSecondaryInteractionRequiredAbility_Implementation() const { return nullptr; }
 };

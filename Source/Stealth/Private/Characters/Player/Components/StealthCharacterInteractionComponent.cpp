@@ -1,25 +1,30 @@
-#include "Characters/Player/Components/PlayerInteractionComponent.h"
+#include "Characters/Player/Components/StealthCharacterInteractionComponent.h"
 
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/Player/StealthCharacter.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/PlayerState.h"
 #include "Interactables/Interactable.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Pickable.h"
 
-UPlayerInteractionComponent::UPlayerInteractionComponent()
+UStealthCharacterInteractionComponent::UStealthCharacterInteractionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-FKey UPlayerInteractionComponent::GetCurrentInteractKey() const
+FKey UStealthCharacterInteractionComponent::GetPrimaryInteractKey() const
 {
-	return GetKeyForInputAction(InteractInputAction);
+	return GetKeyForInputAction(PrimaryInteractInputAction);
 }
 
+FKey UStealthCharacterInteractionComponent::GetSecondaryInteractKey() const
+{
+	return GetKeyForInputAction(SecondaryInteractInputAction);
+}
 
-void UPlayerInteractionComponent::BeginPlay()
+void UStealthCharacterInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -33,13 +38,13 @@ void UPlayerInteractionComponent::BeginPlay()
 		}
 
 		//TODO: Think of some better way of passing interacted item to inventory for separation of concerns
-		InventoryComponent = OwnerCharacter->GetController()->FindComponentByClass<UInventoryComponent>();
+		InventoryComponent = OwnerCharacter->GetPlayerState()->FindComponentByClass<UInventoryComponent>();
 	}
 
 	OnInteractableLookedAt.Broadcast(LookAtInteractableActor);
 }
 
-FKey UPlayerInteractionComponent::GetKeyForInputAction(const UInputAction* InputAction) const
+FKey UStealthCharacterInteractionComponent::GetKeyForInputAction(const UInputAction* InputAction) const
 {
 	if (!InputAction)
 	{
@@ -60,7 +65,7 @@ FKey UPlayerInteractionComponent::GetKeyForInputAction(const UInputAction* Input
 
 	TArray<FKey> Keys = EnhancedInputSubsystem->QueryKeysMappedToAction(InputAction);
 
-	if (Keys.Num() > 0)
+	if (!Keys.IsEmpty())
 	{
 		return Keys[0];
 	}
@@ -68,7 +73,7 @@ FKey UPlayerInteractionComponent::GetKeyForInputAction(const UInputAction* Input
 	return FKey();
 }
 
-void UPlayerInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UStealthCharacterInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -91,7 +96,7 @@ void UPlayerInteractionComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	}
 }
 
-AActor* UPlayerInteractionComponent::GetLookAtInteractableActor() const
+AActor* UStealthCharacterInteractionComponent::GetLookAtInteractableActor() const
 {
 	FHitResult HitResult;
 
@@ -115,17 +120,27 @@ AActor* UPlayerInteractionComponent::GetLookAtInteractableActor() const
 	return nullptr;
 }
 
-void UPlayerInteractionComponent::Interact() const
+void UStealthCharacterInteractionComponent::PrimaryInteract() const
 {
 	if (!LookAtInteractableActor || !LookAtInteractableActor->Implements<UInteractable>())
 	{
 		return;
 	}
 
-	IInteractable::Execute_Interact(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+	IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
 
 	if (InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
 	{
 		InventoryComponent->TryAddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), IPickable::Execute_GetQuantity(LookAtInteractableActor));
 	}
+}
+
+void UStealthCharacterInteractionComponent::SecondaryInteract() const
+{
+	if (!LookAtInteractableActor || !LookAtInteractableActor->Implements<UInteractable>())
+	{
+		return;
+	}
+
+	IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
 }

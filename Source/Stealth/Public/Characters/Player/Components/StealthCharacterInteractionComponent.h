@@ -1,10 +1,8 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "PlayerInteractionComponent.generated.h"
+#include "StealthCharacterInteractionComponent.generated.h"
 
 
 class UInventoryComponent;
@@ -14,7 +12,7 @@ class UInputAction;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractableLookedAt, AActor*, LookedAtActor);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class STEALTH_API UPlayerInteractionComponent : public UActorComponent
+class STEALTH_API UStealthCharacterInteractionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -32,19 +30,22 @@ private:
 	UPROPERTY()
 	TObjectPtr<AActor> LookAtInteractableActor;
 	UPROPERTY()
-	TObjectPtr<UInputAction> InteractInputAction;
+	TObjectPtr<UInputAction> PrimaryInteractInputAction;
 	UPROPERTY()
-	FKey InteractInputKey;
+	TObjectPtr<UInputAction> SecondaryInteractInputAction;
 
 public:
-	UPlayerInteractionComponent();
+	UStealthCharacterInteractionComponent();
 	virtual void BeginPlay() override;
-	
+
 	UFUNCTION(BlueprintCallable)
-	FKey GetCurrentInteractKey() const;
+	FKey GetPrimaryInteractKey() const;
+
+	UFUNCTION(BlueprintCallable)
+	FKey GetSecondaryInteractKey() const;
 
 protected:
-	UFUNCTION(Blueprintable)
+	UFUNCTION()
 	FKey GetKeyForInputAction(const UInputAction* InputAction) const;
 
 public:
@@ -52,16 +53,14 @@ public:
 	UFUNCTION()
 	AActor* GetLookAtInteractableActor() const;
 	UFUNCTION()
-	void Interact() const;
+	void PrimaryInteract() const;
+	UFUNCTION()
+	void SecondaryInteract() const;
 
 	UFUNCTION()
-	void SetInteractInputAction(UInputAction* NewInteractInputAction)
+	void InitializeInput(UInputAction* NewPrimaryInteractInputAction, UInputAction* NewSecondaryInteractInputAction)
 	{
-		if (NewInteractInputAction != InteractInputAction)
-		{
-			InteractInputKey = GetKeyForInputAction(NewInteractInputAction);
-		}
-
-		InteractInputAction = NewInteractInputAction;
+		PrimaryInteractInputAction = NewPrimaryInteractInputAction;
+		SecondaryInteractInputAction = NewSecondaryInteractInputAction;
 	}
 };

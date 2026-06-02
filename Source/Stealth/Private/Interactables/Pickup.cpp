@@ -17,7 +17,7 @@ APickup::APickup()
 	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
-void APickup::Interact_Implementation(AStealthCharacter* Interactor)
+void APickup::PrimaryInteract_Implementation(AStealthCharacter* Interactor)
 {
 	// hide this mesh
 	SetActorHiddenInGame(true);
@@ -27,12 +27,14 @@ void APickup::Interact_Implementation(AStealthCharacter* Interactor)
 	SetActorTickEnabled(false);
 }
 
+void APickup::SecondaryInteract_Implementation(AStealthCharacter* Interactor) {}
+
 void APickup::SetHighlighted_Implementation(bool bHighlight)
 {
 	IInteractable::SetHighlighted_Implementation(bHighlight);
 }
 
-FText APickup::GetInteractionPrompt_Implementation() const
+FText APickup::GetPrimaryInteractionPrompt_Implementation() const
 {
 	const FText& BaseName = InteractPrompt.IsEmpty() ? ItemDefinition->Name : InteractPrompt;
 
@@ -42,6 +44,21 @@ FText APickup::GetInteractionPrompt_Implementation() const
 	}
 
 	return BaseName;
+}
+
+FText APickup::GetSecondaryInteractionPrompt_Implementation() const
+{
+	return IInteractable::GetSecondaryInteractionPrompt_Implementation();
+}
+
+TSubclassOf<UGameplayAbility> APickup::GetPrimaryInteractionRequiredAbility_Implementation() const
+{
+	return IInteractable::GetPrimaryInteractionRequiredAbility_Implementation();
+}
+
+TSubclassOf<UGameplayAbility> APickup::GetSecondaryInteractionRequiredAbility_Implementation() const
+{
+	return IInteractable::GetSecondaryInteractionRequiredAbility_Implementation();
 }
 
 

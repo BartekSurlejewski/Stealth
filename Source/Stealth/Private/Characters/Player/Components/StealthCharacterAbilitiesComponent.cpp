@@ -5,6 +5,7 @@
 #include "Characters/Player/StealthCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayEffect.h"
+#include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Items/ItemDefinition.h"
 
@@ -23,7 +24,7 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 	{
 		AbilitySystemComponent = OwningCharacter->GetAbilitySystemComponent();
 		AttributeSet = OwningCharacter->GetAttributeSet();
-		PlayerInventoryComponent = OwningCharacter->GetController()->FindComponentByClass<UInventoryComponent>();
+		PlayerInventoryComponent = OwningCharacter->GetPlayerState()->FindComponentByClass<UInventoryComponent>();
 	}
 
 	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);

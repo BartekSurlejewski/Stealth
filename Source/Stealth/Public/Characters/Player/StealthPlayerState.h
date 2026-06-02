@@ -4,6 +4,9 @@
 #include "GameFramework/PlayerState.h"
 #include "StealthPlayerState.generated.h"
 
+class AStealthCharacter;
+struct FInventoryItem;
+class UInventoryComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnIsInRestrictedAreaChanged, bool, IsInRestricterArea);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPerformedIllegalAction);
@@ -22,17 +25,24 @@ public:
 	FOnPerformedIllegalAction OnPerformedIllegalAction;
 
 	/*Properties*/
-private:
-	UPROPERTY(Category = PlayerState, BlueprintGetter=GetIsInRestrictedArea)
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = "PlayerState")
 	bool bIsInRestrictedArea = false;
+
+protected:
+	UPROPERTY()
+	TObjectPtr<AStealthCharacter> PlayerCharacter;
 
 	/*Methods*/
 public:
-	UFUNCTION(BlueprintGetter)
-	bool GetIsInRestrictedArea() const
-	{
-		return bIsInRestrictedArea;
-	}
+	AStealthPlayerState();
+
+	[[nodiscard]] const TObjectPtr<UInventoryComponent>& GetInventoryComponent() const { return InventoryComponent; }
+	[[nodiscard]] bool GetIsInRestrictedArea() const { return bIsInRestrictedArea; }
 
 	UFUNCTION()
 	void SetIsInRestrictedArea(bool newIsInRestrictedArea)
@@ -40,4 +50,12 @@ public:
 		bIsInRestrictedArea = newIsInRestrictedArea;
 		OnIsInRestrictedAreaChanged.Broadcast(bIsInRestrictedArea);
 	}
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	//Event Handlers
+	UFUNCTION()
+	void InventoryComponent_OnItemRemoved(FInventoryItem& Item, int Quantity, int QuantityInInventory, bool bShouldDrop);
 };

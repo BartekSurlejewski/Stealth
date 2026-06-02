@@ -12,7 +12,7 @@ class UStealthCharacterAbilitiesComponent;
 class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
-class UPlayerInteractionComponent;
+class UStealthCharacterInteractionComponent;
 struct FInputActionValue;
 class UInputAction;
 class USkeletalMeshComponent;
@@ -30,7 +30,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UPlayerInteractionComponent> InteractionComponent;
+	TObjectPtr<UStealthCharacterInteractionComponent> InteractionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStealthCharacterCollisionsComponent> CollisionsComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Stimuli", meta = (AllowPrivateAccess = "true"))
@@ -42,6 +42,7 @@ protected:
 #pragma endregion
 
 #pragma region Input
+	// TODO: Rework input binding to assign actions in a single place
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> JumpAction;
 	UPROPERTY(EditAnywhere, Category ="Input")
@@ -51,7 +52,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	TObjectPtr<UInputAction> CrouchAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Input")
-	TObjectPtr<UInputAction> InteractAction;
+	TObjectPtr<UInputAction> PrimaryInteractAction;
+	UPROPERTY(EditDefaultsOnly, Category ="Input")
+	TObjectPtr<UInputAction> SecondaryInteractAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Input")
 	TObjectPtr<UInputAction> SprintAction;
 #pragma endregion
@@ -86,5 +89,7 @@ protected:
 	virtual void DoMove(float Right, float Forward);
 
 	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoInteract();
+	virtual void DoPrimaryInteract();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoSecondaryInteract();
 };

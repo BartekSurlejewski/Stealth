@@ -26,9 +26,13 @@ protected:
 public:
 	APickup();
 	//~Begin IInteractable Interface
-	virtual void Interact_Implementation(AStealthCharacter* Interactor) override;
+	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) override;
+	virtual void SecondaryInteract_Implementation(AStealthCharacter* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
-	virtual FText GetInteractionPrompt_Implementation() const override;
+	virtual FText GetPrimaryInteractionPrompt_Implementation() const override;
+	virtual FText GetSecondaryInteractionPrompt_Implementation() const override;
+	virtual TSubclassOf<UGameplayAbility> GetPrimaryInteractionRequiredAbility_Implementation() const override;
+	virtual TSubclassOf<UGameplayAbility> GetSecondaryInteractionRequiredAbility_Implementation() const override;
 	//~End IInteractable Interface
 
 	//~Begin IPickable Interface

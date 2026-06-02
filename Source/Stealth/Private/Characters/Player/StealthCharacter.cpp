@@ -4,12 +4,11 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
-#include "Characters/Player/Components/PlayerInteractionComponent.h"
+#include "Characters/Player/Components/StealthCharacterInteractionComponent.h"
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Inventory/Pickable.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
@@ -49,14 +48,13 @@ AStealthCharacter::AStealthCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
 
-	InteractionComponent = CreateDefaultSubobject<UPlayerInteractionComponent>(TEXT("Interaction Component"));
+	InteractionComponent = CreateDefaultSubobject<UStealthCharacterInteractionComponent>(TEXT("Interaction Component"));
 	CollisionsComponent = CreateDefaultSubobject<UStealthCharacterCollisionsComponent>(TEXT("Collisions Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("Ability System Component"));
 	AttributeSet = CreateDefaultSubobject<UStealthCharacterAttributeSet>(TEXT("Attribute Set"));
 	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterAbilitiesComponent>(TEXT("Stealth Character Abilities Component"));
 }
-
 
 void AStealthCharacter::PossessedBy(AController* NewController)
 {
@@ -137,18 +135,28 @@ void AStealthCharacter::DoMove(float Right, float Forward)
 	}
 }
 
-void AStealthCharacter::DoInteract()
+void AStealthCharacter::DoPrimaryInteract()
 {
 	if (!InteractionComponent)
 	{
 		return;
 	}
 
-	InteractionComponent->Interact();
+	InteractionComponent->PrimaryInteract();
+}
+
+void AStealthCharacter::DoSecondaryInteract()
+{
+	UE_LOG(LogStealth, Warning, TEXT("Secondary Interact"));
+	if (!InteractionComponent)
+	{
+		return;
+	}
+
+	InteractionComponent->SecondaryInteract();
 }
 
 //~End Input
-
 
 void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -164,8 +172,12 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthCharacter::LookInput);
 
 		// Interaction
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoInteract);
-		InteractionComponent->SetInteractInputAction(InteractAction);
+		EnhancedInputComponent->BindAction(PrimaryInteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoPrimaryInteract);
+		EnhancedInputComponent->BindAction(SecondaryInteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSecondaryInteract);
+		if (InteractionComponent)
+		{
+			InteractionComponent->InitializeInput(PrimaryInteractAction, SecondaryInteractAction);
+		}
 
 		// // Sprint
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(),
