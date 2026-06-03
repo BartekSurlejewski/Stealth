@@ -56,9 +56,7 @@ public:
 	UFUNCTION()
 	AActor* GetLookAtInteractableActor() const;
 	UFUNCTION()
-	void PrimaryInteract() const;
-	UFUNCTION()
-	void SecondaryInteract() const;
+	void Interact(bool bIsPrimaryInteraction) const;
 
 	UFUNCTION()
 	void InitializeInput(UInputAction* NewPrimaryInteractInputAction, UInputAction* NewSecondaryInteractInputAction)

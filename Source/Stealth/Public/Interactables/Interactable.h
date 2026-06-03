@@ -29,15 +29,15 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	FText GetSecondaryInteractionPrompt() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	FGameplayTagContainer GetPrimaryInteractionRequiredAbilityTag() const;
+	FGameplayTag GetPrimaryInteractionAbilityTag() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	FGameplayTagContainer GetSecondaryInteractionRequiredAbilityTag() const;
+	FGameplayTag GetSecondaryInteractionAbilityTag() const;
 
 	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) = 0;
 	virtual void SecondaryInteract_Implementation(AStealthCharacter* Interactor) = 0;
 	virtual void SetHighlighted_Implementation(bool bHighlight) {};
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
 	virtual FText GetSecondaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
-	virtual FGameplayTagContainer GetPrimaryInteractionRequiredAbilityTag_Implementation() const { return FGameplayTagContainer(); }
-	virtual FGameplayTagContainer GetSecondaryInteractionRequiredAbilityTag_Implementation() const { return FGameplayTagContainer(); }
+	virtual FGameplayTag GetPrimaryInteractionAbilityTag_Implementation() const { return FGameplayTag(); }
+	virtual FGameplayTag GetSecondaryInteractionAbilityTag_Implementation() const { return FGameplayTag(); }
 };

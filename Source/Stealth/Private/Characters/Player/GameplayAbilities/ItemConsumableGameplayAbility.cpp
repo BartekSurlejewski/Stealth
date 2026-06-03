@@ -4,10 +4,14 @@
 #include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
 
-void UItemConsumableGameplayAbility::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
-                                                     const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
+void UItemConsumableGameplayAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
+                                                const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
+	if (bWasCancelled)
+	{
+		Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+		return;
+	}
 
 	if (!CachedInventoryComponent)
 	{
@@ -16,7 +20,6 @@ void UItemConsumableGameplayAbility::ActivateAbility(const FGameplayAbilitySpecH
 		{
 			return;
 		}
-
 		CachedInventoryComponent = PlayerState->GetInventoryComponent();
 	}
 
@@ -25,9 +28,9 @@ void UItemConsumableGameplayAbility::ActivateAbility(const FGameplayAbilitySpecH
 		return;
 	}
 
-	bool bItemRemoved = CachedInventoryComponent->TryRemoveItem(NeededItem, NeededItemQuantity);
+	CachedInventoryComponent->TryRemoveItem(NeededItem, NeededItemQuantity);
 
-	EndAbility(Handle, ActorInfo, ActivationInfo, false, !bItemRemoved);
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }
 
 bool UItemConsumableGameplayAbility::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,

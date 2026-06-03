@@ -1,6 +1,7 @@
 #include "Characters/Player/Components/StealthCharacterInteractionComponent.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "Abilities/GameplayAbility.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/Player/StealthCharacter.h"
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
@@ -122,46 +123,33 @@ AActor* UStealthCharacterInteractionComponent::GetLookAtInteractableActor() cons
 	return nullptr;
 }
 
-void UStealthCharacterInteractionComponent::PrimaryInteract() const
+void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction) const
 {
 	if (!LookAtInteractableActor || !LookAtInteractableActor->Implements<UInteractable>())
 	{
 		return;
 	}
 
-	FGameplayTagContainer RequiredAbilitiesTag = IInteractable::Execute_GetPrimaryInteractionRequiredAbilityTag(LookAtInteractableActor);
+	FGameplayTag RequiredAbilityTag = bIsPrimaryInteraction
+		                                  ? IInteractable::Execute_GetPrimaryInteractionAbilityTag(LookAtInteractableActor)
+		                                  : IInteractable::Execute_GetSecondaryInteractionAbilityTag(LookAtInteractableActor);
 
-	if (RequiredAbilitiesTag.IsEmpty())
+	if (!RequiredAbilityTag.IsValid())
 	{
-		IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+		bIsPrimaryInteraction
+			? IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()))
+			: IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
 	}
-	else if (AbilitiesComponent && AbilitiesComponent->TryActivateAbilitiesWithTag(RequiredAbilitiesTag))
+	else if (AbilitiesComponent)
 	{
-		IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
+		FGameplayEventData EventData;
+		EventData.Target = LookAtInteractableActor;
+		AbilitiesComponent->HandleGameplayEvent(RequiredAbilityTag, &EventData);
 	}
 
 	//TODO: Move adding to inventory to some other place
-	if (InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
+	if (bIsPrimaryInteraction && InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
 	{
 		InventoryComponent->TryAddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), IPickable::Execute_GetQuantity(LookAtInteractableActor));
-	}
-}
-
-void UStealthCharacterInteractionComponent::SecondaryInteract() const
-{
-	if (!LookAtInteractableActor || !LookAtInteractableActor->Implements<UInteractable>())
-	{
-		return;
-	}
-
-	FGameplayTagContainer RequiredAbilitiesTag = IInteractable::Execute_GetSecondaryInteractionRequiredAbilityTag(LookAtInteractableActor);
-
-	if (RequiredAbilitiesTag.IsEmpty())
-	{
-		IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
-	}
-	else if (AbilitiesComponent && AbilitiesComponent->TryActivateAbilitiesWithTag(RequiredAbilitiesTag))
-	{
-		IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthCharacter>(GetOwner()));
 	}
 }

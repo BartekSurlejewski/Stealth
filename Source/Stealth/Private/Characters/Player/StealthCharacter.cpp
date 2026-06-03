@@ -142,7 +142,7 @@ void AStealthCharacter::DoPrimaryInteract()
 		return;
 	}
 
-	InteractionComponent->PrimaryInteract();
+	InteractionComponent->Interact(true);
 }
 
 void AStealthCharacter::DoSecondaryInteract()
@@ -153,7 +153,7 @@ void AStealthCharacter::DoSecondaryInteract()
 		return;
 	}
 
-	InteractionComponent->SecondaryInteract();
+	InteractionComponent->Interact(false);
 }
 
 //~End Input

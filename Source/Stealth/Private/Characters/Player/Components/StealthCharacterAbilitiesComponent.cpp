@@ -36,6 +36,16 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 
 	PlayerInventoryComponent->OnItemAdded.AddDynamic(this, &UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemAdded);
 	PlayerInventoryComponent->OnItemRemoved.AddDynamic(this, &UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemRemoved);
+	AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded);
+}
+
+void UStealthCharacterAbilitiesComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	PlayerInventoryComponent->OnItemAdded.RemoveAll(this);
+	PlayerInventoryComponent->OnItemRemoved.RemoveAll(this);
+	AbilitySystemComponent->OnAbilityEnded.RemoveAll(this);
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UStealthCharacterAbilitiesComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -130,9 +140,14 @@ void UStealthCharacterAbilitiesComponent::RemoveGameplayEffects(TArray<FActiveGa
 	}
 }
 
-bool UStealthCharacterAbilitiesComponent::TryActivateAbilitiesWithTag(const FGameplayTagContainer& TagContainer)
+bool UStealthCharacterAbilitiesComponent::TryActivateAbilitiesWithTag(const FGameplayTagContainer& TagContainer) const
 {
 	return AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
+}
+
+void UStealthCharacterAbilitiesComponent::HandleGameplayEvent(FGameplayTag EventTag, const FGameplayEventData* Payload) const
+{
+	AbilitySystemComponent->HandleGameplayEvent(EventTag, Payload);
 }
 
 void UStealthCharacterAbilitiesComponent::DoSprintInputStart()
@@ -265,4 +280,9 @@ void UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemRemoved(FInve
 
 	RemoveAbilities(OnAddItemsGrantedAbilities[Item.ItemDefinition].Handles);
 	OnAddItemsGrantedAbilities.Remove(Item.ItemDefinition);
+}
+
+void UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData)
+{
+	OnAbilityEnded.Broadcast(AbilityEndedData);
 }
