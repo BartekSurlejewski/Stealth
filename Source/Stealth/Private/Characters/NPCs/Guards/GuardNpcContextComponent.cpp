@@ -15,23 +15,6 @@ void UGuardNpcContextComponent::BeginPlay()
 	Super::BeginPlay();
 
 	PatrolComponent = NpcAiController->GetPawn()->FindComponentByClass<UNpcPatrolComponent>();
-
-	if (GetPlayerState())
-	{
-		GetPlayerState()->OnPerformedIllegalAction.AddDynamic(this, &UGuardNpcContextComponent::OnPlayerPerformedIllegalAction);
-		GetPlayerState()->OnIsInRestrictedAreaChanged.AddDynamic(this, &UGuardNpcContextComponent::OnIsPlayerInRestrictedAreaChanged);
-	}
-}
-
-void UGuardNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
-
-	if (GetPlayerState())
-	{
-		GetPlayerState()->OnPerformedIllegalAction.RemoveAll(this);
-		GetPlayerState()->OnIsInRestrictedAreaChanged.RemoveAll(this);
-	}
 }
 
 AActor* UGuardNpcContextComponent::GetCurrentPatrolPoint() const

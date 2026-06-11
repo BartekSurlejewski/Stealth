@@ -7,22 +7,11 @@
 class AStealthCharacter;
 struct FInventoryItem;
 class UInventoryComponent;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnIsInRestrictedAreaChanged, bool, IsInRestricterArea);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPerformedIllegalAction);
 
 UCLASS()
 class STEALTH_API AStealthPlayerState : public APlayerState
 {
 	GENERATED_BODY()
-
-	/*Events*/
-public:
-	//TODO: Create some kind of legality subsystem?
-	UPROPERTY(BlueprintAssignable)
-	FOnIsInRestrictedAreaChanged OnIsInRestrictedAreaChanged;
-	UPROPERTY(BlueprintAssignable)
-	FOnPerformedIllegalAction OnPerformedIllegalAction;
 
 	/*Properties*/
 protected:
@@ -45,11 +34,7 @@ public:
 	[[nodiscard]] bool GetIsInRestrictedArea() const { return bIsInRestrictedArea; }
 
 	UFUNCTION()
-	void SetIsInRestrictedArea(bool newIsInRestrictedArea)
-	{
-		bIsInRestrictedArea = newIsInRestrictedArea;
-		OnIsInRestrictedAreaChanged.Broadcast(bIsInRestrictedArea);
-	}
+	void SetIsInRestrictedArea(bool newIsInRestrictedArea);
 
 protected:
 	virtual void BeginPlay() override;

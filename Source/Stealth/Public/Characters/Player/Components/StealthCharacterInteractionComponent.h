@@ -10,7 +10,7 @@ class UInventoryComponent;
 class UCameraComponent;
 class UInputAction;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractableLookedAt, AActor*, LookedAtActor);
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInteractableLookedAt, AActor*, LookedAtActor);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UStealthCharacterInteractionComponent : public UActorComponent
@@ -18,8 +18,8 @@ class STEALTH_API UStealthCharacterInteractionComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintAssignable)
-	FOnInteractableLookedAt OnInteractableLookedAt;
+	// UPROPERTY(BlueprintAssignable)
+	// FOnInteractableLookedAt OnInteractableLookedAt;
 
 private:
 	UPROPERTY(EditAnywhere, Category ="Pickup", meta = (ClampMin = 0, ClampMax = 100000, Units = "cm"))

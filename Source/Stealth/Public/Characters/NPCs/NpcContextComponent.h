@@ -4,9 +4,12 @@
 #include "Characters/Player/StealthPlayerState.h"
 #include "Components/ActorComponent.h"
 #include "Components/StateTreeAIComponent.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "NpcContextComponent.generated.h"
 
 
+struct FBooleanMessage;
+struct FAIStimulus;
 class UNpcProfile;
 class ANpcAiController;
 
@@ -32,9 +35,11 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnPlayerInSightChanged OnPlayerInSightChanged;
 
+	/*Methods*/
 public:
 	UNpcContextComponent();
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	// Perception callbacks
@@ -58,6 +63,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
 	bool bIsWaitingToLosePlayerSight = false;
 
+private:
+	void OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message);
+	/*Properties*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="NPC")
 	TObjectPtr<UNpcProfile> Profile;
@@ -76,9 +84,12 @@ protected:
 
 	//TODO: think of moving to some subsystem not to hold reference for each NPC
 	APawn* GetPlayerPawn();
-	AStealthPlayerState* GetPlayerState();
+	// AStealthPlayerState* GetPlayerState();
 
 private:
 	UPROPERTY()
 	float LosePlayerSightTimer = 0.0f;
+	UPROPERTY()
+	bool bIsPlayerInRestrictedArea;
+	FGameplayMessageListenerHandle PlayerInRestrictedAreaListenerHandle;
 };

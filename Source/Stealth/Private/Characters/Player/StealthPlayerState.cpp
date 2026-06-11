@@ -1,15 +1,26 @@
 ﻿#include "Characters/Player/StealthPlayerState.h"
 
 #include "Characters/Player/StealthCharacter.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Pickable.h"
 #include "Inventory/Items/InventoryItem.h"
 #include "Inventory/Items/ItemDefinition.h"
+#include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 
 AStealthPlayerState::AStealthPlayerState()
 {
 	InventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
+}
+
+void AStealthPlayerState::SetIsInRestrictedArea(bool newIsInRestrictedArea)
+{
+	bIsInRestrictedArea = newIsInRestrictedArea;
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	FBooleanMessage Message(bIsInRestrictedArea);
+	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Player.IsInRestrictedAreaChanged"), Message);
 }
 
 void AStealthPlayerState::BeginPlay()

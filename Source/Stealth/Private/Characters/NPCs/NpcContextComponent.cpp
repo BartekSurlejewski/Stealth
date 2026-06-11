@@ -2,9 +2,10 @@
 
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Kismet/GameplayStatics.h"
+#include "Messages/StealthMessages.h"
 #include "Perception/AIPerceptionTypes.h"
-#include "Stealth/Stealth.h"
 
 
 UNpcContextComponent::UNpcContextComponent()
@@ -20,6 +21,18 @@ void UNpcContextComponent::BeginPlay()
 
 	StateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeAIComponent>();
 	NpcAiController = Cast<ANpcAiController>(GetOwner());
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	PlayerInRestrictedAreaListenerHandle = MsgSubsystem.RegisterListener<FBooleanMessage>(FGameplayTag::RequestGameplayTag("Message.Player.IsInRestrictedAreaChanged"), this,
+	                                                                                      &UNpcContextComponent::OnPlayerInRestrictedAreaChanged);
+}
+
+void UNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	MsgSubsystem.UnregisterListener(PlayerInRestrictedAreaListenerHandle);
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -83,7 +96,12 @@ void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& S
 	LastHeardSoundLocation = Stimulus.StimulusLocation;
 }
 
-bool UNpcContextComponent::IsPlayerInRestrictedArea() { return GetPlayerState()->GetIsInRestrictedArea(); }
+bool UNpcContextComponent::IsPlayerInRestrictedArea() { return bIsPlayerInRestrictedArea; }
+
+void UNpcContextComponent::OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message)
+{
+	bIsPlayerInRestrictedArea = Message.bValue;
+}
 
 void UNpcContextComponent::SendStateTreeEvent(const FGameplayTag& Tag) const
 {
@@ -102,14 +120,4 @@ APawn* UNpcContextComponent::GetPlayerPawn()
 	}
 
 	return PlayerPawn.Get();
-}
-
-AStealthPlayerState* UNpcContextComponent::GetPlayerState()
-{
-	if (PlayerState == nullptr)
-	{
-		PlayerState = GetPlayerPawn()->GetPlayerState<AStealthPlayerState>();
-	}
-
-	return PlayerState.Get();
 }

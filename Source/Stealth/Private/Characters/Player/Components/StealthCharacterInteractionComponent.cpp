@@ -6,10 +6,12 @@
 #include "Characters/Player/StealthCharacter.h"
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerState.h"
 #include "Interactables/Interactable.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Pickable.h"
+#include "Messages/StealthMessages.h"
 
 UStealthCharacterInteractionComponent::UStealthCharacterInteractionComponent()
 {
@@ -43,8 +45,6 @@ void UStealthCharacterInteractionComponent::BeginPlay()
 		InventoryComponent = OwnerCharacter->GetPlayerState()->FindComponentByClass<UInventoryComponent>();
 		AbilitiesComponent = OwnerCharacter->FindComponentByClass<UStealthCharacterAbilitiesComponent>();
 	}
-
-	OnInteractableLookedAt.Broadcast(LookAtInteractableActor);
 }
 
 FKey UStealthCharacterInteractionComponent::GetKeyForInputAction(const UInputAction* InputAction) const
@@ -95,7 +95,10 @@ void UStealthCharacterInteractionComponent::TickComponent(float DeltaTime, ELeve
 		}
 
 		LookAtInteractableActor = NewLookAtInteractableActor;
-		OnInteractableLookedAt.Broadcast(LookAtInteractableActor);
+
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+		FInteractableMessage Message(LookAtInteractableActor);
+		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Player.LookedAtInteractable"), Message);
 	}
 }
 
