@@ -1,5 +1,7 @@
 ﻿#include "TimeSystem/DailyRegimen/DailyRegimenManager.h"
 
+#include "GameFramework/GameplayMessageSubsystem.h"
+#include "Messages/StealthMessages.h"
 #include "TimeSystem/TimeSubsystem.h"
 #include "TimeSystem/DailyRegimen/DailyRegimenTasks/DailyRegimenTask.h"
 
@@ -13,8 +15,7 @@ void ADailyRegimenManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	TimeSubsystem = GetWorld()->GetSubsystem<UTimeSubsystem>();
-	if (TimeSubsystem)
+	if (auto TimeSubsystem = GetWorld()->GetSubsystem<UTimeSubsystem>())
 	{
 		TimeSubsystem->OnTimeChanged.AddDynamic(this, &ADailyRegimenManager::TimeSubsystemOnTimeChanged);
 	}
@@ -35,7 +36,7 @@ void ADailyRegimenManager::BeginPlay()
 
 void ADailyRegimenManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (TimeSubsystem.IsValid())
+	if (auto TimeSubsystem = GetWorld()->GetSubsystem<UTimeSubsystem>())
 	{
 		TimeSubsystem->OnTimeChanged.RemoveAll(this);
 	}
@@ -49,7 +50,8 @@ void ADailyRegimenManager::PrepareTask(UDailyRegimenTask* TaskToPrepare)
 	{
 		return;
 	}
-	int32 CurrentDayTimeAsMinutes = TimeSubsystem->GetCurrentDayTimeAsMinutes();
+
+	int32 CurrentDayTimeAsMinutes = GetWorld()->GetSubsystem<UTimeSubsystem>()->GetCurrentDayTimeAsMinutes();
 
 	if (TaskToPrepare->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
@@ -74,7 +76,10 @@ void ADailyRegimenManager::InitializeTask(UDailyRegimenTask* TaskToInitialize)
 	CurrentTask = TaskToInitialize;
 	CurrentTask->InitializeTask();
 	CurrentTask->OnTaskCompleted.AddDynamic(this, &ADailyRegimenManager::DailyRegimenTask_TaskCompleted);
-	OnTaskStarted.Broadcast(CurrentTask);
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	FDailyTaskStartedMessage Message(CurrentTask);
+	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.DailyTask.OnDailyTaskStarted"), Message);
 }
 
 UDailyRegimenTask* ADailyRegimenManager::GetNextTask()
@@ -91,7 +96,7 @@ UDailyRegimenTask* ADailyRegimenManager::GetNextTask()
 
 UDailyRegimenTask* ADailyRegimenManager::GetNextTaskByTime()
 {
-	int32 CurrentDayTimeAsMinutes = TimeSubsystem->GetCurrentDayTimeAsMinutes();
+	int32 CurrentDayTimeAsMinutes = GetWorld()->GetSubsystem<UTimeSubsystem>()->GetCurrentDayTimeAsMinutes();
 	for (UDailyRegimenTask* Task : DailyRegimenTasks)
 	{
 		if (Task->GetStartTimeAsMinutes() >= CurrentDayTimeAsMinutes)
@@ -120,11 +125,13 @@ void ADailyRegimenManager::DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Tas
 
 void ADailyRegimenManager::TimeSubsystemOnTimeChanged(int32 Hour, int32 Minute)
 {
-	int32 CurrentDayTimeAsMinutes = TimeSubsystem->GetCurrentDayTimeAsMinutes();
+	int32 CurrentDayTimeAsMinutes = GetWorld()->GetSubsystem<UTimeSubsystem>()->GetCurrentDayTimeAsMinutes();
 
 	if (CurrentTask && !CurrentTask->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
-		OnTaskEnded.Broadcast(CurrentTask, bCurrentTaskSucceeded);
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+		FDailyTaskEndedMessage Message(CurrentTask, bCurrentTaskSucceeded);
+		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.DailyTask.OnDailyTaskEnded"), Message);
 
 		CurrentTask->DisposeTask();
 		CurrentTask = nullptr;

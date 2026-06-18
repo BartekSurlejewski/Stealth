@@ -87,6 +87,7 @@ void AStealthPlayerController::OnOpenInventoryInput()
 		}
 	}
 
+	//TODO: change to use Gameplay Messages
 	OnInventoryInput.Broadcast();
 
 	UE_LOG(LogStealth, Log, TEXT("[Inventory]"))

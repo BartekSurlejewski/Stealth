@@ -70,8 +70,8 @@ void UTimeSubsystem::Tick(float DeltaTime)
 float UTimeSubsystem::GetTimeOfDayNormalized() const
 {
 	const float T = Data.SecondsElapsedInDay;
-	const float Rise = Data.DayStartTimeInSeconds - 3600;
-	const float Set = Data.DayEndTimeInSeconds + 3600;
+	const float Rise = Data.DayStartTimeInSeconds - 3600/6;
+	const float Set = Data.DayEndTimeInSeconds + 3600/6;
 
 	if (T <= Rise || T >= Set)
 	{
@@ -83,8 +83,8 @@ float UTimeSubsystem::GetTimeOfDayNormalized() const
 float UTimeSubsystem::GetTimeOfNightNormalized() const
 {
 	const float T = Data.SecondsElapsedInDay;
-	const float Rise = Data.DayEndTimeInSeconds - 3600;
-	const float Set = Data.DayStartTimeInSeconds + Data.SECONDS_PER_DAY + 3600; // next day's sunrise
+	const float Rise = Data.DayEndTimeInSeconds - 3600 * 1.5f;
+	const float Set = Data.DayStartTimeInSeconds + Data.SECONDS_PER_DAY + 3600/6; // next day's sunrise
 
 	// Remap night window [Sunset, NextSunrise] → [0, 1]
 	// Handle wraparound (T might be before midnight, so shift it)

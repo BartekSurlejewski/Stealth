@@ -20,7 +20,6 @@ void ANpcAiController::OnPossess(APawn* InPawn)
 		return;
 	}
 
-	LightExposureSubsystem = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>();
 	PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ANpcAiController::OnTargetPerceptionUpdated);
 }
 

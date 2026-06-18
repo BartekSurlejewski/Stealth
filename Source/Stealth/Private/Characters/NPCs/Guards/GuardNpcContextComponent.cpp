@@ -76,28 +76,6 @@ void UGuardNpcContextComponent::LookAtPlayer()
 	NpcAiController->GetPawn()->SetActorRotation(LookAtRotation);
 }
 
-void UGuardNpcContextComponent::OnPlayerPerformedIllegalAction()
-{
-	if (!bPlayerInSight)
-	{
-		// Guard doesn't see player, do nothing
-		return;
-	}
-
-	SendStateTreeEvent(SuspiciousActivityTag);
-}
-
-void UGuardNpcContextComponent::OnIsPlayerInRestrictedAreaChanged(bool bIsInRestrictedArea)
-{
-	if (!bIsInRestrictedArea || !bPlayerInSight)
-	{
-		// Guard doesn't see player, do nothing
-		return;
-	}
-
-	SendStateTreeEvent(SuspiciousActivityTag);
-}
-
 void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVector& SourceLocation)
 {
 	GlobalAlarmLevel = NewLevel;

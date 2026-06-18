@@ -1,7 +1,6 @@
 ﻿#include "Characters/NPCs/Guards/GuardNpcAiController.h"
 
 #include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
-#include "Exposure/PlayerExposureSubsystem.h"
 #include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AISenseConfig_Sight.h"
 
@@ -27,15 +26,10 @@ void AGuardNpcAiController::OnTargetPerceptionUpdated(AActor* TargetActor, FAISt
 	{
 		FAIStimulus ModifiedStimulus = Stimulus;
 
-		float ExposureMultiplier = 1.0f;
-		if (Stimulus.WasSuccessfullySensed() && LightExposureSubsystem)
-		{
-			ExposureMultiplier = LightExposureSubsystem->GetCurrentTotalExposure();
-		}
-
-		GuardContext->OnSightStimulus(TargetActor, ModifiedStimulus, ExposureMultiplier);
+		GuardContext->OnSightStimulus(TargetActor, ModifiedStimulus);
 		return;
 	}
+	
 
 	// Hearing
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())

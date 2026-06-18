@@ -12,17 +12,6 @@ class STEALTH_API ADailyRegimenManager : public AInfo
 {
 	GENERATED_BODY()
 
-	/*Delegates*/
-public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTaskStarted, UDailyRegimenTask*, DailyRegimenTask);
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTaskEnded, UDailyRegimenTask*, DailyRegimenTask, bool, bTaskSucceeded);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnTaskStarted OnTaskStarted;
-	UPROPERTY(BlueprintAssignable)
-	FOnTaskEnded OnTaskEnded;
-
 	/*Methods*/
 public:
 	ADailyRegimenManager();
@@ -57,8 +46,6 @@ protected:
 	TArray<UDailyRegimenTask*> DailyRegimenTasks;
 
 protected:
-	UPROPERTY()
-	TSoftObjectPtr<UTimeSubsystem> TimeSubsystem;
 	UPROPERTY()
 	int32 CurrentTaskIndex = -1;
 	UPROPERTY()

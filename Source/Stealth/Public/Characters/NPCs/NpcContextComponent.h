@@ -8,6 +8,7 @@
 #include "NpcContextComponent.generated.h"
 
 
+class UPlayerExposureSubsystem;
 struct FBooleanMessage;
 struct FAIStimulus;
 class UNpcProfile;
@@ -44,31 +45,39 @@ public:
 
 	// Perception callbacks
 	UFUNCTION()
-	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus, float ExposureMultiplier);
+	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus);
 	UFUNCTION()
 	virtual void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
-
 	UFUNCTION(BlueprintPure)
 	bool IsPlayerInRestrictedArea();
 
-	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
-	FVector LastKnownPlayerPos = FVector::ZeroVector;
-
-	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
-	FVector LastHeardSoundLocation = FVector::ZeroVector;
-
-	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
-	bool bPlayerInSight = false;
-
-	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
-	bool bIsWaitingToLosePlayerSight = false;
+protected:
+	UFUNCTION()
+	void CheckPlayerVisibility();
+	UFUNCTION()
+	void GainPlayerSight();
+	UFUNCTION()
+	void LosePlayerSight();
+	UFUNCTION()
+	void SendStateTreeEvent(const FGameplayTag& Tag) const;
+	//TODO: think of moving to some subsystem not to hold reference for each NPC
+	APawn* GetPlayerPawn();
 
 private:
 	void OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message);
+
 	/*Properties*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="NPC")
 	TObjectPtr<UNpcProfile> Profile;
+	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
+	FVector LastKnownPlayerPos = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
+	FVector LastHeardSoundLocation = FVector::ZeroVector;
+	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
+	bool bHasPlayerLineOfSight = false;
+	UPROPERTY(BlueprintReadOnly, Category="NPC|State")
+	bool bEffectivelySeesPlayer = false;
 	UPROPERTY(EditDefaultsOnly, Category="NPC|State|Tags")
 	FGameplayTag SuspiciousActivityTag;
 	UPROPERTY()
@@ -78,17 +87,13 @@ protected:
 	UPROPERTY()
 	TSoftObjectPtr<APawn> PlayerPawn;
 	UPROPERTY()
-	TSoftObjectPtr<AStealthPlayerState> PlayerState;
-	UFUNCTION()
-	void SendStateTreeEvent(const FGameplayTag& Tag) const;
-
-	//TODO: think of moving to some subsystem not to hold reference for each NPC
-	APawn* GetPlayerPawn();
-	// AStealthPlayerState* GetPlayerState();
+	FTimerHandle PlayerVisibilityCheckTimerHandle;
+	UPROPERTY()
+	FTimerHandle GainPlayerSightTimerHandle;
+	UPROPERTY()
+	FTimerHandle LosePlayerSightTimerHandle;
 
 private:
-	UPROPERTY()
-	float LosePlayerSightTimer = 0.0f;
 	UPROPERTY()
 	bool bIsPlayerInRestrictedArea;
 	FGameplayMessageListenerHandle PlayerInRestrictedAreaListenerHandle;

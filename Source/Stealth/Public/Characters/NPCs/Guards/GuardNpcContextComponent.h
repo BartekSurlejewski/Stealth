@@ -52,12 +52,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LookAtPlayer();
 
-	UFUNCTION()
-	void OnIsPlayerInRestrictedAreaChanged(bool bIsInRestrictedArea);
-
 private:
-	UFUNCTION()
-	void OnPlayerPerformedIllegalAction();
 	UFUNCTION()
 	void OnAlarmChanged(int32 NewLevel, const FVector& SourceLocation);
 };

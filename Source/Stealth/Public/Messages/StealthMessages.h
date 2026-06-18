@@ -4,6 +4,8 @@
 #include "UObject/Object.h"
 #include "StealthMessages.generated.h"
 
+class UDailyRegimenTask;
+
 USTRUCT(BlueprintType)
 struct FBooleanMessage
 {
@@ -18,4 +20,22 @@ struct FInteractableMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	AActor* InteractableActor;
+};
+
+USTRUCT(BlueprintType)
+struct FDailyTaskStartedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	UDailyRegimenTask* StartedTask;
+};
+
+USTRUCT(BlueprintType)
+struct FDailyTaskEndedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	UDailyRegimenTask* EndedTask;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	bool bPlayerSucceeded;
 };

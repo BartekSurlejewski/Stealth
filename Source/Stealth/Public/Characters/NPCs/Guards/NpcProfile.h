@@ -23,6 +23,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
 	float SuspicionThreshold_Alert = 100.f;
 
+	// Perception
+	UPROPERTY(EditDefaultsOnly, Category="Perception")
+	float AlwaysSeePlayerRange = 100.0f;
+	UPROPERTY(EditDefaultsOnly, Category="Perception")
+	float GainPlayerSightGracePeriod = 1.0f;
 	UPROPERTY(EditDefaultsOnly, Category="Perception")
 	float LosePlayerSightGracePeriod = 1.0f;
 

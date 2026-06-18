@@ -32,6 +32,4 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComponent;
-	UPROPERTY()
-	TObjectPtr<UPlayerExposureSubsystem> LightExposureSubsystem;
 };
