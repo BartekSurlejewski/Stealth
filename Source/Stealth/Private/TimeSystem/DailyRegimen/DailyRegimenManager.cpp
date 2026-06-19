@@ -1,5 +1,6 @@
 ﻿#include "TimeSystem/DailyRegimen/DailyRegimenManager.h"
 
+#include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Messages/StealthMessages.h"
 #include "TimeSystem/TimeSubsystem.h"

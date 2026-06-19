@@ -1,7 +1,9 @@
 ﻿#include "Characters/NPCs/NpcContextComponent.h"
 
+#include "TimerManager.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
+#include "Engine/World.h"
 #include "Exposure/PlayerExposureSubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Kismet/GameplayStatics.h"
