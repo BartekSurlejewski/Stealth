@@ -1,6 +1,9 @@
 ﻿#include "Exposure/PlayerExposureSubsystem.h"
 
+#include "DrawDebugHelpers.h"
+#include "Async/ParallelFor.h"
 #include "Characters/Player/StealthCharacter.h"
+#include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Stealth/Stealth.h"
 #include "TimeSystem/TimeSubsystem.h"
@@ -59,19 +62,20 @@ const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 
 	FVector PlayerPosition = PlayerCharacter->GetActorLocation();
 
-	float Accumulated = 0.f;
+	PartialResultsBuffer.SetNumZeroed(Lights.Num(), EAllowShrinking::No);
 
-	for (const FLightData& LightData : Lights)
+	ParallelFor(Lights.Num(), [&](int32 index)
 	{
+		auto LightData = Lights[index];
 		// Phase 1 — broad phase: pure math, no trace
 		float Dist = FVector::Dist(PlayerPosition, LightData.Position);
 		if (Dist >= LightData.Radius)
 		{
-			continue;
+			return;
 		}
 
-		float Falloff = 1.f - (Dist / LightData.Radius); // linear; use squared for realism
-		Falloff *= LightData.Intensity;
+		float LightIntensity = 1.f - (Dist / LightData.Radius); // linear; use squared for realism
+		LightIntensity *= LightData.Intensity;
 
 		// Phase 2 — occlusion: line trace only for lights that passed phase 1
 		FHitResult Hit;
@@ -82,19 +86,19 @@ const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 		bool bBlocked = GetWorld()->LineTraceSingleByChannel(
 			Hit, LightData.Position, PlayerPosition, ECC_Visibility, Params);
 
-		//TODO: Remove drawing debug lines
 		if (bBlocked)
 		{
-			DrawDebugLine(GetWorld(), LightData.Position, PlayerPosition, FColor::Red, false, 0.6, 0, 1);
 			// not zero — let a tiny bleed through
-			Falloff *= 0.005f;
-		}
-		else
-		{
-			DrawDebugLine(GetWorld(), LightData.Position, PlayerPosition, FColor::Green, false, 0.3, 0, 1);
+			LightIntensity *= 0.005f;
 		}
 
-		Accumulated = FMath::Clamp(Accumulated + Falloff, 0.f, 1.f);
+		PartialResultsBuffer[index] = LightIntensity;
+	});
+
+	float Accumulated = 0.f;
+	for (const float PartialResult : PartialResultsBuffer)
+	{
+		Accumulated += PartialResult;
 	}
 
 	return FMath::Clamp(Accumulated, 0.f, 1.f);

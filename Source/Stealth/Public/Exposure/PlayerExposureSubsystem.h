@@ -55,9 +55,10 @@ private:
 	UPROPERTY()
 	TArray<FLightData> Lights;
 	UPROPERTY()
-	TArray<int32> FreeHandles;
-	UPROPERTY()
 	float CurrentTotalExposure = 1;
 	UPROPERTY()
 	TObjectPtr<AStealthCharacter> PlayerCharacter;
+
+	UPROPERTY(Transient)
+	TArray<float> PartialResultsBuffer; // Reused buffer for multithreaded calculactions
 };
