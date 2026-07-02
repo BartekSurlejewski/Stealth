@@ -11,7 +11,7 @@ class UNpcPatrolComponent;
 struct FAIStimulus;
 class UNpcProfile;
 
-UCLASS(ClassGroup="NPC", meta=(BlueprintSpawnableComponent))
+UCLASS()
 class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 {
 	GENERATED_BODY()

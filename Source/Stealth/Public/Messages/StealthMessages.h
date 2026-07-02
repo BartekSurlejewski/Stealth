@@ -4,6 +4,8 @@
 #include "UObject/Object.h"
 #include "StealthMessages.generated.h"
 
+class AActor;
+enum class ETimeOfDay : uint8;
 class UDailyRegimenTask;
 
 USTRUCT(BlueprintType)
@@ -38,4 +40,22 @@ struct FDailyTaskEndedMessage
 	UDailyRegimenTask* EndedTask;
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	bool bPlayerSucceeded;
+};
+
+USTRUCT(BlueprintType)
+struct FTimeChangedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 NewHour;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 NewMinute;
+};
+
+USTRUCT(BlueprintType)
+struct FTimeOfDayChangedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	ETimeOfDay NewTimeOfDay;
 };

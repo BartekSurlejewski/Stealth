@@ -1,7 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "TimeSystem/DailyRegimen/DailyRegimenTasks/DailyRegimenTask.h"
+﻿#include "TimeSystem/DailyRegimen/DailyRegimenTasks/DailyRegimenTask.h"
 
 #include "Stealth/Stealth.h"
 
@@ -35,3 +32,5 @@ bool UDailyRegimenTask::IsActiveAtTime(const int32& DayTimeInMinutes) const
 		return DayTimeInMinutes >= StartTimeAsMinutes || DayTimeInMinutes < EndTimeAsMinutes;
 	}
 }
+
+void UDailyRegimenTask::PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext) {}

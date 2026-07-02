@@ -4,6 +4,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "StealthWorldSettings.generated.h"
 
+class UDailyRegimenTask;
 class ARuntimeDataContainer;
 
 UCLASS()
@@ -29,9 +30,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth|Time", meta=(ClampMin = "0", ClampMax = "23"))
 	int32 SunsetHour = 20;
 
+	UPROPERTY(Instanced, EditAnywhere, Category = "Stealth|Daily Regimen")
+	TArray<UDailyRegimenTask*> DailyRegimenTasks;
+
 public:
+	UFUNCTION(BlueprintCallable)
 	bool IsGameplayWorld() const { return bIsGameplayWorld; }
 
+	UFUNCTION(BlueprintCallable)
 	void GetStartDayTime(int32& OutDay, int32& OutHour, int32& OutMinute) const
 	{
 		OutDay = StartDay;
@@ -39,6 +45,12 @@ public:
 		OutMinute = StartMinute;
 	}
 
+	UFUNCTION(BlueprintCallable)
 	[[nodiscard]] int32 GetSunriseHour() const { return SunriseHour; }
+
+	UFUNCTION(BlueprintCallable)
 	[[nodiscard]] int32 GetSunsetHour() const { return SunsetHour; }
+
+	UFUNCTION(BlueprintCallable)
+	[[nodiscard]] const TArray<UDailyRegimenTask*>& GetDailyRegimenTasks() const { return DailyRegimenTasks; }
 };

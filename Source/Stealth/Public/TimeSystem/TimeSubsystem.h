@@ -1,6 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Core/StealthTickableWorldSubsystem.h"
@@ -51,18 +49,6 @@ UCLASS(Blueprintable)
 class STEALTH_API UTimeSubsystem : public UStealthTickableWorldSubsystem
 {
 	GENERATED_BODY()
-
-	/*Delegates*/
-public:
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTimeChanged, int32, Hour, int32, Minute);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnTimeChanged OnTimeChanged;
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTimeOfDayChanged, ETimeOfDay, NewTimeOfDay);
-
-	UPROPERTY(BlueprintAssignable)
-	FOnTimeOfDayChanged OnTimeOfDayChanged;
 
 	/*Methods*/
 public:

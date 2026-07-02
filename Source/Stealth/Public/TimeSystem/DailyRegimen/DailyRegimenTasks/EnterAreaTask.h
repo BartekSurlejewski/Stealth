@@ -14,6 +14,7 @@ class STEALTH_API UEnterAreaTask : public UDailyRegimenTask
 public:
 	virtual void InitializeTask_Implementation() override;
 	virtual void DisposeTask_Implementation() override;
+	virtual void PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext) override;
 	UFUNCTION()
 	void TargetArea_OnActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor);
 

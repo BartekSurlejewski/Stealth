@@ -4,7 +4,7 @@
 #include "Characters/NPCs/NpcCharacter.h"
 #include "PrisonerNpcCharacter.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class STEALTH_API APrisonerNpcCharacter : public ANpcCharacter
 {
 	GENERATED_BODY()

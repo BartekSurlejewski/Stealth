@@ -1,5 +1,6 @@
 ﻿#include "TimeSystem/DailyRegimen/DailyRegimenTasks/EnterAreaTask.h"
 
+#include "Characters/NPCs/Prisoners/PrisonerNpcContextComponent.h"
 #include "Characters/Player/StealthCharacter.h"
 #include "Engine/TriggerVolume.h"
 
@@ -21,6 +22,25 @@ void UEnterAreaTask::DisposeTask_Implementation()
 
 	TargetArea->OnActorBeginOverlap.RemoveAll(this);
 }
+
+void UEnterAreaTask::PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext)
+{
+	Super::PerformByPrisoner_Implementation(PrisonerContext);
+	PrisonerContext->MoveToPosition(TargetArea->GetActorLocation(), [this](bool bSuccess)
+	{
+#if WITH_EDITOR
+		if (!bSuccess)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to move to area"));
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Moved to target area!"));
+		}
+#endif
+	});
+}
+
 
 void UEnterAreaTask::TargetArea_OnActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {

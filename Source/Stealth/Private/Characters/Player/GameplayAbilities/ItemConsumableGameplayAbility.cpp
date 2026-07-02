@@ -1,6 +1,7 @@
 ﻿#include "Characters/Player/GameplayAbilities/ItemConsumableGameplayAbility.h"
 
 #include "Characters/Player/StealthPlayerState.h"
+#include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
 

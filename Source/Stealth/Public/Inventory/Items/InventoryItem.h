@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/ObjectPtr.h"
 #include "InventoryItem.generated.h"
 
 class UItemDefinition;

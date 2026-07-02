@@ -69,6 +69,11 @@ private:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	TArray<FInventoryItem> Items;
+	// UPROPERTY()
+	TMap<TObjectPtr<UItemDefinition>, TArray<int32>> ItemSlotsMap;
+	// UPROPERTY()
+	TArray<int32> FreeSlotIndices;
+
 	// Max number of slots (0 = unlimited)
 	UPROPERTY(EditAnywhere, Category = "Inventory")
 	int32 MaxSlots = 20;
@@ -76,7 +81,6 @@ private:
 	// Currently equipped item effect (only one at a time)
 	UPROPERTY()
 	TObjectPtr<UItemEffect> ActiveEquippedEffect;
-
 	UPROPERTY()
 	TObjectPtr<UItemDefinition> EquippedItemDefinition;
 };

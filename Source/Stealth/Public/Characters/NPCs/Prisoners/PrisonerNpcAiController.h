@@ -4,7 +4,9 @@
 #include "Characters/NPCs/NpcAiController.h"
 #include "PrisonerNpcAiController.generated.h"
 
-UCLASS()
+class UPrisonerNpcContextComponent;
+
+UCLASS(Blueprintable)
 class STEALTH_API APrisonerNpcAiController : public ANpcAiController
 {
 	GENERATED_BODY()
@@ -16,6 +18,8 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus) override;
 
-public:
-	virtual void Tick(float DeltaTime) override;
+	/*Properties*/
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPrisonerNpcContextComponent> PrisonerContext;
 };

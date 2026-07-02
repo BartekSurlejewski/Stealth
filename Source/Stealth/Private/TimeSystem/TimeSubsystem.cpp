@@ -1,6 +1,8 @@
 ﻿#include "TimeSystem/TimeSubsystem.h"
 
 #include "Core/Data/StealthWorldSettings.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
+#include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 
 void UTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -33,7 +35,9 @@ void UTimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	if (StartingTimeOfDay == Data.CurrentTimeOfDay) // Event was already invoked if time of day changed at the start
 	{
-		OnTimeOfDayChanged.Broadcast(Data.CurrentTimeOfDay);
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+		FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
+		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeOfDayChanged"), Message);
 	}
 }
 
@@ -61,7 +65,10 @@ void UTimeSubsystem::Tick(float DeltaTime)
 	if (Data.LastMinute != Data.CurrentMinute)
 	{
 		Data.LastMinute = Data.CurrentMinute;
-		OnTimeChanged.Broadcast(Data.CurrentHour, Data.CurrentMinute);
+
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+		FTimeChangedMessage Message(Data.CurrentHour, Data.CurrentMinute);
+		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeChanged"), Message);
 	}
 
 	CheckTimeOfDay();
@@ -70,8 +77,8 @@ void UTimeSubsystem::Tick(float DeltaTime)
 float UTimeSubsystem::GetTimeOfDayNormalized() const
 {
 	const float T = Data.SecondsElapsedInDay;
-	const float Rise = Data.DayStartTimeInSeconds - 3600/6;
-	const float Set = Data.DayEndTimeInSeconds + 3600/6;
+	const float Rise = Data.DayStartTimeInSeconds - 3600 / 6;
+	const float Set = Data.DayEndTimeInSeconds + 3600 / 6;
 
 	if (T <= Rise || T >= Set)
 	{
@@ -84,7 +91,7 @@ float UTimeSubsystem::GetTimeOfNightNormalized() const
 {
 	const float T = Data.SecondsElapsedInDay;
 	const float Rise = Data.DayEndTimeInSeconds - 3600 * 1.5f;
-	const float Set = Data.DayStartTimeInSeconds + Data.SECONDS_PER_DAY + 3600/6; // next day's sunrise
+	const float Set = Data.DayStartTimeInSeconds + Data.SECONDS_PER_DAY + 3600 / 6; // next day's sunrise
 
 	// Remap night window [Sunset, NextSunrise] → [0, 1]
 	// Handle wraparound (T might be before midnight, so shift it)
@@ -121,7 +128,10 @@ void UTimeSubsystem::CheckTimeOfDay()
 			if (Data.SecondsElapsedInDay <= Data.DayStartTimeInSeconds || Data.SecondsElapsedInDay >= Data.DayEndTimeInSeconds)
 			{
 				Data.CurrentTimeOfDay = ETimeOfDay::Night;
-				OnTimeOfDayChanged.Broadcast(ETimeOfDay::Night);
+
+				UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+				FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
+				MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeOfDayChanged"), Message);
 
 				UE_LOG(LogStealth, Log, TEXT("Time of day changed to night"));
 			}
@@ -132,7 +142,10 @@ void UTimeSubsystem::CheckTimeOfDay()
 			if (Data.SecondsElapsedInDay >= Data.DayStartTimeInSeconds && Data.SecondsElapsedInDay <= Data.DayEndTimeInSeconds)
 			{
 				Data.CurrentTimeOfDay = ETimeOfDay::Day;
-				OnTimeOfDayChanged.Broadcast(ETimeOfDay::Day);
+
+				UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+				FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
+				MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeOfDayChanged"), Message);
 
 				UE_LOG(LogStealth, Log, TEXT("Time of day changed to day"));
 			}

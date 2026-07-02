@@ -25,7 +25,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBeha
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
 
 
-UCLASS(Abstract, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(Abstract, Blueprintable, ClassGroup="NPC")
 class STEALTH_API UNpcContextComponent : public UActorComponent
 {
 	GENERATED_BODY()

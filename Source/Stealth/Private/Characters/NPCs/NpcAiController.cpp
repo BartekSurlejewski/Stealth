@@ -2,7 +2,6 @@
 
 #include "Components/StateTreeAIComponent.h"
 #include "Perception/AIPerceptionComponent.h"
-#include "Exposure/PlayerExposureSubsystem.h"
 
 
 ANpcAiController::ANpcAiController()
