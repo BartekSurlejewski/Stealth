@@ -35,6 +35,7 @@ private:
 	UDailyRegimenTask* GetNextTaskByTime();
 	UFUNCTION()
 	void SortTasksByStartTime();
+	UFUNCTION()
 	void BuildWorkingCopiesFromSettings();
 	UFUNCTION()
 	void ResetTasksToSettings();

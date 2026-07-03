@@ -50,7 +50,13 @@ void AStealthPlayerState::InventoryComponent_OnItemRemoved(FInventoryItem& Item,
 		return;
 	}
 
-	TSubclassOf<AActor> ActorToDropClass = Item.ItemDefinition->PickupActorClass;
+	TSoftClassPtr<AActor> SoftActorToDropClass = Item.ItemDefinition->PickupActorClass;
+	if (SoftActorToDropClass.IsNull())
+	{
+		return;
+	}
+
+	TSubclassOf<AActor> ActorToDropClass = SoftActorToDropClass.LoadSynchronous();
 	if (!ActorToDropClass)
 	{
 		return;

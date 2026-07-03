@@ -14,7 +14,7 @@ void UInventoryMenuItemSlot::Initialize(FInventoryItem NewInventoryItem)
 
 	InventoryItem = NewInventoryItem;
 	VisualsParent->SetVisibility(ESlateVisibility::Visible);
-	ItemImage->SetBrushFromAtlasInterface(InventoryItem.ItemDefinition->ItemImage);
+	ItemImage->SetBrushFromAtlasInterface(InventoryItem.ItemDefinition->ItemImage.LoadSynchronous());
 	ItemQuantityText->SetText(FText::AsNumber(InventoryItem.Quantity));
 }
 

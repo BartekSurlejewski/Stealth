@@ -4,6 +4,7 @@
 #include "GameFramework/WorldSettings.h"
 #include "StealthWorldSettings.generated.h"
 
+class ATargetPoint;
 class UDailyRegimenTask;
 class ARuntimeDataContainer;
 
@@ -11,10 +12,6 @@ UCLASS()
 class STEALTH_API AStealthWorldSettings : public AWorldSettings
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
-	TObjectPtr<ARuntimeDataContainer> SceneReferences;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
@@ -31,7 +28,9 @@ protected:
 	int32 SunsetHour = 20;
 
 	UPROPERTY(Instanced, EditAnywhere, Category = "Stealth|Daily Regimen")
-	TArray<UDailyRegimenTask*> DailyRegimenTasks;
+	TArray<TObjectPtr<UDailyRegimenTask>> DailyRegimenTasks;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Stealth|Environment")
+	TArray<TObjectPtr<ATargetPoint>> PointsOfInterest;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -53,4 +52,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	[[nodiscard]] const TArray<UDailyRegimenTask*>& GetDailyRegimenTasks() const { return DailyRegimenTasks; }
+
+	UFUNCTION(BlueprintCallable)
+	[[nodiscard]] const TArray<ATargetPoint*>& GetPointsOfInterest() const { return PointsOfInterest; }
 };

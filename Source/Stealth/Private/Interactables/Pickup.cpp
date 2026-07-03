@@ -1,4 +1,6 @@
-#include "Interactables/Pickup.h"
+#include "Environment/Interactables/Pickup.h"
+
+#include "Components/StaticMeshComponent.h"
 
 APickup::APickup()
 {

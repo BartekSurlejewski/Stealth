@@ -13,6 +13,14 @@ class STEALTH_API UItemDefinition : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
 
+	/*Methods*/
+public:
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override
+	{
+		return FPrimaryAssetId("ItemDef", GetFName());
+	}
+
+	/*Properties*/
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	FText Name;
@@ -21,9 +29,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
 	bool bIsConsumable;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item")
-	TObjectPtr<UPaperSprite> ItemImage;
+	TSoftObjectPtr<UPaperSprite> ItemImage;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item", meta=(MustImplement = "/Script/Stealth.Pickable"))
-	TSubclassOf<AActor> PickupActorClass;
+	TSoftClassPtr<AActor> PickupActorClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Behaviour")
 	TSubclassOf<UItemEffect> EffectClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Item|Abilities")

@@ -53,7 +53,7 @@ void UInventoryMenu::Initialize(UInventoryComponent* Inventory)
 
 void UInventoryMenu::ShowItemInfo(const FInventoryItem InventoryItem)
 {
-	SelectedItemImage->SetBrushFromAtlasInterface(InventoryItem.ItemDefinition->ItemImage);
+	SelectedItemImage->SetBrushFromAtlasInterface(InventoryItem.ItemDefinition->ItemImage.LoadSynchronous());
 	SelectedItemName->SetText(InventoryItem.ItemDefinition->Name);
 	SelectedItemDescription->SetText(InventoryItem.ItemDefinition->Description);
 }

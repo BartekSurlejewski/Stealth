@@ -126,7 +126,7 @@ void UDailyRegimenSubsystem::BuildWorkingCopiesFromSettings()
 	DailyRegimenTasks.Reset();
 	DailyRegimenTasks.Reserve(WorldSettings->GetDailyRegimenTasks().Num());
 
-	for (UDailyRegimenTask* DesignTask : WorldSettings->GetDailyRegimenTasks())
+	for (const auto& DesignTask : WorldSettings->GetDailyRegimenTasks())
 	{
 		if (!IsValid(DesignTask))
 		{
