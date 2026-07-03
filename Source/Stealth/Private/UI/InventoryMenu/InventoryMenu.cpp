@@ -22,13 +22,13 @@ void UInventoryMenu::NativeConstruct()
 		if (auto ItemWidget = Cast<UInventoryMenuItemSlot>(Child))
 		{
 			InventoryItemsSlots.AddUnique(ItemWidget);
-			ItemWidget->OnItemClicked.AddDynamic(this, &UInventoryMenu::ItemSlot_OnItemClicked);
+			ItemWidget->OnItemClicked.AddUniqueDynamic(this, &UInventoryMenu::ItemSlot_OnItemClicked);
 		}
 	}
 
 	if (DropSelectedItemButton)
 	{
-		DropSelectedItemButton->OnClicked.AddDynamic(this, &UInventoryMenu::DropButton_OnClicked);
+		DropSelectedItemButton->OnClicked.AddUniqueDynamic(this, &UInventoryMenu::DropButton_OnClicked);
 	}
 }
 

@@ -42,5 +42,5 @@ void UInventoryMenuItemSlot::OnItemButtonClicked()
 void UInventoryMenuItemSlot::NativeConstruct()
 {
 	Super::NativeConstruct();
-	ItemButton->OnClicked.AddDynamic(this, &UInventoryMenuItemSlot::OnItemButtonClicked);
+	ItemButton->OnClicked.AddUniqueDynamic(this, &UInventoryMenuItemSlot::OnItemButtonClicked);
 }

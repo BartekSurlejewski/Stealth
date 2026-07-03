@@ -14,10 +14,15 @@ ATargetPoint* UCampEnvironmentSubsystem::GetRandomPointOfInterest()
 {
 	if (PointsOfInterest.IsEmpty())
 	{
+		UE_LOG(LogTemp, Warning, TEXT("No POIs in camp environment"));
 		return nullptr;
 	}
 
-	return PointsOfInterest[FMath::RandRange(0, PointsOfInterest.Num() - 1)];
+	auto newPoi = PointsOfInterest[FMath::RandRange(0, PointsOfInterest.Num() - 1)];
+
+	UE_LOG(LogTemp, Warning, TEXT("Random POI: %s"), *newPoi->GetName());
+
+	return newPoi;
 }
 
 void UCampEnvironmentSubsystem::BuildWorkingCopiesFromSettings()

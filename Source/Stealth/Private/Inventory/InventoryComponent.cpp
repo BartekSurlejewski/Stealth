@@ -60,7 +60,10 @@ bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, c
 	{
 		return false;
 	}
-	if (Slot->Quantity < QuantityToRemove) return false;
+	if (Slot->Quantity < QuantityToRemove)
+	{
+		return false;
+	}
 
 	// Cache for delegate before we modify/remove
 	FInventoryItem RemovedSnapshot = *Slot;
