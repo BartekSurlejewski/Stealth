@@ -17,13 +17,4 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	ATargetPoint* GetRandomPointOfInterest();
-
-private:
-	UFUNCTION()
-	void BuildWorkingCopiesFromSettings();
-
-	/*Properties*/
-private:
-	UPROPERTY()
-	TArray<TObjectPtr<ATargetPoint>> PointsOfInterest; // working copies, owned by this subsystem
 };

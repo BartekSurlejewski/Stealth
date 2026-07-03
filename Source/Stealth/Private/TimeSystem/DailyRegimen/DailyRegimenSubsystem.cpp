@@ -126,14 +126,14 @@ void UDailyRegimenSubsystem::BuildWorkingCopiesFromSettings()
 	DailyRegimenTasks.Reset();
 	DailyRegimenTasks.Reserve(WorldSettings->GetDailyRegimenTasks().Num());
 
-	for (const auto& DesignTask : WorldSettings->GetDailyRegimenTasks())
+	for (UDailyRegimenTask* SettingsTask : WorldSettings->GetDailyRegimenTasks())
 	{
-		if (!IsValid(DesignTask))
+		if (!IsValid(SettingsTask))
 		{
 			continue;
 		}
 
-		UDailyRegimenTask* WorkingCopy = DuplicateObject<UDailyRegimenTask>(DesignTask, this);
+		UDailyRegimenTask* WorkingCopy = DuplicateObject<UDailyRegimenTask>(SettingsTask, this);
 		DailyRegimenTasks.Add(WorkingCopy);
 	}
 }
