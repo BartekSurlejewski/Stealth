@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "UObject/Interface.h"
 #include "Interactable.generated.h"
 
 class UGameplayAbility;
@@ -33,9 +34,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	FGameplayTag GetSecondaryInteractionAbilityTag() const;
 
-	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) = 0;
-	virtual void SecondaryInteract_Implementation(AStealthCharacter* Interactor) = 0;
-	virtual void SetHighlighted_Implementation(bool bHighlight) {};
+	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) {}
+	virtual void SecondaryInteract_Implementation(AStealthCharacter* Interactor) {}
+	virtual void SetHighlighted_Implementation(bool bHighlight) {}
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
 	virtual FText GetSecondaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
 	virtual FGameplayTag GetPrimaryInteractionAbilityTag_Implementation() const { return FGameplayTag(); }

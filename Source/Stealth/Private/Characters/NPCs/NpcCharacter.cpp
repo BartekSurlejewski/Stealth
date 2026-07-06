@@ -34,3 +34,20 @@ void ANpcCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
+
+void ANpcCharacter::PrimaryInteract_Implementation(AStealthCharacter* Interactor) {}
+
+void ANpcCharacter::SetHighlighted_Implementation(bool bHighlight)
+{
+	IInteractable::SetHighlighted_Implementation(bHighlight);
+}
+
+FText ANpcCharacter::GetPrimaryInteractionPrompt_Implementation() const
+{
+	return FText::FromString("Talk");
+}
+
+FGameplayTag ANpcCharacter::GetPrimaryInteractionAbilityTag_Implementation() const
+{
+	return IInteractable::GetPrimaryInteractionAbilityTag_Implementation();
+}

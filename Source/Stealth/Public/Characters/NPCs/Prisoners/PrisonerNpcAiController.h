@@ -6,7 +6,7 @@
 
 class UPrisonerNpcContextComponent;
 
-UCLASS(Blueprintable)
+UCLASS()
 class STEALTH_API APrisonerNpcAiController : public ANpcAiController
 {
 	GENERATED_BODY()

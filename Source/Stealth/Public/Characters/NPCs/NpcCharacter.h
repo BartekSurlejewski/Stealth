@@ -1,27 +1,35 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Environment/Interactables/Interactable.h"
 #include "GameFramework/Character.h"
 #include "NpcCharacter.generated.h"
 
 class ANpcAiController;
 
 UCLASS(Abstract)
-class STEALTH_API ANpcCharacter : public ACharacter
+class STEALTH_API ANpcCharacter : public ACharacter, public IInteractable
 {
 	GENERATED_BODY()
 
+	/*Methods*/
+public:
+	ANpcCharacter();
+
+	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//~Begin IInteractable Interface
+	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) override;
+	virtual void SetHighlighted_Implementation(bool bHighlight) override;
+	virtual FText GetPrimaryInteractionPrompt_Implementation() const override;
+	virtual FGameplayTag GetPrimaryInteractionAbilityTag_Implementation() const override;
+	//~End IInteractable Interface
+
+
+	/*Properties*/
 protected:
 	UPROPERTY();
 	TObjectPtr<ANpcAiController> AiController;
-	
-	ANpcCharacter();
-
-protected:
-	virtual void BeginPlay() override;
-
-public:
-	virtual void Tick(float DeltaTime) override;
-
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
