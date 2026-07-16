@@ -2,8 +2,10 @@
 
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Engine/LocalPlayer.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/Items/ItemDefinition.h"
+#include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 
 void AStealthPlayerController::BeginPlay()
@@ -62,11 +64,15 @@ void AStealthPlayerController::BindInputActions()
 		return;
 	}
 
-	// Inventory
-	EIC->BindAction(InventoryAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnOpenInventoryInput);
+	// UI
+	EIC->BindAction(ToggleInventoryAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnToggleInventoryInput);
+	EIC->BindAction(ToggleDetailsMenuAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnToggleDetailsMenuInput);
+	EIC->BindAction(ToggleJournalMenuAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnToggleJournalMenuInput);
+	EIC->BindAction(PrevDetailsMenuAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnPrevDetailsMenuInput);
+	EIC->BindAction(NextDetailsMenuAction, ETriggerEvent::Started, this, &AStealthPlayerController::OnNextDetailsMenuInput);
 }
 
-void AStealthPlayerController::OnOpenInventoryInput()
+void AStealthPlayerController::ToggleDetailsMenu(const FGameplayTag SubmenuTag)
 {
 	bIsInMenu = !bIsInMenu;
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
@@ -76,23 +82,55 @@ void AStealthPlayerController::OnOpenInventoryInput()
 		if (bIsInMenu)
 		{
 			SetShowMouseCursor(true);
-			Subsystem->RemoveMappingContext(DefaultMappingContext);
-			Subsystem->AddMappingContext(MenuMappingContext, 0);
+			Subsystem->AddMappingContext(MenuMappingContext, 1);
 		}
 		else
 		{
 			SetShowMouseCursor(false);
 			Subsystem->RemoveMappingContext(MenuMappingContext);
-			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
 
-	//TODO: change to use Gameplay Messages
-	OnInventoryInput.Broadcast();
-
-	UE_LOG(LogStealth, Log, TEXT("[Inventory]"))
-	for (const auto Item : StealthPlayerState->GetInventoryComponent()->GetItems())
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	FGameplayTag MessageTag;
+	if (bIsInMenu)
 	{
-		UE_LOG(LogStealth, Log, TEXT("Item: %s - %i"), *Item.ItemDefinition->Name.ToString(), Item.Quantity)
+		MessageTag = FGameplayTag::RequestGameplayTag("Message.Input.OpenWidget");
 	}
+	else
+	{
+		MessageTag = FGameplayTag::RequestGameplayTag("Message.Input.CloseWidget");
+	}
+
+	FGameplayTagMessage MessageContent(SubmenuTag);
+	MsgSubsystem.BroadcastMessage(MessageTag, MessageContent);
+}
+
+void AStealthPlayerController::OnToggleInventoryInput()
+{
+	ToggleDetailsMenu(FGameplayTag::RequestGameplayTag("UI.DetailsMenu.Inventory"));
+}
+
+void AStealthPlayerController::OnToggleDetailsMenuInput()
+{
+	ToggleDetailsMenu(FGameplayTag::RequestGameplayTag("UI.DetailsMenu.DailyRegimen"));
+}
+
+void AStealthPlayerController::OnToggleJournalMenuInput()
+{
+	ToggleDetailsMenu(FGameplayTag::RequestGameplayTag("UI.DetailsMenu.Journal"));
+}
+
+void AStealthPlayerController::OnNextDetailsMenuInput()
+{
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	FInputMessage Message;
+	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Input.DetailsMenu.Next"), Message);
+}
+
+void AStealthPlayerController::OnPrevDetailsMenuInput()
+{
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	FInputMessage Message;
+	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Input.DetailsMenu.Prev"), Message);
 }

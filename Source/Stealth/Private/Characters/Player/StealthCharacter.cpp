@@ -8,6 +8,7 @@
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"

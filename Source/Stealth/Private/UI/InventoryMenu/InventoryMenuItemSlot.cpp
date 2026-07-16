@@ -5,7 +5,7 @@
 #include "Components/TextBlock.h"
 #include "Inventory/Items/ItemDefinition.h"
 
-void UInventoryMenuItemSlot::Initialize(FInventoryItem NewInventoryItem)
+void UInventoryMenuItemSlot::SetItem(FInventoryItem NewInventoryItem)
 {
 	if (!VisualsParent || !ItemImage || !ItemQuantityText)
 	{

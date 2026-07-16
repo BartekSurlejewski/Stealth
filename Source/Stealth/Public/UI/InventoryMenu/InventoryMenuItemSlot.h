@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Inventory/Items/InventoryItem.h"
 #include "PaperSprite.h"
+#include "UI/Core/StealthUserWidget.h"
 #include "InventoryMenuItemSlot.generated.h"
 
 class UButton;
@@ -13,7 +14,7 @@ class UImage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemClicked, FInventoryItem, InventoryItem);
 
 UCLASS()
-class STEALTH_API UInventoryMenuItemSlot : public UUserWidget
+class STEALTH_API UInventoryMenuItemSlot : public UStealthUserWidget
 {
 	GENERATED_BODY()
 	/*Events*/
@@ -23,7 +24,7 @@ public:
 	/*Methods*/
 public:
 	UFUNCTION(BlueprintCallable)
-	void Initialize(FInventoryItem NewInventoryItem);
+	void SetItem(FInventoryItem NewInventoryItem);
 	UFUNCTION(BlueprintCallable)
 	void Clear();
 	//Getters

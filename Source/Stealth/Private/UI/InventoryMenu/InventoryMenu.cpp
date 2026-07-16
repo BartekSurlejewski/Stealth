@@ -32,7 +32,7 @@ void UInventoryMenu::NativeConstruct()
 	}
 }
 
-void UInventoryMenu::Initialize(UInventoryComponent* Inventory)
+void UInventoryMenu::SetInventory(UInventoryComponent* Inventory)
 {
 	this->CurrentInventory = Inventory;
 	const auto InventoryItems = Inventory->GetItems();
@@ -42,12 +42,22 @@ void UInventoryMenu::Initialize(UInventoryComponent* Inventory)
 	{
 		if (i < InventoryItems.Num())
 		{
-			InventoryItemsSlots[i]->Initialize(InventoryItems[i]);
+			InventoryItemsSlots[i]->SetItem(InventoryItems[i]);
 		}
 		else
 		{
 			InventoryItemsSlots[i]->Clear();
 		}
+	}
+}
+
+void UInventoryMenu::OnShow_Implementation()
+{
+	Super::OnShow_Implementation();
+
+	if (CurrentInventory)
+	{
+		SetInventory(CurrentInventory);
 	}
 }
 

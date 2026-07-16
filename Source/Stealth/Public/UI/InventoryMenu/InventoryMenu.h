@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Inventory/Items/InventoryItem.h"
+#include "UI/Core/StealthUserWidget.h"
 #include "InventoryMenu.generated.h"
 
 
@@ -14,7 +15,7 @@ class UInventoryComponent;
 class UTextBlock;
 
 UCLASS(Abstract, Blueprintable)
-class STEALTH_API UInventoryMenu : public UUserWidget
+class STEALTH_API UInventoryMenu : public UStealthUserWidget
 {
 	GENERATED_BODY()
 	/*Methods*/
@@ -23,8 +24,10 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void Initialize(UInventoryComponent* Inventory);
+	void SetInventory(UInventoryComponent* Inventory);
 
+	virtual void OnShow_Implementation() override;
+	
 protected:
 	UFUNCTION(BlueprintCallable)
 	void ShowItemInfo(FInventoryItem InventoryItem);

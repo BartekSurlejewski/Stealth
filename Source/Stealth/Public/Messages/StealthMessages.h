@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
+#include "GameplayTagContainer.h"
 #include "StealthMessages.generated.h"
 
 class AActor;
@@ -58,4 +58,20 @@ struct FTimeOfDayChangedMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	ETimeOfDay NewTimeOfDay;
+};
+
+USTRUCT(BlueprintType)
+struct FGameplayTagMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGameplayTag GameplayTag;
+};
+
+USTRUCT(BlueprintType)
+struct FInputMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGameplayTag GameplayTag;
 };
