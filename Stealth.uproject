@@ -1,36 +1,52 @@
 {
-	"FileVersion": 3,
-	"EngineAssociation": "5.8",
-	"Category": "",
-	"Description": "",
-	"Modules": [
-		{
-			"Name": "Stealth",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"AdditionalDependencies": [
-				"Engine",
-				"AIModule",
-				"StateTreeModule",
-				"CoreUObject"
-			]
-		}
-	],
-	"Plugins": [
-		{
-			"Name": "ModelingToolsEditorMode",
-			"Enabled": true,
-			"TargetAllowList": [
-				"Editor"
-			]
-		},
-		{
-			"Name": "GameplayStateTree",
-			"Enabled": true
-		},
-		{
-			"Name": "GameplayAbilities",
-			"Enabled": true
-		}
-	]
+  "FileVersion": 3,
+  "EngineAssociation": "5.8",
+  "Category": "",
+  "Description": "",
+  "Modules": [
+    {
+      "Name": "Stealth",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine",
+        "AIModule",
+        "StateTreeModule",
+        "CoreUObject"
+      ]
+    },
+    {
+      "Name": "StealthQuestSystem",
+      "Type": "Runtime",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine"
+      ]
+    },
+    {
+      "Name": "StealthQuestSystemEditor",
+      "Type": "Editor",
+      "LoadingPhase": "Default",
+      "AdditionalDependencies": [
+        "Engine"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "ModelingToolsEditorMode",
+      "Enabled": true,
+      "TargetAllowList": [
+        "Editor"
+      ]
+    },
+    {
+      "Name": "GameplayStateTree",
+      "Enabled": true
+    },
+    {
+      "Name": "GameplayAbilities",
+      "Enabled": true
+    }
+  ]
 }
