@@ -62,12 +62,10 @@ const UQuestDefinition* UQuestManagerSubsystem::GetDefinition(FPrimaryAssetId Qu
 {
 	UAssetManager& AM = UAssetManager::Get();
 
-	// Synchroniczny load - w praktyce warto to poprzedzić async streamingiem
-	// przy starcie levelu, żeby uniknąć hitchy przy pierwszym dostępie.
 	const FSoftObjectPath AssetPath = AM.GetPrimaryAssetPath(QuestID);
 	if (!AssetPath.IsValid())
 	{
-		UE_LOG(LogQuest, Warning, TEXT("Brak zarejestrowanego assetu dla %s"), *QuestID.ToString());
+		UE_LOG(LogQuest, Warning, TEXT("No asset registered for %s"), *QuestID.ToString());
 		return nullptr;
 	}
 
