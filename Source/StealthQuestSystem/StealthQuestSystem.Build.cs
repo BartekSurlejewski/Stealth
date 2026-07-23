@@ -11,7 +11,8 @@ public class StealthQuestSystem : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
-			"GameplayMessageRuntime"
+			"GameplayMessageRuntime",
+			"DeveloperSettings"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

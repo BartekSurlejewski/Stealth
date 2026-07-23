@@ -1,7 +1,7 @@
 ﻿#include "Data/QuestDefinition.h"
 
 #include "Misc/DataValidation.h"
-#include "Objectives/QuestObjectiveDefinition.h"
+#include "Objectives/QuestObjective.h"
 
 #if WITH_EDITOR
 EDataValidationResult UQuestDefinition::IsDataValid(class FDataValidationContext& Context) const
@@ -22,7 +22,7 @@ EDataValidationResult UQuestDefinition::IsDataValid(class FDataValidationContext
 
 	// ObjectiveID duplicates
 	TSet<FName> SeenIDs;
-	for (const UQuestObjectiveDefinition* Obj : Objectives)
+	for (const UQuestObjective* Obj : Objectives)
 	{
 		if (!Obj)
 		{

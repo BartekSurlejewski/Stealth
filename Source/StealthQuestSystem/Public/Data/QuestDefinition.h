@@ -7,7 +7,7 @@
 
 class UQuestReward;
 class UQuestCondition;
-class UQuestObjectiveDefinition;
+class UQuestObjective;
 
 UCLASS(BlueprintType)
 class STEALTHQUESTSYSTEM_API UQuestDefinition : public UPrimaryDataAsset
@@ -18,26 +18,26 @@ public:
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override;
 #endif
-	
+
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override
 	{
-		return FPrimaryAssetId(TEXT("Quest"), GetFName());
+		return FPrimaryAssetId(TEXT("QuestDefinition"), GetFName());
 	}
 
-	UPROPERTY(EditDefaultsOnly, Category="Presentation")
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category="Presentation")
 	FText QuestTitle;
 
-	UPROPERTY(EditDefaultsOnly, Category="Presentation", meta=(MultiLine=true))
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Presentation", meta=(MultiLine=true))
 	FText QuestDescription;
 
-	UPROPERTY(EditDefaultsOnly, Category="Presentation")
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category="Presentation")
 	FGameplayTag QuestCategory;
 
-	UPROPERTY(EditDefaultsOnly, Category="Structure")
+	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category="Structure")
 	bool bIsSequential = true;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category="Structure")
-	TArray<UQuestObjectiveDefinition*> Objectives;
+	TArray<TObjectPtr<UQuestObjective>> Objectives;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category="Unlock")
 	TArray<UQuestCondition*> UnlockConditions;

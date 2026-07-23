@@ -2,7 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Conditions/QuestCondition_ObjectiveCompleted.h"
 #include "Data/QuestInstance.h"
+#include "Data/QuestSystemMessages.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "QuestManagerSubsystem.generated.h"
 
@@ -12,7 +14,7 @@ class UQuestCondition;
 class UQuestDefinition;
 enum class EQuestStatus : uint8;
 
-UCLASS(Config = Game)
+UCLASS(Config = Game, DefaultConfig)
 class STEALTHQUESTSYSTEM_API UQuestManagerSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -32,7 +34,7 @@ public:
 	// Quests Lifecycle
 	// ------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, Category = "Quest")
-	void ActivateQuest(FPrimaryAssetId QuestID);
+	UQuestInstance* ActivateQuest(FPrimaryAssetId QuestID);
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	void CompleteQuest(FPrimaryAssetId QuestID);
 	UFUNCTION(BlueprintCallable, Category = "Quest")
@@ -48,6 +50,8 @@ public:
 	// Queries (BlueprintPure)
 	// ------------------------------------------------------------------
 	UFUNCTION(BlueprintPure, Category = "Quest")
+	const TArray<UQuestInstance*> GetQuestsInstances() const;
+	UFUNCTION(BlueprintPure, Category = "Quest")
 	EQuestStatus GetQuestStatus(FPrimaryAssetId QuestID) const;
 	UFUNCTION(BlueprintPure, Category = "Quest")
 	bool IsQuestCompleted(FPrimaryAssetId QuestID) const;
@@ -56,11 +60,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Quest")
 	bool IsQuestLocked(FPrimaryAssetId QuestID) const;
 	UFUNCTION(BlueprintPure, Category = "Quest")
-	bool GetQuestInstance(FPrimaryAssetId QuestID, FQuestInstance& OutInstance) const;
+	UQuestInstance* GetQuestInstance(FPrimaryAssetId QuestID) const;
 	UFUNCTION(BlueprintPure, Category = "Quest")
 	TArray<FPrimaryAssetId> GetActiveQuestIDs() const;
 	UFUNCTION(BlueprintPure, Category = "Quest")
 	TArray<FPrimaryAssetId> GetQuestIDsByStatus(EQuestStatus Status) const;
+	UFUNCTION(BlueprintPure, Category = "Quest")
+	bool IsObjectiveCompleted(const FPrimaryAssetId& QuestID, FName ObjectiveID) const;
+	UFUNCTION(BlueprintPure, Category = "Quest")
+	const UQuestDefinition* GetQuestDefinition(FPrimaryAssetId QuestID) const;
 
 	// ------------------------------------------------------------------
 	// Save / Load
@@ -69,23 +77,17 @@ public:
 	void ExportSaveData(FQuestSaveData& OutData) const;
 	UFUNCTION(BlueprintCallable, Category = "Quest|Save")
 	void ImportSaveData(const FQuestSaveData& Data);
-	UPROPERTY(EditDefaultsOnly, Config, Category = "Quest")
-	TArray<FPrimaryAssetId> InitialQuestIDs;
 
 private:
-	// ------------------------------------------------------------------
-	// Helpers
-	// ------------------------------------------------------------------
-	const UQuestDefinition* GetDefinition(FPrimaryAssetId QuestID) const;
-
 	// ------------------------------------------------------------------
 	// Conditions and objectives evaluation
 	// ------------------------------------------------------------------
 
-	bool EvaluateFilterConditions(const TArray<UQuestCondition*>& Conditions, const FQuestEventMessage& Msg) const;
+	bool EvaluateConditions(const TArray<UQuestCondition*>& Conditions) const;
 	bool EvaluateUnlockConditions(const UQuestDefinition* Def) const;
-	bool IsQuestComplete(const UQuestDefinition* Def, const FQuestInstance& Instance) const;
+	bool IsQuestComplete(const UQuestDefinition* Def, const UQuestInstance* Instance) const;
 	void RefreshLockedQuests();
+	void RefreshLockedObjectives();
 
 	// ------------------------------------------------------------------
 	// Player tags
@@ -100,18 +102,26 @@ private:
 	// Broadcasts
 	// ------------------------------------------------------------------
 
-	void BroadcastQuestStartedMessage(FPrimaryAssetId QuestID) const;
-	void BroadcastObjectiveUpdatedMessage(FPrimaryAssetId QuestID, FName ObjectiveID) const;
-	void BroadcastQuestCompletedMessage(FPrimaryAssetId QuestID) const;
-	void BroadcastQuestFailedMessage(FPrimaryAssetId QuestID) const;
-	void BroadcastQuestUnlockedMessage(FPrimaryAssetId QuestID) const;
+	void BroadcastQuestStatusChangedMessage(const FPrimaryAssetId& QuestID, EQuestStatus NewQuestStatus) const;
+
+	void OnObjectiveStatusChanged(FGameplayTag Channel, const FQuestObjectiveUpdatedMessage& Message);
 
 	/*Properties*/
+protected:
+	// UPROPERTY(EditDefaultsOnly, Config, Category = "Quest")
+	// TArray<FPrimaryAssetId> InitialQuestIDs;
+
 private:
 	// ------------------------------------------------------------------
 	// Runtime Data
 	// ------------------------------------------------------------------
 	UPROPERTY(SaveGame)
-	TMap<FPrimaryAssetId, FQuestInstance> QuestsInstances;
+	TMap<FPrimaryAssetId, TObjectPtr<UQuestInstance>> QuestsInstances;
+	UPROPERTY()
 	FGameplayTagContainer GrantedQuestTags;
+
+	// ------------------------------------------------------------------
+	// Listener handles
+	// ------------------------------------------------------------------
+	FGameplayMessageListenerHandle QuestObjectiveStatusChangedHandle;
 };

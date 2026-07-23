@@ -15,6 +15,9 @@ public:
 	UPROPERTY(Config, EditAnywhere, Category="NPCs|Perception")
 	float PlayerSeeTimeThreshold = 1.0f;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Quest")
+	TArray<FPrimaryAssetId> InitialQuestIDs;
+
 	UFUNCTION(BlueprintCallable)
 	static const UStealthGameplaySettings* GetStealthGameplaySettings();
 };

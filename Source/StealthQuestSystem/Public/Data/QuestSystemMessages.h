@@ -5,69 +5,44 @@
 #include "UObject/Object.h"
 #include "QuestSystemMessages.generated.h"
 
-USTRUCT(BlueprintType)
-struct FQuestEventMessage
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	FPrimaryAssetId ItemID;
-	UPROPERTY(BlueprintReadWrite)
-	FName TargetID;
-	UPROPERTY(BlueprintReadWrite)
-	TWeakObjectPtr<UObject> Instigator;
-
-	UPROPERTY(BlueprintReadWrite)
-	int32 Count = 1;
-};
+enum class EQuestStatus : uint8;
+enum class EQuestObjectiveStatus : uint8;
 
 USTRUCT(BlueprintType)
-struct FQuestStartedMessage
+struct FQuestStatusChangedMessage
 {
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite)
 	FPrimaryAssetId QuestID;
+	UPROPERTY(BlueprintReadWrite)
+	EQuestStatus QuestStatus;
 };
 
 USTRUCT(BlueprintType)
-struct FQuestObjectiveUpdatedMessage
+struct FQuestObjectiveMessage
 {
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite)
-	FPrimaryAssetId QuestID;
+	FPrimaryAssetId QuestId;
 	UPROPERTY(BlueprintReadWrite)
 	FName ObjectiveID;
 };
 
 USTRUCT(BlueprintType)
-struct FQuestCompletedMessage
+struct FQuestObjectiveUpdatedMessage : public FQuestObjectiveMessage
 {
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite)
-	FPrimaryAssetId QuestID;
-};
-
-USTRUCT(BlueprintType)
-struct FQuestFailedMessage
-{
-	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite)
-	FPrimaryAssetId QuestID;
-};
-
-USTRUCT(BlueprintType)
-struct FQuestUnlockedMessage
-{
-	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite)
-	FPrimaryAssetId QuestID;
+	EQuestObjectiveStatus Status;
 };
 
 namespace QuestMessageChannels
 {
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Started);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_ObjectiveUpdated);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Completed);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Failed);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Unlocked);
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Started);
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_ObjectiveUpdated);
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Completed);
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Failed);
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Unlocked);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Status_Changed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Objective_Status_Changed);
 }
