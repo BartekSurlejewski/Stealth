@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "Conditions/QuestCondition_ObjectiveCompleted.h"
 #include "Data/QuestInstance.h"
 #include "Data/QuestSystemMessages.h"
 #include "Subsystems/GameInstanceSubsystem.h"
@@ -14,7 +13,7 @@ class UQuestCondition;
 class UQuestDefinition;
 enum class EQuestStatus : uint8;
 
-UCLASS(Config = Game, DefaultConfig)
+UCLASS()
 class STEALTHQUESTSYSTEM_API UQuestManagerSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
@@ -24,7 +23,8 @@ public:
 	// ------------------------------------------------------------------
 	// Subsystem Lifecycle
 	// ------------------------------------------------------------------
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	UFUNCTION()
+	virtual void PlayerInitialize();
 	virtual void Deinitialize() override;
 
 	UFUNCTION(BlueprintPure, Category="Quest", meta=(WorldContext="WorldContextObject"))
@@ -107,9 +107,6 @@ private:
 	void OnObjectiveStatusChanged(FGameplayTag Channel, const FQuestObjectiveUpdatedMessage& Message);
 
 	/*Properties*/
-protected:
-	// UPROPERTY(EditDefaultsOnly, Config, Category = "Quest")
-	// TArray<FPrimaryAssetId> InitialQuestIDs;
 
 private:
 	// ------------------------------------------------------------------

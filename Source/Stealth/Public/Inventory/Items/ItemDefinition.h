@@ -17,7 +17,7 @@ class STEALTH_API UItemDefinition : public UPrimaryDataAsset
 public:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override
 	{
-		return FPrimaryAssetId("ItemDef", GetFName());
+		return FPrimaryAssetId("ItemDefinition", GetFName());
 	}
 
 	/*Properties*/

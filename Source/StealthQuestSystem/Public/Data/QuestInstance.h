@@ -13,11 +13,8 @@ UENUM(BlueprintType)
 enum class EQuestStatus : uint8
 {
 	Inactive,
-	Available,
 	Active,
-	Completed,
-	Failed,
-	Abandoned
+	Finished,
 };
 
 UCLASS(Blueprintable)
@@ -67,7 +64,7 @@ struct FQuestSaveData
 	UPROPERTY()
 	TArray<FPrimaryAssetId> QuestIDs;
 	UPROPERTY()
-	TArray<UQuestInstance*> Instances;
+	TArray<TObjectPtr<UQuestInstance>> Instances;
 	UPROPERTY()
 	FGameplayTagContainer GrantedQuestTags; // Tags granted by quests system
 };

@@ -46,6 +46,10 @@ public:
 protected:
 	UFUNCTION()
 	void SetStatus(EQuestObjectiveStatus NewStatus);
+	UFUNCTION(BlueprintCallable)
+	bool AreAllConditionsMet() const;
+	UFUNCTION()
+	void QuestCondition_StatusChanged(UQuestCondition* Condition, bool bIsConditionMet);
 
 	/*Properties*/
 public:

@@ -22,11 +22,12 @@ void UQuestInstance::ActivateQuest()
 			if (Cond && !Cond->IsConditionMet(this))
 			{
 				bUnlockConditionsMet = false;
+				break;
 			}
 		}
 		if (bUnlockConditionsMet)
 		{
-			Objective->ActivateObjective();
+			ActivateObjective(Objective);
 		}
 	}
 
@@ -37,7 +38,7 @@ void UQuestInstance::DeactivateQuest()
 {
 	for (const TObjectPtr<UQuestObjective> Objective : Objectives)
 	{
-		Objective->DeactivateObjective();
+		DeactivateObjective(Objective);
 	}
 
 	SetStatus(EQuestStatus::Inactive);

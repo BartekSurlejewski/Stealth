@@ -50,6 +50,8 @@ public:
 	bool HasItem(const UItemDefinition* ItemDefinition, int32 Quantity = 1) const;
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	int32 GetItemQuantity(const UItemDefinition* ItemDefinition) const;
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	int32 GetItemQuantityByID(FPrimaryAssetId ItemDefID) const;
 	UFUNCTION(BlueprintPure, Category = "Inventory")
 	bool IsFull() const;
 
@@ -67,6 +69,7 @@ private:
 
 	/*Properties*/
 private:
+	// TODO: Rework to use map for O(1) operations
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
 	TArray<FInventoryItem> Items;
 	// UPROPERTY()

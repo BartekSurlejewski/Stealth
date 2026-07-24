@@ -3,18 +3,16 @@
 
 void UQuestObjective::ActivateObjective_Implementation()
 {
+	if (AreAllConditionsMet())
+	{
+		SetStatus(EQuestObjectiveStatus::Completed);
+		return;
+	}
+
 	for (UQuestCondition* Condition : ObjectiveConditions)
 	{
-		if (!Condition)
-		{
-			continue;
-		}
-
-		if (Condition->IsConditionMet(this))
-		{
-			SetStatus(EQuestObjectiveStatus::Completed);
-			return;
-		}
+		Condition->OnQuestConditionStatusChanged.AddDynamic(this, &UQuestObjective::QuestCondition_StatusChanged);
+		Condition->Activate();
 	}
 
 	SetStatus(EQuestObjectiveStatus::Active);
@@ -22,7 +20,14 @@ void UQuestObjective::ActivateObjective_Implementation()
 
 void UQuestObjective::DeactivateObjective_Implementation()
 {
-	SetStatus(EQuestObjectiveStatus::Active);
+	for (UQuestCondition* Condition : ObjectiveConditions)
+	{
+		Condition->OnQuestConditionStatusChanged.RemoveAll(this);
+		Condition->Deactivate();
+		ActivateObjective();
+	}
+
+	SetStatus(EQuestObjectiveStatus::Locked);
 }
 
 void UQuestObjective::ForceCompleteObjective()
@@ -34,10 +39,8 @@ void UQuestObjective::ForceCompleteObjective()
 			continue;
 		}
 
-		Condition->ForceComplete();
+		Condition->ForceComplete(this);
 	}
-
-	SetStatus(EQuestObjectiveStatus::Completed);
 }
 
 void UQuestObjective::SetStatus(EQuestObjectiveStatus NewStatus)
@@ -49,4 +52,32 @@ void UQuestObjective::SetStatus(EQuestObjectiveStatus NewStatus)
 
 	Status = NewStatus;
 	OnQuestObjectiveStatusChanged.Broadcast(ObjectiveID, Status);
+}
+
+bool UQuestObjective::AreAllConditionsMet() const
+{
+	bool bConditionsMet = true;
+	for (UQuestCondition* Condition : ObjectiveConditions)
+	{
+		if (!Condition)
+		{
+			continue;
+		}
+
+		if (!Condition->IsConditionMet(this))
+		{
+			bConditionsMet = false;
+			break;
+		}
+	}
+
+	return bConditionsMet;
+}
+
+void UQuestObjective::QuestCondition_StatusChanged(UQuestCondition* Condition, bool bIsConditionMet)
+{
+	if (bIsConditionMet && AreAllConditionsMet())
+	{
+		SetStatus(EQuestObjectiveStatus::Completed);
+	}
 }

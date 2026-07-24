@@ -1,5 +1,6 @@
 ﻿#include "Characters/Player/StealthPlayerState.h"
 
+#include "QuestManagerSubsystem.h"
 #include "Characters/Player/StealthCharacter.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
@@ -34,6 +35,8 @@ void AStealthPlayerState::BeginPlay()
 	}
 
 	InventoryComponent->OnItemRemoved.AddDynamic(this, &AStealthPlayerState::InventoryComponent_OnItemRemoved);
+
+	UQuestManagerSubsystem::Get(this)->PlayerInitialize();
 }
 
 void AStealthPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)

@@ -19,10 +19,8 @@ DEFINE_LOG_CATEGORY_STATIC(LogQuest, Log, All);
 // Lifecycle
 // ============================================================================
 
-void UQuestManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UQuestManagerSubsystem::PlayerInitialize()
 {
-	Super::Initialize(Collection);
-
 	QuestObjectiveStatusChangedHandle = UGameplayMessageSubsystem::Get(this).RegisterListener<FQuestObjectiveUpdatedMessage>(
 		QuestMessageChannels::TAG_Quest_Objective_Status_Changed.GetTag(), this,
 		&UQuestManagerSubsystem::OnObjectiveStatusChanged);
@@ -42,11 +40,6 @@ void UQuestManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 		ActivateQuest(QuestID);
 	}
-
-	// for (const FPrimaryAssetId& ID : InitialQuestIDs)
-	// {
-	// 	ActivateQuest(ID);
-	// }
 }
 
 void UQuestManagerSubsystem::Deinitialize()
@@ -109,7 +102,7 @@ UQuestInstance* UQuestManagerSubsystem::ActivateQuest(FPrimaryAssetId QuestID)
 
 	if (const UQuestInstance* Existing = QuestsInstances.FindRef(QuestID))
 	{
-		if (Existing->GetQuestStatus() == EQuestStatus::Active || Existing->GetQuestStatus() == EQuestStatus::Completed)
+		if (Existing->GetQuestStatus() == EQuestStatus::Active || Existing->GetQuestStatus() == EQuestStatus::Finished)
 		{
 			return nullptr;
 		}
@@ -135,6 +128,8 @@ UQuestInstance* UQuestManagerSubsystem::ActivateQuest(FPrimaryAssetId QuestID)
 	RuntimeQuest->ActivateQuest();
 	RefreshLockedObjectives();
 	BroadcastQuestStatusChangedMessage(QuestID, RuntimeQuest->GetQuestStatus());
+
+	UE_LOG(LogQuest, Warning, TEXT("Quest Activated: %s"), *QuestID.ToString());
 
 	return RuntimeQuest;
 }
@@ -165,11 +160,13 @@ void UQuestManagerSubsystem::CompleteQuest(FPrimaryAssetId QuestID)
 		}
 	}
 
-	Instance->SetStatus(EQuestStatus::Completed);
+	Instance->SetStatus(EQuestStatus::Finished);
 
 	BroadcastQuestStatusChangedMessage(QuestID, Instance->GetQuestStatus());
 
 	RefreshLockedQuests();
+
+	UE_LOG(LogQuest, Warning, TEXT("Quest Completed: %s"), *QuestID.ToString());
 
 	if (Def->bIsRepeatable)
 	{
@@ -185,7 +182,7 @@ void UQuestManagerSubsystem::FailQuest(FPrimaryAssetId QuestID)
 		return;
 	}
 
-	Instance->SetStatus(EQuestStatus::Failed);
+	Instance->SetStatus(EQuestStatus::Finished);
 	BroadcastQuestStatusChangedMessage(QuestID, Instance->GetQuestStatus());
 }
 
@@ -197,7 +194,7 @@ void UQuestManagerSubsystem::AbandonQuest(FPrimaryAssetId QuestID)
 		return;
 	}
 
-	Instance->SetStatus(EQuestStatus::Abandoned);
+	Instance->SetStatus(EQuestStatus::Finished);
 }
 
 void UQuestManagerSubsystem::ForceCompleteQuest(FPrimaryAssetId QuestID)
@@ -206,10 +203,20 @@ void UQuestManagerSubsystem::ForceCompleteQuest(FPrimaryAssetId QuestID)
 	if (!Instance)
 	{
 		Instance = ActivateQuest(QuestID);
+
+		if (!Instance)
+		{
+			return;
+		}
 	}
 
 	for (UQuestObjective* Objective : Instance->GetObjectives())
 	{
+		if (!Objective)
+		{
+			continue;
+		}
+
 		Objective->ForceCompleteObjective();
 	}
 
@@ -221,13 +228,7 @@ void UQuestManagerSubsystem::ForceUnlockQuest(FPrimaryAssetId QuestID)
 	UQuestInstance* Instance = QuestsInstances.FindRef(QuestID);
 	if (!Instance)
 	{
-		Instance = ActivateQuest(QuestID);
-	}
-
-	if (Instance->GetQuestStatus() == EQuestStatus::Inactive)
-	{
-		Instance->SetStatus(EQuestStatus::Available);
-		BroadcastQuestStatusChangedMessage(QuestID, Instance->GetQuestStatus());
+		ActivateQuest(QuestID);
 	}
 }
 
@@ -254,7 +255,7 @@ EQuestStatus UQuestManagerSubsystem::GetQuestStatus(FPrimaryAssetId QuestID) con
 
 bool UQuestManagerSubsystem::IsQuestCompleted(FPrimaryAssetId QuestID) const
 {
-	return GetQuestStatus(QuestID) == EQuestStatus::Completed;
+	return GetQuestStatus(QuestID) == EQuestStatus::Finished;
 }
 
 bool UQuestManagerSubsystem::IsQuestActive(FPrimaryAssetId QuestID) const
@@ -462,9 +463,27 @@ void UQuestManagerSubsystem::BroadcastQuestStatusChangedMessage(const FPrimaryAs
 
 void UQuestManagerSubsystem::OnObjectiveStatusChanged(FGameplayTag Channel, const FQuestObjectiveUpdatedMessage& Message)
 {
-	if (Message.Status == EQuestObjectiveStatus::Completed)
+	UE_LOG(LogQuest, Warning, TEXT("Objective %s Changed for Quest %s"), *Message.ObjectiveID.ToString(), *Message.QuestId.ToString());
+
+	if (Message.Status != EQuestObjectiveStatus::Completed)
 	{
-		RefreshLockedObjectives();
+		return;
+	}
+
+	RefreshLockedObjectives();
+
+	UQuestInstance* Instance = QuestsInstances.FindRef(Message.QuestId);
+	if (!Instance || Instance->GetQuestStatus() != EQuestStatus::Active)
+	{
+		return;
+	}
+
+	if (const UQuestDefinition* Def = GetQuestDefinition(Message.QuestId))
+	{
+		if (IsQuestComplete(Def, Instance))
+		{
+			CompleteQuest(Message.QuestId);
+		}
 	}
 }
 

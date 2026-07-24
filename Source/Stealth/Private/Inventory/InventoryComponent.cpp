@@ -158,6 +158,20 @@ int32 UInventoryComponent::GetItemQuantity(const UItemDefinition* ItemDefinition
 			return Slot.Quantity;
 		}
 	}
+
+	return 0;
+}
+
+int32 UInventoryComponent::GetItemQuantityByID(const FPrimaryAssetId ItemDefID) const
+{
+	for (const FInventoryItem& Slot : Items)
+	{
+		if (Slot.ItemDefinition->GetPrimaryAssetId() == ItemDefID)
+		{
+			return Slot.Quantity;
+		}
+	}
+
 	return 0;
 }
 
