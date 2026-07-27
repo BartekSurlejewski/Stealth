@@ -3,6 +3,7 @@
 #include "Characters/NPCs/NpcAiController.h"
 #include "Components/CapsuleComponent.h"
 #include "DialogueSystem/DialogueComponent.h"
+#include "DialogueSystem/DialogueManagerSubsystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -37,7 +38,16 @@ void ANpcCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-void ANpcCharacter::PrimaryInteract_Implementation(AStealthCharacter* Interactor) {}
+void ANpcCharacter::PrimaryInteract_Implementation(AStealthCharacter* Interactor)
+{
+	auto DialogueManager = UDialogueManagerSubsystem::Get(this);
+	if (!DialogueManager || !DialogueComponent)
+	{
+		return;
+	}
+
+	DialogueManager->TryStartDialogue(DialogueComponent);
+}
 
 void ANpcCharacter::SetHighlighted_Implementation(bool bHighlight)
 {

@@ -5,6 +5,7 @@
 #include "NativeGameplayTags.h"
 #include "StealthMessages.generated.h"
 
+class UDialogueComponent;
 class AActor;
 enum class ETimeOfDay : uint8;
 class UDailyRegimenTask;
@@ -21,6 +22,9 @@ namespace StealthMessageChannels
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Next);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Prev);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Prev);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_Dialogue_OptionChosen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_Dialogue_Start);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_Dialogue_End);
 
 	// Daily Tasks
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_DailyTask_OnDailyTaskStarted);
@@ -29,6 +33,10 @@ namespace StealthMessageChannels
 	// Time
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Time_TimeChanged);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Time_TimeOfDayChanged);
+
+	// Dialogue
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Dialogue_Started);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Dialogue_Ended);
 }
 
 USTRUCT(BlueprintType)
@@ -37,6 +45,14 @@ struct FBooleanMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	bool bValue = false;
+};
+
+USTRUCT(BlueprintType)
+struct FIntMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 Value = -1;
 };
 
 USTRUCT(BlueprintType)
@@ -97,4 +113,12 @@ struct FInputMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	FGameplayTag GameplayTag;
+};
+
+USTRUCT(BlueprintType)
+struct FDialogueMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	UDialogueComponent* DialogueComponent;
 };

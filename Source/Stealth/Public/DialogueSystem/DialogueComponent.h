@@ -6,45 +6,43 @@
 #include "DialogueComponent.generated.h"
 
 
+class USpecialDialogueBehaviour;
 class ACharacter;
 
-USTRUCT(BlueprintType)
-struct FDialogueOption
+UCLASS(Blueprintable)
+class STEALTH_API UDialogueOption : public UObject
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FText OptionText;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FText ResponseText;
-
+	UPROPERTY(EditDefaultsOnly, Instanced)
+	TArray<TObjectPtr<USpecialDialogueBehaviour>> CustomActions;
+	UPROPERTY(EditDefaultsOnly)
+	bool bCanBeUsedOnce = false;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FGameplayTag QuestToGrant; // NEW: granting quests via dialogue
+	bool bUsedAlready = false;
 };
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogueOptionSelected, FGameplayTag, GrantedQuestTag);
 
 UCLASS(ClassGroup=(Dialogue), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UDialogueComponent : public UActorComponent
 {
 	GENERATED_BODY()
-	/*Events*/
-public:
-	UPROPERTY(BlueprintAssignable)
-	FOnDialogueOptionSelected OnDialogueOptionSelected;
 
 	/*Methods*/
 public:
 	UDialogueComponent();
 
 	UFUNCTION(BlueprintCallable, Category="Dialogue")
-	void SelectDialogueOption(int32 OptionIndex, ACharacter* PlayerCharacter);
+	UDialogueOption* GetDialogueOption(int32 OptionIndex);
 
 	/*Properties*/
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
-	TArray<FDialogueOption> DialogueOptions;
+	TArray<TObjectPtr<UDialogueOption>> DialogueOptions;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Dialogue")
 	FText NPCGreeting = FText::FromString("Hello prisoner");
 };

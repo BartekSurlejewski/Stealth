@@ -4,6 +4,9 @@
 #include "Core/StealthWorldSubsystem.h"
 #include "DialogueManagerSubsystem.generated.h"
 
+class UDialogueController;
+class UDialogueComponent;
+
 UCLASS()
 class STEALTH_API UDialogueManagerSubsystem : public UStealthWorldSubsystem
 {
@@ -14,4 +17,15 @@ public:
 	{
 		return UStealthWorldSubsystem::Get<UDialogueManagerSubsystem>(WorldContextObject);
 	}
+
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+	virtual void OnWorldEndPlay(UWorld& InWorld) override;
+
+	UFUNCTION(BlueprintCallable)
+	bool TryStartDialogue(UDialogueComponent* NpcDialogueComponent);
+
+	/*Properties*/
+private:
+	UPROPERTY()
+	TObjectPtr<UDialogueController> DialogueController;
 };
