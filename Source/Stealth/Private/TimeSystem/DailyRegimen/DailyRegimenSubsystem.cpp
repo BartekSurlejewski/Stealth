@@ -13,7 +13,7 @@ void UDailyRegimenSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Super::OnWorldBeginPlay(InWorld);
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	TimeChangedListenerHandle = MsgSubsystem.RegisterListener<FTimeChangedMessage>(FGameplayTag::RequestGameplayTag("Message.Time.TimeChanged"), this,
+	TimeChangedListenerHandle = MsgSubsystem.RegisterListener<FTimeChangedMessage>(StealthMessageChannels::TAG_Message_Time_TimeChanged, this,
 	                                                                               &UDailyRegimenSubsystem::OnTimeChanged);
 
 	if (!WorldSettings)
@@ -79,7 +79,7 @@ void UDailyRegimenSubsystem::InitializeTask(UDailyRegimenTask* TaskToInitialize)
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 	FDailyTaskStartedMessage Message(CurrentTask);
-	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.DailyTask.OnDailyTaskStarted"), Message);
+	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskStarted, Message);
 }
 
 UDailyRegimenTask* UDailyRegimenSubsystem::GetNextTaskByIndex()
@@ -170,7 +170,7 @@ void UDailyRegimenSubsystem::OnTimeChanged(FGameplayTag Channel, const FTimeChan
 	{
 		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 		FDailyTaskEndedMessage TaskEndedMessage(CurrentTask, bCurrentTaskSucceeded);
-		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.DailyTask.OnDailyTaskEnded"), TaskEndedMessage);
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskEnded, TaskEndedMessage);
 
 		CurrentTask->DisposeTask();
 		CurrentTask = nullptr;

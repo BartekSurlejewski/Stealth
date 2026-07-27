@@ -2,11 +2,34 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "StealthMessages.generated.h"
 
 class AActor;
 enum class ETimeOfDay : uint8;
 class UDailyRegimenTask;
+
+namespace StealthMessageChannels
+{
+	// Player
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Player_LookedAtInteractable);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Player_IsInRestrictedAreaChanged);
+
+	// Input
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_OpenWidget);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_CloseWidget);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Next);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Prev);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Prev);
+
+	// Daily Tasks
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_DailyTask_OnDailyTaskStarted);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_DailyTask_OnDailyTaskEnded);
+
+	// Time
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Time_TimeChanged);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Time_TimeOfDayChanged);
+}
 
 USTRUCT(BlueprintType)
 struct FBooleanMessage

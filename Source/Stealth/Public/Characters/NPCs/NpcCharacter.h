@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "NpcCharacter.generated.h"
 
+class UDialogueComponent;
 class ANpcAiController;
 
 UCLASS(Abstract)
@@ -27,9 +28,10 @@ public:
 	virtual FGameplayTag GetPrimaryInteractionAbilityTag_Implementation() const override;
 	//~End IInteractable Interface
 
-
 	/*Properties*/
 protected:
 	UPROPERTY();
 	TObjectPtr<ANpcAiController> AiController;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UDialogueComponent> DialogueComponent;
 };

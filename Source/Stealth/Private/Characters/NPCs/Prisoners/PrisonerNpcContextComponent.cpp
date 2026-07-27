@@ -8,9 +8,9 @@ void UPrisonerNpcContextComponent::BeginPlay()
 	Super::BeginPlay();
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	DailyTaskStartedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskStartedMessage>(FGameplayTag::RequestGameplayTag("Message.DailyTask.OnDailyTaskStarted"), this,
+	DailyTaskStartedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskStartedMessage>(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskStarted, this,
 	                                                                                         &UPrisonerNpcContextComponent::OnDailyTaskStarted);
-	DailyTaskEndedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskEndedMessage>(FGameplayTag::RequestGameplayTag("Message.DailyTask.OnDailyTaskEnded"), this,
+	DailyTaskEndedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskEndedMessage>(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskEnded, this,
 	                                                                                     &UPrisonerNpcContextComponent::OnDailyTaskEnded);
 }
 

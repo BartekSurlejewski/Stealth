@@ -7,7 +7,6 @@
 #include "UI/DetailsMenu.h"
 #include "UI/Core/StealthUserWidget.h"
 
-UE_DEFINE_GAMEPLAY_TAG_STATIC(TAG_UI_DetailsMenu, "UI.DetailsMenu")
 
 void AStealthHUD::BeginPlay()
 {
@@ -17,9 +16,9 @@ void AStealthHUD::BeginPlay()
 	CreateOptionalHUD();
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	WidgetOpenListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(FGameplayTag::RequestGameplayTag("Message.Input.OpenWidget"), this,
+	WidgetOpenListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(StealthMessageChannels::TAG_Message_Input_OpenWidget, this,
 	                                                                              &AStealthHUD::OnWidgetOpenMessage);
-	WidgetCloseListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(FGameplayTag::RequestGameplayTag("Message.Input.CloseWidget"), this,
+	WidgetCloseListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(StealthMessageChannels::TAG_Message_Input_CloseWidget, this,
 	                                                                               &AStealthHUD::OnWidgetCloseMessage);
 }
 
@@ -117,9 +116,9 @@ void AStealthHUD::RemoveAndClearWidget(UStealthUserWidget* InstanceRef)
 
 void AStealthHUD::OnWidgetOpenMessage(FGameplayTag Channel, const FGameplayTagMessage& Message)
 {
-	if (Message.GameplayTag.MatchesTag(TAG_UI_DetailsMenu.GetTag()))
+	if (Message.GameplayTag.MatchesTag(StealthUiTags::TAG_UI_DetailsMenu))
 	{
-		UStealthUserWidget* Widget = ShowWidget(TAG_UI_DetailsMenu);
+		UStealthUserWidget* Widget = ShowWidget(StealthUiTags::TAG_UI_DetailsMenu);
 		UDetailsMenu* DetailsMenu = Cast<UDetailsMenu>(Widget);
 		if (DetailsMenu)
 		{
@@ -134,12 +133,20 @@ void AStealthHUD::OnWidgetOpenMessage(FGameplayTag Channel, const FGameplayTagMe
 
 void AStealthHUD::OnWidgetCloseMessage(FGameplayTag Channel, const FGameplayTagMessage& Message)
 {
-	if (Message.GameplayTag.MatchesTag(TAG_UI_DetailsMenu.GetTag()))
+	if (Message.GameplayTag.MatchesTag(StealthUiTags::TAG_UI_DetailsMenu))
 	{
-		HideWidget(TAG_UI_DetailsMenu);
+		HideWidget(StealthUiTags::TAG_UI_DetailsMenu);
 	}
 	else
 	{
 		HideWidget(Message.GameplayTag);
 	}
+}
+
+namespace StealthUiTags
+{
+	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu, "UI.DetailsMenu");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_Inventory, "UI.DetailsMenu.Inventory");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_Journal, "UI.DetailsMenu.Journal");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_DailyRegimen, "UI.DetailsMenu.DailyRegimen");
 }

@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/HUD.h"
 #include "StealthHUD.generated.h"
@@ -55,3 +56,11 @@ private:
 	FGameplayMessageListenerHandle WidgetOpenListenerHandle;
 	FGameplayMessageListenerHandle WidgetCloseListenerHandle;
 };
+
+namespace StealthUiTags
+{
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu_Inventory);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu_Journal);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu_DailyRegimen);
+}

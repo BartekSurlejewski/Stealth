@@ -21,7 +21,7 @@ void AStealthPlayerState::SetIsInRestrictedArea(bool newIsInRestrictedArea)
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 	FBooleanMessage Message(bIsInRestrictedArea);
-	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Player.IsInRestrictedAreaChanged"), Message);
+	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Player_IsInRestrictedAreaChanged, Message);
 }
 
 void AStealthPlayerState::BeginPlay()

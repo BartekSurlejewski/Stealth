@@ -37,7 +37,7 @@ void UTimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	{
 		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 		FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
-		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeOfDayChanged"), Message);
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
 	}
 }
 
@@ -68,7 +68,7 @@ void UTimeSubsystem::Tick(float DeltaTime)
 
 		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 		FTimeChangedMessage Message(Data.CurrentHour, Data.CurrentMinute);
-		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeChanged"), Message);
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeChanged, Message);
 	}
 
 	CheckTimeOfDay();
@@ -131,7 +131,7 @@ void UTimeSubsystem::CheckTimeOfDay()
 
 				UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 				FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
-				MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeOfDayChanged"), Message);
+				MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
 
 				UE_LOG(LogStealth, Log, TEXT("Time of day changed to night"));
 			}
@@ -145,7 +145,7 @@ void UTimeSubsystem::CheckTimeOfDay()
 
 				UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 				FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
-				MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Time.TimeOfDayChanged"), Message);
+				MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
 
 				UE_LOG(LogStealth, Log, TEXT("Time of day changed to day"));
 			}

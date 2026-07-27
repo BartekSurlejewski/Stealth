@@ -99,8 +99,8 @@ void UStealthCharacterInteractionComponent::TickComponent(float DeltaTime, ELeve
 		LookAtInteractableActor = NewLookAtInteractableActor;
 
 		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-		FInteractableMessage Message(LookAtInteractableActor);
-		MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Player.LookedAtInteractable"), Message);
+		const FInteractableMessage Message(LookAtInteractableActor);
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Player_LookedAtInteractable.GetTag(), Message);
 	}
 }
 

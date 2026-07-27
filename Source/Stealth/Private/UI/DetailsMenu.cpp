@@ -8,9 +8,9 @@ void UDetailsMenu::NativeConstruct()
 	Super::NativeConstruct();
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	PrevSubmenuInputListenerHandle = MsgSubsystem.RegisterListener<FInputMessage>(FGameplayTag::RequestGameplayTag("Message.Input.DetailsMenu.Prev"), this,
+	PrevSubmenuInputListenerHandle = MsgSubsystem.RegisterListener<FInputMessage>(StealthMessageChannels::TAG_Message_Input_DetailsMenu_Prev, this,
 	                                                                              &UDetailsMenu::OnPrevSubmenuInput);
-	NextSubmenuInputListenerHandle = MsgSubsystem.RegisterListener<FInputMessage>(FGameplayTag::RequestGameplayTag("Message.Input.DetailsMenu.Next"), this,
+	NextSubmenuInputListenerHandle = MsgSubsystem.RegisterListener<FInputMessage>(StealthMessageChannels::TAG_Message_Input_DetailsMenu_Next, this,
 	                                                                              &UDetailsMenu::OnNextSubmenuInput);
 
 	DailyRegimenSubmenuInfo.Button = DailyRegimenButton;

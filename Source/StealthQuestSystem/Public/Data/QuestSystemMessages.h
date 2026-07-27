@@ -38,11 +38,6 @@ struct FQuestObjectiveUpdatedMessage : public FQuestObjectiveMessage
 
 namespace QuestMessageChannels
 {
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Started);
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_ObjectiveUpdated);
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Completed);
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Failed);
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Unlocked);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Status_Changed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest_Objective_Status_Changed);
 }

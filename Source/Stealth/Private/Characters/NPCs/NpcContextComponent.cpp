@@ -26,7 +26,7 @@ void UNpcContextComponent::BeginPlay()
 	NpcAiController = Cast<ANpcAiController>(GetOwner());
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	PlayerInRestrictedAreaListenerHandle = MsgSubsystem.RegisterListener<FBooleanMessage>(FGameplayTag::RequestGameplayTag("Message.Player.IsInRestrictedAreaChanged"), this,
+	PlayerInRestrictedAreaListenerHandle = MsgSubsystem.RegisterListener<FBooleanMessage>(StealthMessageChannels::TAG_Message_Player_IsInRestrictedAreaChanged, this,
 	                                                                                      &UNpcContextComponent::OnPlayerInRestrictedAreaChanged);
 
 	GetWorld()->GetTimerManager().SetTimer(PlayerVisibilityCheckTimerHandle, this, &UNpcContextComponent::CheckPlayerVisibility, 0.25f, true);

@@ -7,6 +7,7 @@
 #include "Inventory/InventoryComponent.h"
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
+#include "UI/Core/StealthHUD.h"
 
 void AStealthPlayerController::BeginPlay()
 {
@@ -95,42 +96,42 @@ void AStealthPlayerController::ToggleDetailsMenu(const FGameplayTag SubmenuTag)
 	FGameplayTag MessageTag;
 	if (bIsInMenu)
 	{
-		MessageTag = FGameplayTag::RequestGameplayTag("Message.Input.OpenWidget");
+		MessageTag = StealthMessageChannels::TAG_Message_Input_OpenWidget.GetTag();
 	}
 	else
 	{
-		MessageTag = FGameplayTag::RequestGameplayTag("Message.Input.CloseWidget");
+		MessageTag = StealthMessageChannels::TAG_Message_Input_CloseWidget.GetTag();
 	}
 
-	FGameplayTagMessage MessageContent(SubmenuTag);
+	const FGameplayTagMessage MessageContent(SubmenuTag);
 	MsgSubsystem.BroadcastMessage(MessageTag, MessageContent);
 }
 
 void AStealthPlayerController::OnToggleInventoryInput()
 {
-	ToggleDetailsMenu(FGameplayTag::RequestGameplayTag("UI.DetailsMenu.Inventory"));
+	ToggleDetailsMenu(StealthUiTags::TAG_UI_DetailsMenu_Inventory);
 }
 
 void AStealthPlayerController::OnToggleDetailsMenuInput()
 {
-	ToggleDetailsMenu(FGameplayTag::RequestGameplayTag("UI.DetailsMenu.DailyRegimen"));
+	ToggleDetailsMenu(StealthUiTags::TAG_UI_DetailsMenu_DailyRegimen);
 }
 
 void AStealthPlayerController::OnToggleJournalMenuInput()
 {
-	ToggleDetailsMenu(FGameplayTag::RequestGameplayTag("UI.DetailsMenu.Journal"));
+	ToggleDetailsMenu(StealthUiTags::TAG_UI_DetailsMenu_Journal);
 }
 
 void AStealthPlayerController::OnNextDetailsMenuInput()
 {
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 	FInputMessage Message;
-	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Input.DetailsMenu.Next"), Message);
+	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Input_DetailsMenu_Next.GetTag(), Message);
 }
 
 void AStealthPlayerController::OnPrevDetailsMenuInput()
 {
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 	FInputMessage Message;
-	MsgSubsystem.BroadcastMessage(FGameplayTag::RequestGameplayTag("Message.Input.DetailsMenu.Prev"), Message);
+	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Input_DetailsMenu_Prev.GetTag(), Message);
 }

@@ -2,6 +2,7 @@
 
 #include "Characters/NPCs/NpcAiController.h"
 #include "Components/CapsuleComponent.h"
+#include "DialogueSystem/DialogueComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
@@ -10,12 +11,13 @@ ANpcCharacter::ANpcCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
-
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
 
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+
+	DialogueComponent = CreateDefaultSubobject<UDialogueComponent>("DialogueComponent");
 }
 
 void ANpcCharacter::BeginPlay()
