@@ -34,7 +34,7 @@ public:
 	// Quests Lifecycle
 	// ------------------------------------------------------------------
 	UFUNCTION(BlueprintCallable, Category = "Quest")
-	UQuestInstance* ActivateQuest(FPrimaryAssetId QuestID);
+	UQuestInstance* ActivateQuest(FPrimaryAssetId QuestID, AActor* Instigator);
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	void CompleteQuest(FPrimaryAssetId QuestID);
 	UFUNCTION(BlueprintCallable, Category = "Quest")

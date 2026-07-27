@@ -38,7 +38,7 @@ void UQuestManagerSubsystem::PlayerInitialize()
 			continue;
 		}
 
-		ActivateQuest(QuestID);
+		ActivateQuest(QuestID, nullptr);
 	}
 }
 
@@ -92,7 +92,7 @@ const UQuestDefinition* UQuestManagerSubsystem::GetQuestDefinition(FPrimaryAsset
 // Quest lifetime
 // ============================================================================
 
-UQuestInstance* UQuestManagerSubsystem::ActivateQuest(FPrimaryAssetId QuestID)
+UQuestInstance* UQuestManagerSubsystem::ActivateQuest(const FPrimaryAssetId QuestID, AActor* Instigator)
 {
 	const UQuestDefinition* Def = GetQuestDefinition(QuestID);
 	if (!Def)
@@ -124,7 +124,7 @@ UQuestInstance* UQuestManagerSubsystem::ActivateQuest(FPrimaryAssetId QuestID)
 		Objectives.Add(RuntimeObjective);
 	}
 
-	RuntimeQuest->Initialize(QuestID, EQuestStatus::Active, MoveTemp(Objectives));
+	RuntimeQuest->Initialize(QuestID, EQuestStatus::Active, MoveTemp(Objectives), Instigator);
 	RuntimeQuest->ActivateQuest();
 	RefreshLockedObjectives();
 	BroadcastQuestStatusChangedMessage(QuestID, RuntimeQuest->GetQuestStatus());
@@ -202,7 +202,7 @@ void UQuestManagerSubsystem::ForceCompleteQuest(FPrimaryAssetId QuestID)
 	UQuestInstance* Instance = QuestsInstances.FindRef(QuestID);
 	if (!Instance)
 	{
-		Instance = ActivateQuest(QuestID);
+		Instance = ActivateQuest(QuestID, nullptr);
 
 		if (!Instance)
 		{
@@ -228,7 +228,7 @@ void UQuestManagerSubsystem::ForceUnlockQuest(FPrimaryAssetId QuestID)
 	UQuestInstance* Instance = QuestsInstances.FindRef(QuestID);
 	if (!Instance)
 	{
-		ActivateQuest(QuestID);
+		ActivateQuest(QuestID, nullptr);
 	}
 }
 
@@ -381,7 +381,7 @@ void UQuestManagerSubsystem::RefreshLockedQuests()
 
 		if (EvaluateUnlockConditions(Def))
 		{
-			const UQuestInstance* Instance = ActivateQuest(QuestID);
+			const UQuestInstance* Instance = ActivateQuest(QuestID, nullptr);
 			BroadcastQuestStatusChangedMessage(QuestID, Instance->GetQuestStatus());
 		}
 	}

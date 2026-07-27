@@ -23,7 +23,7 @@ class STEALTHQUESTSYSTEM_API UQuestInstance : public UObject
 	GENERATED_BODY()
 	/*Methods*/
 public:
-	void Initialize(const FPrimaryAssetId& NewQuestDefinitionID, const EQuestStatus& NewQuestStatus, TArray<TObjectPtr<UQuestObjective>>&& NewObjectives);
+	void Initialize(const FPrimaryAssetId& NewQuestDefinitionID, const EQuestStatus& NewQuestStatus, TArray<TObjectPtr<UQuestObjective>>&& NewObjectives, AActor* Instigator);
 
 	UFUNCTION()
 	void ActivateQuest();
@@ -54,6 +54,8 @@ protected:
 	EQuestStatus Status = EQuestStatus::Inactive;
 	UPROPERTY(BlueprintReadOnly, Category="Quest|Instance")
 	TArray<TObjectPtr<UQuestObjective>> Objectives;
+	UPROPERTY(BlueprintReadOnly, Category="Quest|Instance")
+	TObjectPtr<AActor> QuestInstigator;
 };
 
 USTRUCT(BlueprintType)

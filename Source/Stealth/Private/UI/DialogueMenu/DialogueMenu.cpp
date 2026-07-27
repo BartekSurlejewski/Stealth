@@ -1,4 +1,2 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "UI/DialogueMenu/DialogueMenu.h"
+﻿#include "UI/DialogueMenu/DialogueMenu.h"
+void UDialogueMenu::ShowDialogueOptions(const TArray<UDialogueOption*> NewDialogueOptions) {}

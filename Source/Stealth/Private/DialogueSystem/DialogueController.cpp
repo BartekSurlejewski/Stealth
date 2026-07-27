@@ -3,6 +3,7 @@
 #include "GameplayTagContainer.h"
 #include "Core/Executable.h"
 #include "DialogueSystem/DialogueComponent.h"
+#include "DialogueSystem/DialogueOption.h"
 #include "DialogueSystem/SpecialBehaviour/USpecialDialogueBehaviour.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Messages/StealthMessages.h"
@@ -55,7 +56,7 @@ void UDialogueController::Input_OnDialogueOptionChosen(FGameplayTag Channel, con
 
 	for (const TObjectPtr<USpecialDialogueBehaviour>& Behaviour : SelectedOption->CustomActions)
 	{
-		IExecutable::Execute_PerformAction(Behaviour, this);
+		IExecutable::Execute_PerformAction(Behaviour, NpcDialogueComponent);
 	}
 
 	SelectedOption->bUsedAlready = true;

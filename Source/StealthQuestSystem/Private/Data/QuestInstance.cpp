@@ -5,11 +5,13 @@
 #include "Objectives/QuestObjective.h"
 
 
-void UQuestInstance::Initialize(const FPrimaryAssetId& NewQuestDefinitionID, const EQuestStatus& NewQuestStatus, TArray<TObjectPtr<UQuestObjective>>&& NewObjectives)
+void UQuestInstance::Initialize(const FPrimaryAssetId& NewQuestDefinitionID, const EQuestStatus& NewQuestStatus, TArray<TObjectPtr<UQuestObjective>>&& NewObjectives,
+                                AActor* Instigator)
 {
 	this->QuestDefinitionID = NewQuestDefinitionID;
 	this->Status = NewQuestStatus;
 	this->Objectives = MoveTemp(NewObjectives);
+	this->QuestInstigator = Instigator;
 }
 
 void UQuestInstance::ActivateQuest()
