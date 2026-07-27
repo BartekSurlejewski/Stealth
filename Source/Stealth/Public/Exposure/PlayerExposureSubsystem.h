@@ -30,6 +30,8 @@ class STEALTH_API UPlayerExposureSubsystem : public UStealthTickableWorldSubsyst
 	GENERATED_BODY()
 
 public:
+	static UPlayerExposureSubsystem* Get(const UObject* WorldContextObject);
+
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 

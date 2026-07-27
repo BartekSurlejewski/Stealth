@@ -17,9 +17,11 @@ void UStealthLightComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UPlayerExposureSubsystem* LightsRegistry = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>();
 
-	if (!LightsRegistry)
+	UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this);
+
+
+	if (!ExposureSubsystem)
 	{
 		return;
 	}
@@ -47,15 +49,14 @@ void UStealthLightComponent::BeginPlay()
 	LightData.Intensity = LightComponent->Intensity;
 	LightData.OwnerActor = GetOwner();
 
-	LightHandle = LightsRegistry->RegisterLight(LightData);
+	LightHandle = ExposureSubsystem->RegisterLight(LightData);
 }
 
 void UStealthLightComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	UPlayerExposureSubsystem* LightsRegistry = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>();
-	if (LightsRegistry)
+	if (UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this))
 	{
-		LightsRegistry->UnregisterLight(LightHandle);
+		ExposureSubsystem->UnregisterLight(LightHandle);
 	}
 
 	Super::EndPlay(EndPlayReason);

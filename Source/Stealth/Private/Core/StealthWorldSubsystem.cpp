@@ -4,6 +4,7 @@
 #include "Engine/World.h"
 #include "Stealth/Stealth.h"
 
+
 bool UStealthWorldSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	const UWorld* World = Cast<UWorld>(Outer);

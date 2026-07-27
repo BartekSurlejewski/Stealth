@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/Engine.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "StealthTickableWorldSubsystem.generated.h"
 
@@ -18,6 +19,25 @@ public:
 	}
 
 	virtual bool IsTickable() const override { return true; }
+
+	template <typename T>
+	static T* Get(const UObject* WorldContextObject)
+	{
+		static_assert(TIsDerivedFrom<T, UStealthTickableWorldSubsystem>::IsDerived, "T must derive from UStealthTickableWorldSubsystem");
+
+		if (!WorldContextObject)
+		{
+			return nullptr;
+		}
+
+		const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+		if (!World)
+		{
+			return nullptr;
+		}
+
+		return World->GetSubsystem<T>();
+	}
 
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;

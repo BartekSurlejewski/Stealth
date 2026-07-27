@@ -15,6 +15,11 @@ class STEALTH_API UDailyRegimenSubsystem : public UStealthWorldSubsystem
 
 	/*Methods*/
 public:
+	static UDailyRegimenSubsystem* Get(const UObject* WorldContextObject)
+	{
+		return UStealthWorldSubsystem::Get<UDailyRegimenSubsystem>(WorldContextObject);
+	}
+
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void OnWorldEndPlay(UWorld& InWorld) override;
 

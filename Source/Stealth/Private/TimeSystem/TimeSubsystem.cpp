@@ -5,6 +5,11 @@
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 
+UTimeSubsystem* UTimeSubsystem::Get(const UObject* WorldContextObject)
+{
+	return UStealthTickableWorldSubsystem::Get<UTimeSubsystem>(WorldContextObject);
+}
+
 void UTimeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);

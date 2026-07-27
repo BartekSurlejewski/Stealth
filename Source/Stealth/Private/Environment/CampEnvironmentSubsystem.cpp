@@ -3,6 +3,7 @@
 #include "Core/Data/StealthWorldSettings.h"
 #include "Engine/TargetPoint.h"
 
+
 void UCampEnvironmentSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);

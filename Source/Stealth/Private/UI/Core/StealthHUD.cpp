@@ -35,7 +35,7 @@ void AStealthHUD::ShowMainHUD()
 {
 	for (auto WidgetClass : MainHUDWidgetClasses)
 	{
-		CreateAndShowWidget(WidgetClass, true);
+		CreateWidgetInstance(WidgetClass, true);
 	}
 }
 
@@ -43,7 +43,7 @@ void AStealthHUD::CreateOptionalHUD()
 {
 	for (auto WidgetClass : OptionalHUDWidgetClasses)
 	{
-		CreateAndShowWidget(WidgetClass, false);
+		CreateWidgetInstance(WidgetClass, false);
 	}
 }
 
@@ -74,7 +74,7 @@ void AStealthHUD::HideWidget(FGameplayTag WidgetTag)
 	WidgetInstance->OnHide();
 }
 
-UStealthUserWidget* AStealthHUD::CreateAndShowWidget(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder)
+UStealthUserWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder)
 {
 	if (!WidgetClass)
 	{
@@ -149,4 +149,5 @@ namespace StealthUiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_Inventory, "UI.DetailsMenu.Inventory");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_Journal, "UI.DetailsMenu.Journal");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_DailyRegimen, "UI.DetailsMenu.DailyRegimen");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DialogueMenu, "UI.DialogueMenu");
 }

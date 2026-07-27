@@ -33,7 +33,7 @@ private:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void HideWidget(FGameplayTag WidgetTag);
 	UFUNCTION()
-	UStealthUserWidget* CreateAndShowWidget(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder = 0);
+	UStealthUserWidget* CreateWidgetInstance(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder = 0);
 	UFUNCTION()
 	void RemoveAndClearWidget(UStealthUserWidget* InstanceRef);
 
@@ -63,4 +63,5 @@ namespace StealthUiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu_Inventory);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu_Journal);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DetailsMenu_DailyRegimen);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_DialogueMenu);
 }

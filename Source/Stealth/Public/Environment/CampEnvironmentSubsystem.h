@@ -13,6 +13,11 @@ class STEALTH_API UCampEnvironmentSubsystem : public UStealthWorldSubsystem
 
 	/*Methods*/
 public:
+	static UCampEnvironmentSubsystem* Get(const UObject* WorldContextObject)
+	{
+		return UStealthWorldSubsystem::Get<UCampEnvironmentSubsystem>(WorldContextObject);
+	}
+
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	UFUNCTION(BlueprintCallable)

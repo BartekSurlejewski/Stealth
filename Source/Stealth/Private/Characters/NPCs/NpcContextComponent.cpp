@@ -82,8 +82,12 @@ void UNpcContextComponent::CheckPlayerVisibility()
 {
 	if (bHasPlayerLineOfSight)
 	{
-		float ExposureMultiplier = GetWorld()->GetSubsystem<UPlayerExposureSubsystem>()->GetCurrentTotalExposure();
+		float ExposureMultiplier = 1;
 
+		if (auto ExposureSubsystem = UPlayerExposureSubsystem::Get(this))
+		{
+			ExposureMultiplier = ExposureSubsystem->GetCurrentTotalExposure();
+		}
 		if (!bEffectivelySeesPlayer && ExposureMultiplier > 0.1f)
 		{
 			// Run timer for noticing player

@@ -51,7 +51,11 @@ void UDailyRegimenSubsystem::PrepareTask(UDailyRegimenTask* TaskToPrepare)
 		return;
 	}
 
-	int32 CurrentDayTimeAsMinutes = GetWorld()->GetSubsystem<UTimeSubsystem>()->GetCurrentDayTimeAsMinutes();
+	int32 CurrentDayTimeAsMinutes = 0;
+	if (auto TimeSubsystem = UTimeSubsystem::Get(this))
+	{
+		CurrentDayTimeAsMinutes = TimeSubsystem->GetCurrentDayTimeAsMinutes();
+	}
 
 	if (TaskToPrepare->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{

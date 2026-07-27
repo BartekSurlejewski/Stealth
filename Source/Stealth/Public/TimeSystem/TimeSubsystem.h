@@ -52,6 +52,8 @@ class STEALTH_API UTimeSubsystem : public UStealthTickableWorldSubsystem
 
 	/*Methods*/
 public:
+	static UTimeSubsystem* Get(const UObject* WorldContextObject);
+
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	virtual void Tick(float DeltaTime) override;

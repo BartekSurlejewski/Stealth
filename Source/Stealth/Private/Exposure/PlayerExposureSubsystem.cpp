@@ -8,6 +8,11 @@
 #include "Stealth/Stealth.h"
 #include "TimeSystem/TimeSubsystem.h"
 
+UPlayerExposureSubsystem* UPlayerExposureSubsystem::Get(const UObject* WorldContextObject)
+{
+	return UStealthTickableWorldSubsystem::Get<UPlayerExposureSubsystem>(WorldContextObject);
+}
+
 void UPlayerExposureSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
