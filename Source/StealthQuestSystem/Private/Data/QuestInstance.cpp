@@ -11,7 +11,7 @@ void UQuestInstance::Initialize(const FPrimaryAssetId& NewQuestDefinitionID, con
 	this->QuestDefinitionID = NewQuestDefinitionID;
 	this->Status = NewQuestStatus;
 	this->Objectives = MoveTemp(NewObjectives);
-	this->QuestInstigator = Instigator;
+	this->ContextData.Instigator = Instigator;
 }
 
 void UQuestInstance::ActivateQuest()
@@ -44,6 +44,17 @@ void UQuestInstance::DeactivateQuest()
 	}
 
 	SetStatus(EQuestStatus::Inactive);
+}
+
+AActor* UQuestInstance::GetContextActor(FName Key) const
+{
+	const TObjectPtr<AActor>* FoundActor = ContextData.ContextActors.Find(Key);
+	return FoundActor ? *FoundActor : nullptr;
+}
+
+void UQuestInstance::AddContextActor(FName Key, AActor* Actor)
+{
+	ContextData.ContextActors.Add(Key, Actor);
 }
 
 void UQuestInstance::SetStatus(EQuestStatus NewStatus)

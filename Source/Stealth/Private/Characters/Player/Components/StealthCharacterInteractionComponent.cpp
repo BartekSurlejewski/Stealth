@@ -155,6 +155,7 @@ void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction)
 	//TODO: Move adding to inventory to some other place
 	if (bIsPrimaryInteraction && InventoryComponent && LookAtInteractableActor->Implements<UPickable>())
 	{
-		InventoryComponent->TryAddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), IPickable::Execute_GetQuantity(LookAtInteractableActor));
+		int32 QuantityAfterAdd = 0;
+		InventoryComponent->TryAddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), QuantityAfterAdd, IPickable::Execute_GetQuantity(LookAtInteractableActor));
 	}
 }

@@ -6,7 +6,9 @@
 #include "ActiveGameplayEffectHandle.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "Abilities/GameplayAbilityTypes.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/Items/InventoryItem.h"
+#include "Messages/StealthMessages.h"
 #include "StealthCharacterAbilitiesComponent.generated.h"
 
 class UInventoryComponent;
@@ -116,9 +118,14 @@ private:
 	void UpdateTags() const;
 
 	UFUNCTION()
-	void InventoryComponent_OnItemAdded(FInventoryItem& Item, int AddedQuantity, int QuantityInInventory);
+	void PlayerInventory_OnItemAdded(FGameplayTag Channel, const FPlayerInventoryItemAddedMessage& Message);
 	UFUNCTION()
-	void InventoryComponent_OnItemRemoved(FInventoryItem& Item, int RemovedQuantity, int QuantityInInventory, bool bShouldDrop);
+	void PlayerInventory_OnItemRemoved(FGameplayTag Channel, const FPlayerInventoryItemRemovedMessage& Message);
 	UFUNCTION()
 	void AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData);
+
+	// Properties
+private:
+	FGameplayMessageListenerHandle PlayerInventoryItemAddedHandle;
+	FGameplayMessageListenerHandle PlayerInventoryItemRemovedHandle;
 };

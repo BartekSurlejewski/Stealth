@@ -19,6 +19,24 @@ ANpcCharacter::ANpcCharacter()
 	GetCharacterMovement()->AirControl = 0.5f;
 
 	DialogueComponent = CreateDefaultSubobject<UDialogueComponent>("DialogueComponent");
+
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		NpcGUID = FGuid::NewGuid();
+	}
+}
+
+void ANpcCharacter::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+#if WITH_EDITOR
+	if (!NpcGUID.IsValid())
+	{
+		NpcGUID = FGuid::NewGuid();
+		MarkPackageDirty();
+	}
+#endif
 }
 
 void ANpcCharacter::BeginPlay()
@@ -37,6 +55,16 @@ void ANpcCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
+
+#if WITH_EDITOR
+void ANpcCharacter::PostEditImport()
+{
+	Super::PostEditImport();
+
+	NpcGUID = FGuid::NewGuid();
+	MarkPackageDirty();
+}
+#endif
 
 void ANpcCharacter::PrimaryInteract_Implementation(AStealthCharacter* Interactor)
 {

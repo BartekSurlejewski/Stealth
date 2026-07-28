@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "NpcAiController.generated.h"
 
+class UInventoryComponent;
 struct FGameplayTag;
 class UStateTreeAIComponent;
 class UPlayerExposureSubsystem;
@@ -29,7 +30,10 @@ protected:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	FGameplayTag ChangedStateEventTag;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
+	FGuid NpcGUID;
 };

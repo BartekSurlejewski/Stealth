@@ -5,6 +5,7 @@
 #include "Components/TextBlock.h"
 #include "Components/WrapBox.h"
 #include "Inventory/InventoryComponent.h"
+#include "Inventory/InventoryManagerSubsystem.h"
 #include "Inventory/Items/ItemDefinition.h"
 #include "UI/InventoryMenu/InventoryMenuItemSlot.h"
 
@@ -87,7 +88,7 @@ void UInventoryMenu::DropButton_OnClicked()
 	}
 
 	//TODO: Rework
-	if (CurrentInventory->TryRemoveItem(SelectedItem.ItemDefinition, SelectedItem.Quantity, true))
+	if (UInventoryManagerSubsystem::Get(this)->TryRemoveItemFromPlayerInventory(SelectedItem.ItemDefinition, SelectedItem.Quantity, true))
 	{
 		auto MatchingSlot = InventoryItemsSlots.FindByPredicate([&](const UInventoryMenuItemSlot* ItemSlot)
 		{

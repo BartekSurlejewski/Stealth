@@ -1,5 +1,6 @@
 ﻿#include "Quests/Conditions/QuestCondition_ItemOwned.h"
 
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Items/ItemDefinition.h"
@@ -21,17 +22,19 @@ void UQuestCondition_ItemOwned::Activate_Implementation()
 		return;
 	}
 
-	PlayerInventoryComponent->OnItemAdded.AddDynamic(this, &UQuestCondition_ItemOwned::PlayerInventory_OnItemAdded);
-	PlayerInventoryComponent->OnItemRemoved.AddDynamic(this, &UQuestCondition_ItemOwned::PlayerInventory_OnItemRemoved);
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	PlayerInventoryItemAddedHandle = MsgSubsystem.RegisterListener<FPlayerInventoryItemAddedMessage>(StealthMessageChannels::TAG_Message_Inventory_ItemAdded, this,
+	                                                                                                 &UQuestCondition_ItemOwned::PlayerInventory_OnItemAdded);
+	PlayerInventoryItemRemovedHandle = MsgSubsystem.RegisterListener<FPlayerInventoryItemRemovedMessage>(StealthMessageChannels::TAG_Message_Inventory_ItemRemoved, this,
+	                                                                                                     &UQuestCondition_ItemOwned::PlayerInventory_OnItemRemoved);
 }
 
 void UQuestCondition_ItemOwned::Deactivate_Implementation()
 {
-	if (PlayerInventoryComponent)
-	{
-		PlayerInventoryComponent->OnItemAdded.RemoveAll(this);
-		PlayerInventoryComponent->OnItemRemoved.RemoveAll(this);
-	}
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	MsgSubsystem.UnregisterListener(PlayerInventoryItemAddedHandle);
+	MsgSubsystem.UnregisterListener(PlayerInventoryItemRemovedHandle);
+
 	PlayerInventoryComponent = nullptr;
 
 	Super::Deactivate_Implementation();
@@ -47,17 +50,17 @@ bool UQuestCondition_ItemOwned::IsConditionMet_Implementation(const UObject* WCO
 	return PlayerInventoryComponent->GetItemQuantityByID(RequiredItemID) >= MinCount;
 }
 
-void UQuestCondition_ItemOwned::PlayerInventory_OnItemAdded(FInventoryItem& Item, int32 RemovedQuantity, int32 QuantityInInventory)
+void UQuestCondition_ItemOwned::PlayerInventory_OnItemAdded(FGameplayTag Channel, const FPlayerInventoryItemAddedMessage& Message)
 {
-	if (Item.ItemDefinition->GetPrimaryAssetId() == RequiredItemID && QuantityInInventory >= MinCount)
+	if (Message.AddedItem->GetPrimaryAssetId() == RequiredItemID && Message.QuantityInInventory >= MinCount)
 	{
 		OnQuestConditionStatusChanged.Broadcast(this, true);
 	}
 }
 
-void UQuestCondition_ItemOwned::PlayerInventory_OnItemRemoved(FInventoryItem& Item, int32 RemovedQuantity, int32 QuantityInInventory, bool bShouldDrop)
+void UQuestCondition_ItemOwned::PlayerInventory_OnItemRemoved(FGameplayTag Channel, const FPlayerInventoryItemRemovedMessage& Message)
 {
-	if (Item.ItemDefinition->GetPrimaryAssetId() == RequiredItemID && QuantityInInventory < MinCount)
+	if (Message.RemovedItem->GetPrimaryAssetId() == RequiredItemID && Message.QuantityInInventory < MinCount)
 	{
 		OnQuestConditionStatusChanged.Broadcast(this, false);
 	}

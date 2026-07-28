@@ -4,6 +4,7 @@
 #include "Characters/Player/StealthCharacter.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
+#include "Inventory/InventoryManagerSubsystem.h"
 #include "Inventory/Pickable.h"
 #include "Inventory/Items/InventoryItem.h"
 #include "Inventory/Items/ItemDefinition.h"
@@ -34,26 +35,45 @@ void AStealthPlayerState::BeginPlay()
 		UE_LOG(LogStealth, Error, TEXT("PlayerState: Couldn't cast player character to AStealthCharacter."));
 	}
 
-	InventoryComponent->OnItemRemoved.AddDynamic(this, &AStealthPlayerState::InventoryComponent_OnItemRemoved);
+	if (InventoryComponent)
+	{
+		if (const auto InventoryManager = UInventoryManagerSubsystem::Get(this))
+		{
+			InventoryManager->RegisterPlayerInventory(InventoryComponent);
+		}
+	}
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	PlayerInventoryItemRemovedListenerHandle = MsgSubsystem.RegisterListener<FPlayerInventoryItemRemovedMessage>(StealthMessageChannels::TAG_Message_Inventory_ItemRemoved, this,
+	                                                                                                             &AStealthPlayerState::OnPlayerInventoryItemRemoved);
 
 	UQuestManagerSubsystem::Get(this)->PlayerInitialize();
 }
 
 void AStealthPlayerState::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	InventoryComponent->OnItemRemoved.RemoveAll(this);
+	if (InventoryComponent)
+	{
+		if (const auto InventoryManager = UInventoryManagerSubsystem::Get(this))
+		{
+			InventoryManager->UnregisterPlayerInventory(InventoryComponent);
+		}
+	}
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	MsgSubsystem.UnregisterListener(PlayerInventoryItemRemovedListenerHandle);
 
 	Super::EndPlay(EndPlayReason);
 }
 
-void AStealthPlayerState::InventoryComponent_OnItemRemoved(FInventoryItem& Item, int Quantity, int QuantityInInventory, bool bShouldDrop)
+void AStealthPlayerState::OnPlayerInventoryItemRemoved(FGameplayTag Channel, const FPlayerInventoryItemRemovedMessage& Message)
 {
-	if (!bShouldDrop || !PlayerCharacter)
+	if (!Message.bShouldDrop || !PlayerCharacter)
 	{
 		return;
 	}
 
-	TSoftClassPtr<AActor> SoftActorToDropClass = Item.ItemDefinition->PickupActorClass;
+	TSoftClassPtr<AActor> SoftActorToDropClass = Message.RemovedItem->PickupActorClass;
 	if (SoftActorToDropClass.IsNull())
 	{
 		return;
@@ -68,6 +88,6 @@ void AStealthPlayerState::InventoryComponent_OnItemRemoved(FInventoryItem& Item,
 	AActor* SpawnedActor = PlayerCharacter->TryDropItem(ActorToDropClass);
 	if (SpawnedActor && SpawnedActor->Implements<UPickable>())
 	{
-		IPickable::Execute_Initialize(SpawnedActor, Item.ItemDefinition, Item.Quantity, Item.ItemDefinition->Name);
+		IPickable::Execute_Initialize(SpawnedActor, Message.RemovedItem, Message.RemovedQuantity, Message.RemovedItem->Name);
 	}
 }

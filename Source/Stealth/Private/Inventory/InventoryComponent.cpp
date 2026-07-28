@@ -16,7 +16,7 @@ void UInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32 QuantityToAdd)
+bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32& QuantityAfterAdd, int32 QuantityToAdd)
 {
 	if (!ItemDefinition || QuantityToAdd <= 0)
 	{
@@ -27,8 +27,7 @@ bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32 Quan
 	if (FInventoryItem* ExistingSlot = FindItemSlot(ItemDefinition))
 	{
 		ExistingSlot->Quantity += QuantityToAdd;
-		OnInventoryChanged.Broadcast();
-		OnItemAdded.Broadcast(*ExistingSlot, QuantityToAdd, ExistingSlot->Quantity);
+		QuantityAfterAdd = ExistingSlot->Quantity;
 		return true;
 	}
 
@@ -43,12 +42,11 @@ bool UInventoryComponent::TryAddItem(UItemDefinition* ItemDefinition, int32 Quan
 	NewItem.Quantity = QuantityToAdd;
 
 	Items.Add(NewItem);
-	OnInventoryChanged.Broadcast();
-	OnItemAdded.Broadcast(NewItem, QuantityToAdd, NewItem.Quantity);
+	QuantityAfterAdd = NewItem.Quantity;
 	return true;
 }
 
-bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, const int32 QuantityToRemove, bool bShouldDrop)
+bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, int32& QuantityAfterRemove, const int32 QuantityToRemove)
 {
 	if (!ItemDefinition || QuantityToRemove <= 0)
 	{
@@ -70,6 +68,7 @@ bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, c
 	RemovedSnapshot.Quantity = QuantityToRemove;
 
 	Slot->Quantity = FMath::Max(0, Slot->Quantity - QuantityToRemove);
+	QuantityAfterRemove = Slot->Quantity;
 
 	if (Slot->Quantity <= 0)
 	{
@@ -82,8 +81,6 @@ bool UInventoryComponent::TryRemoveItem(const UItemDefinition* ItemDefinition, c
 		Items.RemoveSingle(*Slot);
 	}
 
-	OnInventoryChanged.Broadcast();
-	OnItemRemoved.Broadcast(RemovedSnapshot, QuantityToRemove, Slot->Quantity, bShouldDrop);
 	return true;
 }
 
@@ -101,7 +98,8 @@ bool UInventoryComponent::TryUseItem(const UItemDefinition* ItemDefinition)
 	// (drive this from the definition if you want non-consumables to be usable too)
 	if (ItemDefinition->bIsConsumable)
 	{
-		TryRemoveItem(ItemDefinition, 1);
+		int32 QuantityAfterRemove = 0;
+		TryRemoveItem(ItemDefinition, QuantityAfterRemove, 1);
 	}
 
 	return true;
@@ -125,7 +123,6 @@ bool UInventoryComponent::TryEquipItem(UItemDefinition* ItemDefinition)
 		EquippedItemDefinition = ItemDefinition;
 	}
 
-	OnInventoryChanged.Broadcast();
 	return true;
 }
 
@@ -140,7 +137,6 @@ bool UInventoryComponent::TryUnequipItem(const UItemDefinition* ItemDefinition)
 	}
 
 	EquippedItemDefinition = nullptr;
-	OnInventoryChanged.Broadcast();
 	return true;
 }
 

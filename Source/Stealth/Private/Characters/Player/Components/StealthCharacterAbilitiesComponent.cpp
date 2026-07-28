@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Items/ItemDefinition.h"
+#include "Messages/StealthMessages.h"
 
 
 UStealthCharacterAbilitiesComponent::UStealthCharacterAbilitiesComponent()
@@ -34,15 +35,21 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 	GrantAbilities(StartingAbilities);
 	ApplyGameplayEffectsToSelf(StartingEffects);
 
-	PlayerInventoryComponent->OnItemAdded.AddDynamic(this, &UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemAdded);
-	PlayerInventoryComponent->OnItemRemoved.AddDynamic(this, &UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemRemoved);
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	PlayerInventoryItemAddedHandle = MsgSubsystem.RegisterListener<FPlayerInventoryItemAddedMessage>(StealthMessageChannels::TAG_Message_Inventory_ItemAdded, this,
+	                                                                                                 &UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemAdded);
+	PlayerInventoryItemRemovedHandle = MsgSubsystem.RegisterListener<FPlayerInventoryItemRemovedMessage>(StealthMessageChannels::TAG_Message_Inventory_ItemRemoved, this,
+	                                                                                                     &UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemRemoved);
+
 	AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded);
 }
 
 void UStealthCharacterAbilitiesComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	PlayerInventoryComponent->OnItemAdded.RemoveAll(this);
-	PlayerInventoryComponent->OnItemRemoved.RemoveAll(this);
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	MsgSubsystem.UnregisterListener(PlayerInventoryItemAddedHandle);
+	MsgSubsystem.UnregisterListener(PlayerInventoryItemRemovedHandle);
+
 	AbilitySystemComponent->OnAbilityEnded.RemoveAll(this);
 
 	Super::EndPlay(EndPlayReason);
@@ -261,25 +268,25 @@ void UStealthCharacterAbilitiesComponent::UpdateTags() const
 	}
 }
 
-void UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemAdded(FInventoryItem& Item, int AddedQuantity, int QuantityInInventory)
+void UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemAdded(FGameplayTag Channel, const FPlayerInventoryItemAddedMessage& Message)
 {
-	if (AddedQuantity <= 0 || QuantityInInventory <= 0 || OnAddItemsGrantedAbilities.Find(Item.ItemDefinition))
+	if (Message.AddedQuantity <= 0 || Message.QuantityInInventory <= 0 || OnAddItemsGrantedAbilities.Find(Message.AddedItem))
 	{
 		return;
 	}
 
-	OnAddItemsGrantedAbilities.Add(Item.ItemDefinition, FAbilityHandleList{GrantAbilities(Item.ItemDefinition->AbilitiesToGrantOnAdd)});
+	OnAddItemsGrantedAbilities.Add(Message.AddedItem, FAbilityHandleList{GrantAbilities(Message.AddedItem->AbilitiesToGrantOnAdd)});
 }
 
-void UStealthCharacterAbilitiesComponent::InventoryComponent_OnItemRemoved(FInventoryItem& Item, int RemovedQuantity, int QuantityInInventory, bool bShouldDrop)
+void UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemRemoved(FGameplayTag Channel, const FPlayerInventoryItemRemovedMessage& Message)
 {
-	if (RemovedQuantity <= 0 || QuantityInInventory > 0 || !OnAddItemsGrantedAbilities.Find(Item.ItemDefinition))
+	if (Message.RemovedQuantity <= 0 || Message.QuantityInInventory > 0 || !OnAddItemsGrantedAbilities.Find(Message.RemovedItem))
 	{
 		return;
 	}
 
-	RemoveAbilities(OnAddItemsGrantedAbilities[Item.ItemDefinition].Handles);
-	OnAddItemsGrantedAbilities.Remove(Item.ItemDefinition);
+	RemoveAbilities(OnAddItemsGrantedAbilities[Message.RemovedItem].Handles);
+	OnAddItemsGrantedAbilities.Remove(Message.RemovedItem);
 }
 
 void UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData)

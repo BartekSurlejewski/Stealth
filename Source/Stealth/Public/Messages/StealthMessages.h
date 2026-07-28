@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
+#include "Inventory/Items/InventoryItem.h"
 #include "StealthMessages.generated.h"
 
 class UDialogueComponent;
@@ -37,6 +38,12 @@ namespace StealthMessageChannels
 	// Dialogue
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Dialogue_Started);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Dialogue_Ended);
+
+	// Inventory
+	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_Changed);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_ItemAdded);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_ItemRemoved);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_ItemMoved);
 }
 
 USTRUCT(BlueprintType)
@@ -121,4 +128,97 @@ struct FDialogueMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	UDialogueComponent* DialogueComponent;
+};
+
+// Inventory
+// USTRUCT(BlueprintType)
+// struct FPlayerInventoryChangedMessage
+// {
+// 	GENERATED_BODY()
+// };
+//
+// USTRUCT(BlueprintType)
+// struct FNpcInventoryChangedMessage
+// {
+// 	GENERATED_BODY()
+// };
+
+USTRUCT(BlueprintType)
+struct FPlayerInventoryItemAddedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<UItemDefinition> AddedItem;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 AddedQuantity;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 QuantityInInventory;
+};
+
+USTRUCT(BlueprintType)
+struct FPlayerInventoryItemRemovedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<UItemDefinition> RemovedItem;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 RemovedQuantity;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 QuantityInInventory;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	bool bShouldDrop;
+};
+
+USTRUCT(BlueprintType)
+struct FNpcInventoryItemAddedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGuid NpcGUID;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<UItemDefinition> AddedItem;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 AddedQuantity;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 QuantityInInventory;
+};
+
+USTRUCT(BlueprintType)
+struct FNpcInventoryItemRemovedMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGuid NpcGUID;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<UItemDefinition> RemovedItem;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 RemovedQuantity;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 QuantityInInventory;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	bool bShouldDrop;
+};
+
+USTRUCT(BlueprintType)
+struct FItemMovedFromNpcToPlayerMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGuid NpcGUID;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<UItemDefinition> Moved;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 MovedQuantity;
+};
+
+USTRUCT(BlueprintType)
+struct FItemMovedFromPlayerToNpcMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGuid NpcGUID;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	TObjectPtr<UItemDefinition> Moved;
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	int32 MovedQuantity;
 };

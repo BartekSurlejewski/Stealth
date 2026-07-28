@@ -8,11 +8,11 @@
 class UItemEffect;
 class UItemDefinition;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemAdded, FInventoryItem&, Item, int32, AddedQuantity, int32, QuantityInInventory);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnItemRemoved, FInventoryItem&, Item, int32, RemovedQuantity, int32, QuantityInInventory, bool, bShouldDrop);
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
+//
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemAdded, FInventoryItem&, Item, int32, AddedQuantity, int32, QuantityInInventory);
+//
+// DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnItemRemoved, FInventoryItem&, Item, int32, RemovedQuantity, int32, QuantityInInventory, bool, bShouldDrop);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UInventoryComponent : public UActorComponent
@@ -21,14 +21,14 @@ class STEALTH_API UInventoryComponent : public UActorComponent
 
 	/*Events*/
 public:
-	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-	FOnInventoryChanged OnInventoryChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-	FOnItemAdded OnItemAdded;
-
-	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-	FOnItemRemoved OnItemRemoved;
+	// UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	// FOnInventoryChanged OnInventoryChanged;
+	//
+	// UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	// FOnItemAdded OnItemAdded;
+	//
+	// UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	// FOnItemRemoved OnItemRemoved;
 
 	/*Methods*/
 public:
@@ -37,9 +37,9 @@ public:
 
 	// --- Core API ---
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool TryAddItem(UItemDefinition* ItemDefinition, int32 QuantityToAdd = 1);
+	bool TryAddItem(UItemDefinition* ItemDefinition, int32& QuantityAfterAdd, int32 QuantityToAdd = 1);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
-	bool TryRemoveItem(const UItemDefinition* ItemDefinition, int32 QuantityToRemove = 1, bool bShouldDrop = false);
+	bool TryRemoveItem(const UItemDefinition* ItemDefinition, int32& QuantityAfterRemove, int32 QuantityToRemove = 1);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")
 	bool TryUseItem(const UItemDefinition* ItemDefinition);
 	UFUNCTION(BlueprintCallable, Category = "Inventory")

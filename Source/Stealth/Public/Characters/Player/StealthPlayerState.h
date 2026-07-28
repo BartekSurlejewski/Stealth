@@ -1,7 +1,10 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerState.h"
+#include "Messages/StealthMessages.h"
 #include "StealthPlayerState.generated.h"
 
 class AStealthCharacter;
@@ -42,5 +45,9 @@ protected:
 
 	//Event Handlers
 	UFUNCTION()
-	void InventoryComponent_OnItemRemoved(FInventoryItem& Item, int Quantity, int QuantityInInventory, bool bShouldDrop);
+	void OnPlayerInventoryItemRemoved(FGameplayTag Channel, const FPlayerInventoryItemRemovedMessage& Message);
+
+	/*Properties*/
+private:
+	FGameplayMessageListenerHandle PlayerInventoryItemRemovedListenerHandle;
 };

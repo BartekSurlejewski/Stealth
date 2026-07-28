@@ -5,6 +5,8 @@
 #include "QuestObjective.generated.h"
 
 
+class UQuestInstance;
+class AActor;
 class UQuestCondition;
 
 UENUM(BlueprintType)
@@ -39,9 +41,15 @@ public:
 
 	UFUNCTION()
 	void ForceCompleteObjective();
-
 	UFUNCTION()
 	EQuestObjectiveStatus GetStatus() const { return Status; }
+
+	UFUNCTION(BlueprintPure, Category="Quest|Objective")
+	UQuestInstance* GetParentQuestInstance();
+	UFUNCTION(BlueprintCallable, Category="Quest|Objective")
+	AActor* GetQuestInstigator();
+	UFUNCTION(BlueprintCallable, Category="Quest|Objective")
+	AActor* GetQuestContextActor(FName Key);
 
 protected:
 	UFUNCTION()
@@ -67,4 +75,6 @@ public:
 protected:
 	UPROPERTY(BlueprintReadOnly, Category="Quest|Objective")
 	EQuestObjectiveStatus Status = EQuestObjectiveStatus::Locked;
+	UPROPERTY()
+	TObjectPtr<UQuestInstance> CachedParentQuest;
 };

@@ -17,9 +17,17 @@ class STEALTH_API ANpcCharacter : public ACharacter, public IInteractable
 public:
 	ANpcCharacter();
 
+	virtual void OnConstruction(const FTransform& Transform) override;
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+#if WITH_EDITOR
+	virtual void PostEditImport() override;
+#endif
+
+	void AssignGuidFromSave(const FGuid& SavedGuid) { NpcGUID = SavedGuid; }
+	UFUNCTION(BlueprintPure, Category = "NPC|Identification")
+	const FGuid& GetNpcGUID() const { return NpcGUID; }
 
 	//~Begin IInteractable Interface
 	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) override;
@@ -34,4 +42,6 @@ protected:
 	TObjectPtr<ANpcAiController> AiController;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UDialogueComponent> DialogueComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
+	FGuid NpcGUID;
 };

@@ -1,5 +1,6 @@
 ﻿#include "Objectives/QuestObjective.h"
 #include "Conditions/QuestCondition.h"
+#include "Data/QuestInstance.h"
 
 void UQuestObjective::ActivateObjective_Implementation()
 {
@@ -41,6 +42,27 @@ void UQuestObjective::ForceCompleteObjective()
 
 		Condition->ForceComplete(this);
 	}
+}
+
+UQuestInstance* UQuestObjective::GetParentQuestInstance()
+{
+	if (!CachedParentQuest)
+	{
+		CachedParentQuest = Cast<UQuestInstance>(GetOuter());
+	}
+	return CachedParentQuest;
+}
+
+AActor* UQuestObjective::GetQuestInstigator()
+{
+	UQuestInstance* ParentQuest = GetParentQuestInstance();
+	return ParentQuest ? ParentQuest->GetInstigator() : nullptr;
+}
+
+AActor* UQuestObjective::GetQuestContextActor(FName Key)
+{
+	UQuestInstance* ParentQuest = GetParentQuestInstance();
+	return ParentQuest ? ParentQuest->GetContextActor(Key) : nullptr;
 }
 
 void UQuestObjective::SetStatus(EQuestObjectiveStatus NewStatus)

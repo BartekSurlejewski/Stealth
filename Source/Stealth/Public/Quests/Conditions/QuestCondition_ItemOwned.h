@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "Conditions/QuestCondition.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
+#include "Messages/StealthMessages.h"
 #include "QuestCondition_ItemOwned.generated.h"
 
 
@@ -20,9 +22,9 @@ public:
 
 private:
 	UFUNCTION()
-	void PlayerInventory_OnItemAdded(FInventoryItem& Item, int32 RemovedQuantity, int32 QuantityInInventory);
+	void PlayerInventory_OnItemAdded(FGameplayTag Channel, const FPlayerInventoryItemAddedMessage& Message);
 	UFUNCTION()
-	void PlayerInventory_OnItemRemoved(FInventoryItem& Item, int32 RemovedQuantity, int32 QuantityInInventory, bool bShouldDrop);
+	void PlayerInventory_OnItemRemoved(FGameplayTag Channel, const FPlayerInventoryItemRemovedMessage& Message);
 
 protected:
 	UPROPERTY(EditAnywhere, Category="Quest", meta=(AllowedTypes="ItemDefinition"))
@@ -32,4 +34,8 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> PlayerInventoryComponent;
+
+private:
+	FGameplayMessageListenerHandle PlayerInventoryItemAddedHandle;
+	FGameplayMessageListenerHandle PlayerInventoryItemRemovedHandle;
 };
