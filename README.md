@@ -1,5 +1,5 @@
 # Stealth Game
-Immersive sim game prototype. Sandbox project for improving my Unreal Engine skills.
+A personal, independent immersive-sim prototype built to learn Unreal Engine 5.7 and C++ gameplay programming. This project demonstrates modular gameplay systems (player abilities, inventory, AI, quests, time/visibility mechanics) implemented in C++ — not studio work, but a technical sample of engine-level gameplay engineering.
 
 ## How To Start
 - Clone the repository
@@ -8,13 +8,10 @@ Immersive sim game prototype. Sandbox project for improving my Unreal Engine ski
 - Start game in editor
 
 ## Implemented Features Include:
-- Movement
-- Gameplay Ability System - sprinting, crouching, interactions, stamina consumption and restoration
-- NPC AI using StateTree
-- Perception system - NPCs react when they see or hear player
-- Daily tasks system
-- Interactables system using IInteractable interface
-- Inventory system
-- HUD system
-- Lights affecting player's visibility
-- Day/Night cycle
+- Player movement & abilities: sprint, crouch and stamina managed via Gameplay Ability System (GAS).
+- Interactables: IInteractable-based interaction system and pickup items (see Source/Stealth/Private/Interactables).
+- Inventory: InventoryComponent and InventoryManagerSubsystem — modular C++ inventory manager and item handling (Source/Stealth/Private/Inventory).
+- NPC AI: StateTree-driven AI with perception (sight & hearing) and reactive behaviours (see Source/Stealth/Private/Characters and StateTree setup).
+- Quests & daily tasks: quest conditions and objectives (Source/Stealth/Private/Quests and Source/StealthQuestSystem module).
+- Time & visibility: Day/Night cycle with lighting influencing player visibility and NPC reactions (Source/Stealth/Private/TimeSystem, Exposure).
+- UI / HUD: in-game HUD for player status, inventory and quest feedback (Source/Stealth/Private/UI).
