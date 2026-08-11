@@ -8,6 +8,7 @@
 #include "Inventory/InventoryManagerSubsystem.h"
 #include "Inventory/Items/ItemDefinition.h"
 #include "UI/InventoryMenu/InventoryMenuItemSlot.h"
+#include "PaperSprite.h"
 
 void UInventoryMenu::NativeConstruct()
 {
@@ -44,10 +45,11 @@ void UInventoryMenu::SetInventory(UInventoryComponent* Inventory)
 		if (i < InventoryItems.Num())
 		{
 			InventoryItemsSlots[i]->SetItem(InventoryItems[i]);
+			InventoryItemsSlots[i]->Show();
 		}
 		else
 		{
-			InventoryItemsSlots[i]->Clear();
+			InventoryItemsSlots[i]->Hide();
 		}
 	}
 }
@@ -98,7 +100,7 @@ void UInventoryMenu::DropButton_OnClicked()
 		if (MatchingSlot)
 		{
 			UInventoryMenuItemSlot* InventorySlot = *MatchingSlot;
-			InventorySlot->Clear();
+			InventorySlot->Hide();
 		}
 	}
 }

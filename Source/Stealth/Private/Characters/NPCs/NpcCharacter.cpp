@@ -6,7 +6,6 @@
 #include "DialogueSystem/DialogueManagerSubsystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-// Sets default values
 ANpcCharacter::ANpcCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;

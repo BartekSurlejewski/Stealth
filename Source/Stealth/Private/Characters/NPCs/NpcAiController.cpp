@@ -38,14 +38,14 @@ void ANpcAiController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (UInventoryManagerSubsystem* InventoryManager = UInventoryManagerSubsystem::Get(this))
 	{
-		InventoryManager->RegisterNpcInventory(NpcGUID, NpcInventoryComponent);
+		InventoryManager->UnregisterNpcInventory(NpcGUID, NpcInventoryComponent);
 	}
 
 	if (PerceptionComponent)
 	{
 		PerceptionComponent->OnTargetPerceptionUpdated.RemoveAll(this);
 	}
-	
+
 	Super::EndPlay(EndPlayReason);
 }
 

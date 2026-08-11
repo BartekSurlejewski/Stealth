@@ -50,6 +50,8 @@ public:
 	virtual void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
 	UFUNCTION(BlueprintPure)
 	bool IsPlayerInRestrictedArea();
+	UFUNCTION()
+	void SendStateTreeEvent(const FGameplayTag& Tag) const;
 
 protected:
 	UFUNCTION()
@@ -58,8 +60,7 @@ protected:
 	void GainPlayerSight();
 	UFUNCTION()
 	void LosePlayerSight();
-	UFUNCTION()
-	void SendStateTreeEvent(const FGameplayTag& Tag) const;
+
 	//TODO: think of moving to some subsystem not to hold reference for each NPC
 	APawn* GetPlayerPawn();
 

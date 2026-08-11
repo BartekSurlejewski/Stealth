@@ -1,7 +1,6 @@
 ﻿#include "DialogueSystem/DialogueComponent.h"
 
-#include "DialogueSystem/SpecialBehaviour/USpecialDialogueBehaviour.h"
-
+#include "Characters/NPCs/NpcCharacter.h"
 
 UDialogueComponent::UDialogueComponent()
 {
@@ -16,4 +15,9 @@ UDialogueOption* UDialogueComponent::GetDialogueOption(int32 OptionIndex)
 	}
 
 	return DialogueOptions[OptionIndex];
+}
+
+ANpcCharacter* UDialogueComponent::GetOwningNpc() const
+{
+	return Cast<ANpcCharacter>(GetOwner());
 }

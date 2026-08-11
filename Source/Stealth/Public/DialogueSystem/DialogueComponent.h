@@ -4,6 +4,7 @@
 #include "Components/ActorComponent.h"
 #include "DialogueComponent.generated.h"
 
+class ANpcCharacter;
 class UDialogueOption;
 class USpecialDialogueBehaviour;
 class ACharacter;
@@ -19,6 +20,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Dialogue")
 	UDialogueOption* GetDialogueOption(int32 OptionIndex);
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	const TArray<UDialogueOption*>& GetAllDialogueOptions() const { return DialogueOptions; }
+
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	FText GetNpcGreeting() const { return NPCGreeting; }
+	// Get the owning NPC (for context passing)
+	UFUNCTION(BlueprintCallable, Category="Dialogue")
+	ANpcCharacter* GetOwningNpc() const;
 
 	/*Properties*/
 protected:

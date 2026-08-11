@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Inventory/Items/InventoryItem.h"
-#include "PaperSprite.h"
 #include "UI/Core/StealthUserWidget.h"
 #include "InventoryMenuItemSlot.generated.h"
 
@@ -25,8 +24,7 @@ public:
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetItem(FInventoryItem NewInventoryItem);
-	UFUNCTION(BlueprintCallable)
-	void Clear();
+	virtual void Hide() override;
 	//Getters
 	UFUNCTION(BlueprintPure)
 	[[nodiscard]] const FInventoryItem& GetInventoryItem() const { return InventoryItem; }

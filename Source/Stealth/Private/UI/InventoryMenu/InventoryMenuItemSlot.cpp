@@ -4,6 +4,7 @@
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
 #include "Inventory/Items/ItemDefinition.h"
+#include "PaperSprite.h"
 
 void UInventoryMenuItemSlot::SetItem(FInventoryItem NewInventoryItem)
 {
@@ -13,12 +14,11 @@ void UInventoryMenuItemSlot::SetItem(FInventoryItem NewInventoryItem)
 	}
 
 	InventoryItem = NewInventoryItem;
-	VisualsParent->SetVisibility(ESlateVisibility::Visible);
 	ItemImage->SetBrushFromAtlasInterface(InventoryItem.ItemDefinition->ItemImage.LoadSynchronous());
 	ItemQuantityText->SetText(FText::AsNumber(InventoryItem.Quantity));
 }
 
-void UInventoryMenuItemSlot::Clear()
+void UInventoryMenuItemSlot::Hide()
 {
 	if (!VisualsParent)
 	{
@@ -26,7 +26,8 @@ void UInventoryMenuItemSlot::Clear()
 	}
 
 	InventoryItem = FInventoryItem();
-	VisualsParent->SetVisibility(ESlateVisibility::Hidden);
+
+	Super::Hide();
 }
 
 void UInventoryMenuItemSlot::OnItemButtonClicked()

@@ -11,6 +11,11 @@ class STEALTH_API UStealthUserWidget : public UUserWidget
 	GENERATED_BODY()
 	/*Methods*/
 public:
+	UFUNCTION()
+	virtual void Show();
+	UFUNCTION()
+	virtual void Hide();
+
 	UFUNCTION(BlueprintNativeEvent)
 	void OnShow();
 	UFUNCTION(BlueprintNativeEvent)
