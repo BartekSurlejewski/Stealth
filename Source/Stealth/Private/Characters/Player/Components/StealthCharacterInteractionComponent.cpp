@@ -136,8 +136,8 @@ void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction)
 	}
 
 	FGameplayTag RequiredAbilityTag = bIsPrimaryInteraction
-		                                  ? IInteractable::Execute_GetPrimaryInteractionAbilityTag(LookAtInteractableActor)
-		                                  : IInteractable::Execute_GetSecondaryInteractionAbilityTag(LookAtInteractableActor);
+		                                  ? IInteractable::Execute_GetPrimaryInteractionRequiredAbilityTag(LookAtInteractableActor)
+		                                  : IInteractable::Execute_GetSecondaryInteractionRequiredAbilityTag(LookAtInteractableActor);
 
 	if (!RequiredAbilityTag.IsValid())
 	{
@@ -151,6 +151,10 @@ void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction)
 		EventData.Target = LookAtInteractableActor;
 		AbilitiesComponent->HandleGameplayEvent(RequiredAbilityTag, &EventData);
 	}
+
+	FInteractionNotifyMessage InteractionMessage;
+	InteractionMessage.InteractionTag = IInteractable::Execute_GetPrimaryInteractionMessageTag(LookAtInteractableActor);
+	UGameplayMessageSubsystem::Get(this).BroadcastMessage(StealthMessageChannels::TAG_Message_InteractionPerformed.GetTag(), InteractionMessage);
 
 	//TODO: Move adding to inventory to some other place
 	if (bIsPrimaryInteraction && InventoryComponent && LookAtInteractableActor->Implements<UPickable>())

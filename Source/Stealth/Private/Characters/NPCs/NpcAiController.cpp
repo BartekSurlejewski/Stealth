@@ -3,7 +3,6 @@
 #include "Characters/NPCs/NpcCharacter.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Inventory/InventoryComponent.h"
-#include "Inventory/InventoryManagerSubsystem.h"
 #include "Perception/AIPerceptionComponent.h"
 
 
@@ -20,11 +19,6 @@ void ANpcAiController::OnPossess(APawn* InPawn)
 
 	if (const ANpcCharacter* NpcCharacter = Cast<ANpcCharacter>(InPawn))
 	{
-		if (UInventoryManagerSubsystem* InventoryManager = UInventoryManagerSubsystem::Get(this))
-		{
-			InventoryManager->RegisterNpcInventory(NpcGUID, NpcInventoryComponent);
-		}
-
 		NpcGUID = NpcCharacter->GetNpcGUID();
 	}
 
@@ -36,11 +30,6 @@ void ANpcAiController::OnPossess(APawn* InPawn)
 
 void ANpcAiController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (UInventoryManagerSubsystem* InventoryManager = UInventoryManagerSubsystem::Get(this))
-	{
-		InventoryManager->UnregisterNpcInventory(NpcGUID, NpcInventoryComponent);
-	}
-
 	if (PerceptionComponent)
 	{
 		PerceptionComponent->OnTargetPerceptionUpdated.RemoveAll(this);

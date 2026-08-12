@@ -58,8 +58,7 @@ UQuestManagerSubsystem* UQuestManagerSubsystem::Get(const UObject* WorldContextO
 		return nullptr;
 	}
 
-	const UWorld* World = GEngine->GetWorldFromContextObject(
-		WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	if (!World)
 	{
 		return nullptr;

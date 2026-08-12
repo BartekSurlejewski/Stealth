@@ -31,8 +31,8 @@ public:
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const override;
 	virtual FText GetSecondaryInteractionPrompt_Implementation() const override;
-	virtual FGameplayTag GetPrimaryInteractionAbilityTag_Implementation() const override;
-	virtual FGameplayTag GetSecondaryInteractionAbilityTag_Implementation() const override;
+	virtual FGameplayTag GetPrimaryInteractionRequiredAbilityTag_Implementation() const override;
+	virtual FGameplayTag GetSecondaryInteractionRequiredAbilityTag_Implementation() const override;
 	//~End IInteractable Interface
 
 	//~Begin IPickable Interface

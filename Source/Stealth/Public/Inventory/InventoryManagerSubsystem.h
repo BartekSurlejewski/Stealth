@@ -4,6 +4,7 @@
 #include "Core/StealthWorldSubsystem.h"
 #include "InventoryManagerSubsystem.generated.h"
 
+class UNpcRegistrySubsystem;
 class UItemDefinition;
 class UInventoryComponent;
 
@@ -30,18 +31,11 @@ public:
 	void UnregisterPlayerStash(const FGuid& StashGuid, const UInventoryComponent* InventoryComponent);
 
 	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
-	void RegisterNpcInventory(const FGuid& NpcGuid, UInventoryComponent* InventoryComponent);
-	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
-	void UnregisterNpcInventory(const FGuid& NpcGuid, const UInventoryComponent* InventoryComponent);
-
-	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
 	UInventoryComponent* GetPlayerInventory() const;
 	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
 	UInventoryComponent* GetPlayerStash(const FGuid& StashGuid) const;
 	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
 	UInventoryComponent* GetNpcInventory(const FGuid& NpcGuid) const;
-	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
-	TArray<UInventoryComponent*> GetAllNpcInventories();
 
 	// Inventories Operations
 	UFUNCTION(BlueprintCallable, Category = "Inventory Manager")
@@ -59,8 +53,6 @@ public:
 
 	/*Properties*/
 private:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Manager", meta = (AllowPrivateAccess = "true"))
-	TMap<FGuid, UInventoryComponent*> NpcInventoryMap;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Manager", meta = (AllowPrivateAccess = "true"))
 	TMap<FGuid, UInventoryComponent*> PlayerStashMap;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory Manager", meta = (AllowPrivateAccess = "true"))

@@ -37,7 +37,7 @@ protected:
 	virtual void NativeDestruct() override;
 
 public:
-	void Show(FGameplayTag SubmenuTag);
+	void ShowSubmenu(FGameplayTag SubmenuTag);
 
 private:
 	UFUNCTION()

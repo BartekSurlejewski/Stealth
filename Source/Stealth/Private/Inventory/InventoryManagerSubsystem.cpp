@@ -1,5 +1,6 @@
 ﻿#include "Inventory/InventoryManagerSubsystem.h"
 
+#include "Characters/NPCs/NpcRegistrySubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
 #include "Messages/StealthMessages.h"
@@ -53,37 +54,6 @@ void UInventoryManagerSubsystem::UnregisterPlayerStash(const FGuid& StashGuid, c
 	}
 }
 
-void UInventoryManagerSubsystem::RegisterNpcInventory(const FGuid& NpcGuid, UInventoryComponent* InventoryComponent)
-{
-	if (!NpcGuid.IsValid() || !InventoryComponent)
-	{
-		UE_LOG(LogStealth, Warning, TEXT("[InventoryManager] Invalid NPC inventory registration for Guid %s"), *NpcGuid.ToString());
-		return;
-	}
-
-	if (const UInventoryComponent* Found = NpcInventoryMap.FindRef(NpcGuid))
-	{
-		if (Found && Found != InventoryComponent)
-		{
-			UE_LOG(LogStealth, Warning, TEXT("[InventoryManager] NPC GUID %s is already registered with a different component"),
-			       *NpcGuid.ToString());
-		}
-	}
-
-	NpcInventoryMap.Add(NpcGuid, InventoryComponent);
-}
-
-void UInventoryManagerSubsystem::UnregisterNpcInventory(const FGuid& NpcGuid, const UInventoryComponent* InventoryComponent)
-{
-	if (const UInventoryComponent* Found = NpcInventoryMap.FindRef(NpcGuid))
-	{
-		if (!Found || Found == InventoryComponent)
-		{
-			NpcInventoryMap.Remove(NpcGuid);
-		}
-	}
-}
-
 UInventoryComponent* UInventoryManagerSubsystem::GetPlayerInventory() const
 {
 	return PlayerInventory.Get();
@@ -101,29 +71,18 @@ UInventoryComponent* UInventoryManagerSubsystem::GetPlayerStash(const FGuid& Sta
 
 UInventoryComponent* UInventoryManagerSubsystem::GetNpcInventory(const FGuid& NpcGuid) const
 {
-	if (UInventoryComponent* Found = NpcInventoryMap.FindRef(NpcGuid))
+	const UNpcRegistrySubsystem* NpcRegistry = UNpcRegistrySubsystem::Get(this);
+
+	if (!NpcRegistry)
+	{
+		return nullptr;
+	}
+
+	if (UInventoryComponent* Found = NpcRegistry->GetNpcInventory(NpcGuid))
 	{
 		return Found;
 	}
 	return nullptr;
-}
-
-TArray<UInventoryComponent*> UInventoryManagerSubsystem::GetAllNpcInventories()
-{
-	TArray<UInventoryComponent*> Result;
-	for (auto It = NpcInventoryMap.CreateIterator(); It; ++It)
-	{
-		if (It.Value())
-		{
-			Result.Add(It.Value());
-		}
-		else
-		{
-			It.RemoveCurrent(); // Lazy cleanup of dead entries
-		}
-	}
-
-	return Result;
 }
 
 bool UInventoryManagerSubsystem::TryRemoveItemFromPlayerInventory(UItemDefinition* ItemDefinition, const int32 QuantityToRemove, const bool bShouldDrop) const

@@ -1,14 +1,18 @@
 #include "Characters/NPCs/NpcCharacter.h"
 
 #include "Characters/NPCs/NpcAiController.h"
+#include "Characters/NPCs/NpcRegistrySubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "DialogueSystem/DialogueComponent.h"
 #include "DialogueSystem/DialogueManagerSubsystem.h"
+#include "Engine/GameInstance.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 ANpcCharacter::ANpcCharacter()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
+	PrimaryActorTick.TickInterval = 0.2f;
 
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
@@ -42,12 +46,16 @@ void ANpcCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AiController = Cast<ANpcAiController>(GetController());
+	NpcRegistrySubsystem = UNpcRegistrySubsystem::Get(this);
+	ANpcAiController* AiController = Cast<ANpcAiController>(GetController());
+	NpcRegistrySubsystem->RegisterNpc(this, AiController);
 }
 
-void ANpcCharacter::Tick(float DeltaTime)
+void ANpcCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::Tick(DeltaTime);
+	NpcRegistrySubsystem->UnregisterNpc(NpcGUID);
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void ANpcCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -86,7 +94,7 @@ FText ANpcCharacter::GetPrimaryInteractionPrompt_Implementation() const
 	return FText::FromString("Talk");
 }
 
-FGameplayTag ANpcCharacter::GetPrimaryInteractionAbilityTag_Implementation() const
+FGameplayTag ANpcCharacter::GetPrimaryInteractionRequiredAbilityTag_Implementation() const
 {
-	return IInteractable::GetPrimaryInteractionAbilityTag_Implementation();
+	return IInteractable::GetPrimaryInteractionRequiredAbilityTag_Implementation();
 }

@@ -27,7 +27,7 @@ public:
 	virtual void PlayerInitialize();
 	virtual void Deinitialize() override;
 
-	UFUNCTION(BlueprintPure, Category="Quest", meta=(WorldContext="WorldContextObject"))
+	UFUNCTION(BlueprintCallable, Category="Quest", meta=(WorldContext="WorldContextObject"))
 	static UQuestManagerSubsystem* Get(const UObject* WorldContextObject);
 
 	// ------------------------------------------------------------------

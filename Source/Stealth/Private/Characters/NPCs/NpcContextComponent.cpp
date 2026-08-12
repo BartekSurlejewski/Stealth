@@ -14,6 +14,7 @@
 UNpcContextComponent::UNpcContextComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = false;
 	PrimaryComponentTick.TickInterval = 0.1f; // 10 Hz
 }
 
@@ -21,6 +22,8 @@ UNpcContextComponent::UNpcContextComponent()
 void UNpcContextComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	SetComponentTickEnabled(true);
 
 	StateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeAIComponent>();
 	NpcAiController = Cast<ANpcAiController>(GetOwner());
@@ -124,6 +127,11 @@ void UNpcContextComponent::CheckPlayerVisibility()
 
 void UNpcContextComponent::GainPlayerSight()
 {
+	if (bEffectivelySeesPlayer)
+	{
+		return;
+	}
+
 	bEffectivelySeesPlayer = true;
 
 	if (bIsPlayerInRestrictedArea)
@@ -136,6 +144,11 @@ void UNpcContextComponent::GainPlayerSight()
 
 void UNpcContextComponent::LosePlayerSight()
 {
+	if (!bEffectivelySeesPlayer)
+	{
+		return;
+	}
+
 	bEffectivelySeesPlayer = false;
 	OnPlayerInSightChanged.Broadcast(bEffectivelySeesPlayer);
 }

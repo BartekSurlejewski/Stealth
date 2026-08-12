@@ -28,7 +28,7 @@ void UDetailsMenu::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UDetailsMenu::Show(FGameplayTag SubmenuTag)
+void UDetailsMenu::ShowSubmenu(FGameplayTag SubmenuTag)
 {
 	// Since we're expecting small number of submenus, iterating over them wouldn't take noticeably longer than using a map
 	for (const FSubmenuInfo& SubmenuInfo : SubmenusInfo)

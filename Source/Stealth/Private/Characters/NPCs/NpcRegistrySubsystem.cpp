@@ -14,11 +14,11 @@ UNpcRegistrySubsystem* UNpcRegistrySubsystem::Get(const UObject* WorldContextObj
 	if (!WorldContextObject)
 		return nullptr;
 
-	const UWorld* World = GEngine->GetWorldFromContextObject(
-		WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	const UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	if (!World)
+	{
 		return nullptr;
-
+	}
 	const UGameInstance* GameInstance = World->GetGameInstance();
 	return GameInstance ? GameInstance->GetSubsystem<UNpcRegistrySubsystem>() : nullptr;
 }
@@ -41,6 +41,27 @@ void UNpcRegistrySubsystem::Deinitialize()
 
 	UE_LOG(LogTemp, Warning, TEXT("[NpcRegistry] Subsystem deinitialized"));
 }
+
+/*=========================================================================
+ * TICKABLE
+ *=========================================================================*/
+void UNpcRegistrySubsystem::Tick(float DeltaTime)
+{
+	TimeSinceLastTick += DeltaTime;
+	if (TimeSinceLastTick < TickInterval)
+	{
+		return;
+	}
+
+	TimeSinceLastTick = 0.0f;
+	UpdateAllNpcLocations();
+}
+
+TStatId UNpcRegistrySubsystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UNpcRegistrySubsystem, STATGROUP_Tickables);
+}
+
 
 /*=========================================================================
  * REGISTRATION

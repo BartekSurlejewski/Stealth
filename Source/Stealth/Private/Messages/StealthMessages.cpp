@@ -32,4 +32,7 @@ namespace StealthMessageChannels
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Inventory_ItemAdded, "Message.Inventory.ItemAdded");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Inventory_ItemRemoved, "Message.Inventory.ItemRemoved");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Inventory_ItemMoved, "Message.Inventory.ItemMoved");
+
+	// Interaction
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_InteractionPerformed, "Message.InteractionPerformed");
 }

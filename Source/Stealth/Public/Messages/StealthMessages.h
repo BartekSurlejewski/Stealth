@@ -40,10 +40,12 @@ namespace StealthMessageChannels
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Dialogue_Ended);
 
 	// Inventory
-	// UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_Changed);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_ItemAdded);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_ItemRemoved);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Inventory_ItemMoved);
+
+	// Interaction
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_InteractionPerformed);
 }
 
 USTRUCT(BlueprintType)
@@ -130,19 +132,6 @@ struct FDialogueMessage
 	UDialogueComponent* DialogueComponent;
 };
 
-// Inventory
-// USTRUCT(BlueprintType)
-// struct FPlayerInventoryChangedMessage
-// {
-// 	GENERATED_BODY()
-// };
-//
-// USTRUCT(BlueprintType)
-// struct FNpcInventoryChangedMessage
-// {
-// 	GENERATED_BODY()
-// };
-
 USTRUCT(BlueprintType)
 struct FPlayerInventoryItemAddedMessage
 {
@@ -221,4 +210,12 @@ struct FItemMovedFromPlayerToNpcMessage
 	TObjectPtr<UItemDefinition> Moved;
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	int32 MovedQuantity;
+};
+
+USTRUCT(BlueprintType)
+struct FInteractionNotifyMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGameplayTag InteractionTag;
 };

@@ -122,7 +122,7 @@ void AStealthHUD::OnWidgetOpenMessage(FGameplayTag Channel, const FGameplayTagMe
 		UDetailsMenu* DetailsMenu = Cast<UDetailsMenu>(Widget);
 		if (DetailsMenu)
 		{
-			DetailsMenu->Show(Message.GameplayTag);
+			DetailsMenu->ShowSubmenu(Message.GameplayTag);
 		}
 	}
 	else
@@ -150,4 +150,5 @@ namespace StealthUiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_Journal, "UI.DetailsMenu.Journal");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DetailsMenu_DailyRegimen, "UI.DetailsMenu.DailyRegimen");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_DialogueMenu, "UI.DialogueMenu");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_UI_FinishGameMenu, "UI.FinishGameMenu");
 }

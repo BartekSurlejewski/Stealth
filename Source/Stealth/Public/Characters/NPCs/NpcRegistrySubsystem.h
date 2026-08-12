@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "NpcCharacter.h"
+#include "Tickable.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "NpcRegistrySubsystem.generated.h"
 
@@ -56,7 +57,7 @@ struct FNpcRegistryEntry
 };
 
 UCLASS()
-class STEALTH_API UNpcRegistrySubsystem : public UGameInstanceSubsystem
+class STEALTH_API UNpcRegistrySubsystem : public UGameInstanceSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 
@@ -67,7 +68,22 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	UFUNCTION(BlueprintCallable, Category="NPC Registry", meta=(WorldContext="WorldContextObject"))
 	static UNpcRegistrySubsystem* Get(const UObject* WorldContextObject);
+
+	/*=========================================================================
+	 * TICKABLE
+	 *=========================================================================*/
+public:
+	virtual void Tick(float DeltaTime) override;
+	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Always; }
+	virtual TStatId GetStatId() const override;
+	virtual bool IsTickableWhenPaused() const override { return false; }
+
+private:
+	UPROPERTY()
+	float TimeSinceLastTick = 0.0f;
+	static constexpr float TickInterval = 0.2f;
 
 	/*=========================================================================
 	 * REGISTRATION / UNREGISTRATION
@@ -234,6 +250,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
 	void BroadcastEventToAllNpcs(const FGameplayTag& EventTag);
 
+protected:
 	/**
 	 * Update cached locations for all NPCs
 	 */

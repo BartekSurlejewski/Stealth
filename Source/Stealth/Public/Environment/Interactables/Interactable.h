@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "UObject/Interface.h"
 #include "Interactable.generated.h"
 
@@ -30,15 +31,17 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	FText GetSecondaryInteractionPrompt() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	FGameplayTag GetPrimaryInteractionAbilityTag() const;
+	FGameplayTag GetPrimaryInteractionRequiredAbilityTag() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	FGameplayTag GetSecondaryInteractionAbilityTag() const;
+	FGameplayTag GetSecondaryInteractionRequiredAbilityTag() const;
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
+	FGameplayTag GetPrimaryInteractionMessageTag() const;
 
 	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) {}
 	virtual void SecondaryInteract_Implementation(AStealthCharacter* Interactor) {}
 	virtual void SetHighlighted_Implementation(bool bHighlight) {}
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
 	virtual FText GetSecondaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
-	virtual FGameplayTag GetPrimaryInteractionAbilityTag_Implementation() const { return FGameplayTag(); }
-	virtual FGameplayTag GetSecondaryInteractionAbilityTag_Implementation() const { return FGameplayTag(); }
+	virtual FGameplayTag GetPrimaryInteractionRequiredAbilityTag_Implementation() const { return FGameplayTag(); }
+	virtual FGameplayTag GetSecondaryInteractionRequiredAbilityTag_Implementation() const { return FGameplayTag(); }
 };
