@@ -32,7 +32,7 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void ShowItemInfo(FInventoryItem InventoryItem);
 	UFUNCTION()
-	void ItemSlot_OnItemClicked(FInventoryItem InventoryItem);
+	void ItemSlot_OnItemClicked(const FInventoryItem& InventoryItem);
 	UFUNCTION()
 	void DropButton_OnClicked();
 

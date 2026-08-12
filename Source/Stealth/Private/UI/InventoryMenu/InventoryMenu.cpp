@@ -71,7 +71,7 @@ void UInventoryMenu::ShowItemInfo(const FInventoryItem InventoryItem)
 	SelectedItemDescription->SetText(InventoryItem.ItemDefinition->Description);
 }
 
-void UInventoryMenu::ItemSlot_OnItemClicked(FInventoryItem InventoryItem)
+void UInventoryMenu::ItemSlot_OnItemClicked(const FInventoryItem& InventoryItem)
 {
 	if (!InventoryItem.ItemDefinition)
 	{

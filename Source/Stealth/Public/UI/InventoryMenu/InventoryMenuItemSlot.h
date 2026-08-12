@@ -10,7 +10,7 @@ class UButton;
 class UTextBlock;
 class UImage;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemClicked, FInventoryItem, InventoryItem);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemClicked, const FInventoryItem&, InventoryItem);
 
 UCLASS()
 class STEALTH_API UInventoryMenuItemSlot : public UStealthUserWidget

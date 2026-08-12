@@ -17,7 +17,7 @@ public class Stealth : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
-			"UnrealEd", "PropertyEditor", "GameplayTasks", "Paper2D", "Paper2DEditor", "StealthQuestSystemEditor"
+			"GameplayTasks", "Paper2D"
 		});
 
 		PublicIncludePaths.AddRange(new string[]
