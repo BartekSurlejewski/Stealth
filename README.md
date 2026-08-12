@@ -1,11 +1,21 @@
 # Stealth Game
 A personal, independent immersive-sim prototype built to learn Unreal Engine 5.7 and C++ gameplay programming. This project demonstrates modular gameplay systems (player abilities, inventory, AI, quests, time/visibility mechanics) implemented in C++ — not studio work, but a technical sample of engine-level gameplay engineering.
 
+### Note this is WiP project and new features and improvements are regularly added
+
 ## How To Start
 - Clone the repository
 - Fetch git LFS
 - Start the project using Unreal Engine 5.7
 - Start game in editor
+
+## Controls
+Mouse + W,S,A,D - Movement
+Space - Jump
+Ctrl - Crouch
+Shift - Sprint
+E/R - Primary/secondary interaction
+TAB/I/J - Toggle menus
 
 ## Implemented Features Include:
 - Player movement & abilities: sprint, crouch and stamina managed via Gameplay Ability System (GAS).
