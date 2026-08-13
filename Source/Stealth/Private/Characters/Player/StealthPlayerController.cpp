@@ -79,7 +79,7 @@ void AStealthPlayerController::ToggleDetailsMenu(const FGameplayTag SubmenuTag)
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
 		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
-		//TODO: Add some manager/subsystem for managing UI menus
+		//TODO: Move managing menus and cursor show/hide somewhere else
 		if (bIsInMenu)
 		{
 			SetShowMouseCursor(true);
