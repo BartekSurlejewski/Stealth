@@ -68,7 +68,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Quest")
 	bool IsObjectiveCompleted(const FPrimaryAssetId& QuestID, FName ObjectiveID) const;
 	UFUNCTION(BlueprintPure, Category = "Quest")
-	const UQuestDefinition* GetQuestDefinition(FPrimaryAssetId QuestID) const;
+	const UQuestDefinition* GetQuestDefinition(const FPrimaryAssetId& QuestID) const;
 
 	// ------------------------------------------------------------------
 	// Save / Load

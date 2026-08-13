@@ -72,7 +72,7 @@ UQuestManagerSubsystem* UQuestManagerSubsystem::Get(const UObject* WorldContextO
 // Definition access
 // ============================================================================
 
-const UQuestDefinition* UQuestManagerSubsystem::GetQuestDefinition(FPrimaryAssetId QuestID) const
+const UQuestDefinition* UQuestManagerSubsystem::GetQuestDefinition(const FPrimaryAssetId& QuestID) const
 {
 	UAssetManager& AM = UAssetManager::Get();
 
