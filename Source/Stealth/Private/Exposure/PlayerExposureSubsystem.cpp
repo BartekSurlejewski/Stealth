@@ -56,7 +56,7 @@ void UPlayerExposureSubsystem::UpdateLight(int32 Handle, const FLightData& Light
 	Lights[Handle] = LightData;
 }
 
-const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
+float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 {
 	//TODO: Add calculating the light exposure when player is in the room during day
 	// Return max light exposure during the day
@@ -109,7 +109,7 @@ const float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 	return FMath::Clamp(Accumulated, 0.f, 1.f);
 }
 
-const float UPlayerExposureSubsystem::CalculateTotalPlayerExposure()
+float UPlayerExposureSubsystem::CalculateTotalPlayerExposure()
 {
 	if (!PlayerCharacter)
 	{

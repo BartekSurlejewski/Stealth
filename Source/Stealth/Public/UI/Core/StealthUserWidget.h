@@ -12,10 +12,14 @@ class STEALTH_API UStealthUserWidget : public UUserWidget
 	/*Methods*/
 public:
 	UFUNCTION()
-	virtual void Show();
+	void Show();
 	UFUNCTION()
-	virtual void Hide();
+	void Hide();
 
+	FGameplayTag GetWidgetGameplayTag() const { return WidgetGameplayTag; }
+	bool GetPauseGameOnShow() const { return bPauseGameOnShow; }
+
+protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void OnShow();
 	UFUNCTION(BlueprintNativeEvent)
@@ -24,10 +28,10 @@ public:
 	virtual void OnShow_Implementation() {}
 	virtual void OnHide_Implementation() {}
 
-	FGameplayTag GetWidgetGameplayTag() const { return WidgetGameplayTag; }
-
 	/*Properties*/
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
 	FGameplayTag WidgetGameplayTag;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stealth")
+	bool bPauseGameOnShow = false;
 };

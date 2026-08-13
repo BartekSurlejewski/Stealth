@@ -28,6 +28,20 @@ void UDetailsMenu::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UDetailsMenu::OnShow_Implementation()
+{
+	Super::OnShow_Implementation();
+
+	int32 NumWidgets = WidgetSwitcher->GetNumWidgets();
+	for (int i = 0; i < NumWidgets; ++i)
+	{
+		if (UStealthUserWidget* StealthWidget = Cast<UStealthUserWidget>(WidgetSwitcher->GetWidgetAtIndex(i)))
+		{
+			StealthWidget->Show();
+		}
+	}
+}
+
 void UDetailsMenu::ShowSubmenu(FGameplayTag SubmenuTag)
 {
 	// Since we're expecting small number of submenus, iterating over them wouldn't take noticeably longer than using a map

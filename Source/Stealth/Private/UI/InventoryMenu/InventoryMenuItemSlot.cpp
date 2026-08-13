@@ -19,18 +19,6 @@ void UInventoryMenuItemSlot::SetItem(FInventoryItem NewInventoryItem)
 	ItemQuantityText->SetText(FText::AsNumber(InventoryItem.Quantity));
 }
 
-void UInventoryMenuItemSlot::Hide()
-{
-	if (!VisualsParent)
-	{
-		return;
-	}
-
-	InventoryItem = FInventoryItem();
-
-	Super::Hide();
-}
-
 void UInventoryMenuItemSlot::OnItemButtonClicked()
 {
 	if (VisualsParent->GetVisibility() != ESlateVisibility::Visible)
@@ -45,4 +33,16 @@ void UInventoryMenuItemSlot::NativeConstruct()
 {
 	Super::NativeConstruct();
 	ItemButton->OnClicked.AddUniqueDynamic(this, &UInventoryMenuItemSlot::OnItemButtonClicked);
+}
+
+void UInventoryMenuItemSlot::OnHide_Implementation()
+{
+	if (!VisualsParent)
+	{
+		return;
+	}
+
+	InventoryItem = FInventoryItem();
+
+	Super::OnHide_Implementation();
 }

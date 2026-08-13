@@ -16,11 +16,9 @@ UStealthLightComponent::UStealthLightComponent()
 void UStealthLightComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-
+	
 	UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this);
-
-
+	
 	if (!ExposureSubsystem)
 	{
 		return;

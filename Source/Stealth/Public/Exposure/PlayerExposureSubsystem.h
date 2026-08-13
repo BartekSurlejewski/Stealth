@@ -1,10 +1,7 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "Core/StealthTickableWorldSubsystem.h"
-#include "Subsystems/WorldSubsystem.h"
 #include "PlayerExposureSubsystem.generated.h"
 
 class UTimeSubsystem;
@@ -47,9 +44,9 @@ public:
 
 private:
 	UFUNCTION(BlueprintCallable)
-	const float CalculatePlayerLightExposure();
+	float CalculatePlayerLightExposure();
 	UFUNCTION(BlueprintCallable)
-	const float CalculateTotalPlayerExposure();
+	float CalculateTotalPlayerExposure();
 
 private:
 	UPROPERTY()

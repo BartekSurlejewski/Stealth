@@ -29,7 +29,7 @@ public:
 
 private:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
-	UStealthUserWidget* ShowWidget(FGameplayTag WidgetTag, int32 ZOrder = 0);
+	UStealthUserWidget* ShowWidget(FGameplayTag WidgetTag);
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void HideWidget(FGameplayTag WidgetTag);
 	UFUNCTION()
@@ -51,6 +51,10 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "HUD|Widgets")
 	TMap<FGameplayTag, TObjectPtr<UStealthUserWidget>> ExistingWidgetsByTag;
+	UPROPERTY(BlueprintReadOnly, Category = "HUD|Widgets")
+	TSet<TObjectPtr<UStealthUserWidget>> VisibleWidgets;
+
+	static constexpr int32 MAX_VISIBLE_WIDGETS = 100;
 
 private:
 	FGameplayMessageListenerHandle WidgetOpenListenerHandle;

@@ -8,27 +8,10 @@
 class UItemEffect;
 class UItemDefinition;
 
-// DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
-//
-// DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnItemAdded, FInventoryItem&, Item, int32, AddedQuantity, int32, QuantityInInventory);
-//
-// DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnItemRemoved, FInventoryItem&, Item, int32, RemovedQuantity, int32, QuantityInInventory, bool, bShouldDrop);
-
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
-
-	/*Events*/
-public:
-	// UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-	// FOnInventoryChanged OnInventoryChanged;
-	//
-	// UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-	// FOnItemAdded OnItemAdded;
-	//
-	// UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-	// FOnItemRemoved OnItemRemoved;
 
 	/*Methods*/
 public:

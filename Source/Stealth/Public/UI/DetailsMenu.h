@@ -35,6 +35,7 @@ class STEALTH_API UDetailsMenu : public UStealthUserWidget
 protected:
 	virtual void NativeConstruct() override;
 	virtual void NativeDestruct() override;
+	virtual void OnShow_Implementation() override;
 
 public:
 	void ShowSubmenu(FGameplayTag SubmenuTag);

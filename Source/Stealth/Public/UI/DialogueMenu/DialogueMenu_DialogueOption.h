@@ -16,8 +16,6 @@ class STEALTH_API UDialogueMenu_DialogueOption : public UStealthUserWidget
 
 	// Events
 public:
-	virtual void Hide() override;
-
 	UPROPERTY(BlueprintAssignable)
 	FOnDialogueOptionClicked OnDialogueOptionClicked;
 

@@ -6,7 +6,6 @@
 #include "UI/Core/StealthUserWidget.h"
 #include "InventoryMenu.generated.h"
 
-
 class UInventoryMenuItemSlot;
 class UButton;
 class UImage;
@@ -21,13 +20,12 @@ class STEALTH_API UInventoryMenu : public UStealthUserWidget
 	/*Methods*/
 protected:
 	virtual void NativeConstruct() override;
+	virtual void OnShow_Implementation() override;
 
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetInventory(UInventoryComponent* Inventory);
 
-	virtual void OnShow_Implementation() override;
-	
 protected:
 	UFUNCTION(BlueprintCallable)
 	void ShowItemInfo(FInventoryItem InventoryItem);

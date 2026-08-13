@@ -24,15 +24,16 @@ public:
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetItem(FInventoryItem NewInventoryItem);
-	virtual void Hide() override;
+
 	//Getters
 	UFUNCTION(BlueprintPure)
 	[[nodiscard]] const FInventoryItem& GetInventoryItem() const { return InventoryItem; }
 
 protected:
+	virtual void NativeConstruct() override;
+virtual void OnHide_Implementation() override;	
 	UFUNCTION()
 	void OnItemButtonClicked();
-	virtual void NativeConstruct() override;
 
 	/*Properties*/
 protected:

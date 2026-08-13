@@ -2,6 +2,7 @@
 
 #include "NativeGameplayTags.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 #include "UI/DetailsMenu.h"
@@ -11,6 +12,8 @@
 void AStealthHUD::BeginPlay()
 {
 	Super::BeginPlay();
+
+	VisibleWidgets.Reserve(MAX_VISIBLE_WIDGETS);
 
 	ShowMainHUD();
 	CreateOptionalHUD();
@@ -47,7 +50,7 @@ void AStealthHUD::CreateOptionalHUD()
 	}
 }
 
-UStealthUserWidget* AStealthHUD::ShowWidget(FGameplayTag WidgetTag, int32 ZOrder)
+UStealthUserWidget* AStealthHUD::ShowWidget(FGameplayTag WidgetTag)
 {
 	UStealthUserWidget* WidgetInstance = ExistingWidgetsByTag.FindRef(WidgetTag);
 	if (!WidgetInstance)
@@ -56,8 +59,19 @@ UStealthUserWidget* AStealthHUD::ShowWidget(FGameplayTag WidgetTag, int32 ZOrder
 		return nullptr;
 	}
 
-	WidgetInstance->AddToViewport(ZOrder);
-	WidgetInstance->OnShow();
+	if (VisibleWidgets.Contains(WidgetInstance))
+	{
+		return WidgetInstance;
+	}
+
+	WidgetInstance->Show();
+	VisibleWidgets.Add(WidgetInstance);
+
+	if (WidgetInstance->GetPauseGameOnShow())
+	{
+		UGameplayStatics::SetGamePaused(this, true);
+	}
+
 	return WidgetInstance;
 }
 
@@ -70,8 +84,28 @@ void AStealthHUD::HideWidget(FGameplayTag WidgetTag)
 		return;
 	}
 
-	WidgetInstance->RemoveFromParent();
-	WidgetInstance->OnHide();
+	if (!VisibleWidgets.Contains(WidgetInstance))
+	{
+		return;
+	}
+
+	WidgetInstance->Hide();
+	VisibleWidgets.Remove(WidgetInstance);
+
+	bool bAnyActiveWidgetPausesGame = false;
+	for (const TObjectPtr<UStealthUserWidget>& VisibleWidget : VisibleWidgets)
+	{
+		if (VisibleWidget->GetPauseGameOnShow())
+		{
+			bAnyActiveWidgetPausesGame = true;
+			break;
+		}
+	}
+
+	if (!bAnyActiveWidgetPausesGame && WidgetInstance->GetPauseGameOnShow())
+	{
+		UGameplayStatics::SetGamePaused(this, false);
+	}
 }
 
 UStealthUserWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder)
@@ -95,10 +129,12 @@ UStealthUserWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthUserWi
 	}
 
 	ExistingWidgetsByTag.Add(WidgetInstance->GetWidgetGameplayTag(), WidgetInstance);
+	WidgetInstance->AddToViewport(ZOrder);
+	WidgetInstance->Hide();
 
 	if (bShow)
 	{
-		ShowWidget(WidgetInstance->GetWidgetGameplayTag(), ZOrder);
+		ShowWidget(WidgetInstance->GetWidgetGameplayTag());
 	}
 
 	return WidgetInstance;
@@ -119,8 +155,7 @@ void AStealthHUD::OnWidgetOpenMessage(FGameplayTag Channel, const FGameplayTagMe
 	if (Message.GameplayTag.MatchesTag(StealthUiTags::TAG_UI_DetailsMenu))
 	{
 		UStealthUserWidget* Widget = ShowWidget(StealthUiTags::TAG_UI_DetailsMenu);
-		UDetailsMenu* DetailsMenu = Cast<UDetailsMenu>(Widget);
-		if (DetailsMenu)
+		if (UDetailsMenu* DetailsMenu = Cast<UDetailsMenu>(Widget))
 		{
 			DetailsMenu->ShowSubmenu(Message.GameplayTag);
 		}
