@@ -7,7 +7,7 @@
 #include "Messages/StealthMessages.h"
 #include "StealthPlayerState.generated.h"
 
-class AStealthCharacter;
+class AStealthPlayerCharacter;
 struct FInventoryItem;
 class UInventoryComponent;
 
@@ -27,7 +27,7 @@ protected:
 
 protected:
 	UPROPERTY()
-	TObjectPtr<AStealthCharacter> PlayerCharacter;
+	TObjectPtr<AStealthPlayerCharacter> PlayerCharacter;
 
 	/*Methods*/
 public:

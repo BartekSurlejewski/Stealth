@@ -5,7 +5,7 @@
 #include "PlayerExposureSubsystem.generated.h"
 
 class UTimeSubsystem;
-class AStealthCharacter;
+class AStealthPlayerCharacter;
 class UActorLightExposureComponent;
 class UWorld;
 
@@ -56,7 +56,7 @@ private:
 	UPROPERTY()
 	float CurrentTotalExposure = 1;
 	UPROPERTY()
-	TObjectPtr<AStealthCharacter> PlayerCharacter;
+	TObjectPtr<AStealthPlayerCharacter> PlayerCharacter;
 
 	UPROPERTY(Transient)
 	TArray<float> PartialResultsBuffer; // Reused buffer for multithreaded calculactions

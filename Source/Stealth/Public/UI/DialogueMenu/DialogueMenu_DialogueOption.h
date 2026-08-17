@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Core/StealthUserWidget.h"
+#include "UI/Core/BaseWidgets/StealthBaseWidget.h"
 #include "DialogueMenu_DialogueOption.generated.h"
 
 class UTextBlock;
@@ -10,7 +10,7 @@ class UDialogueOption;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDialogueOptionClicked, int32, OptionIndex);
 
 UCLASS()
-class STEALTH_API UDialogueMenu_DialogueOption : public UStealthUserWidget
+class STEALTH_API UDialogueMenu_DialogueOption : public UStealthBaseWidget
 {
 	GENERATED_BODY()
 

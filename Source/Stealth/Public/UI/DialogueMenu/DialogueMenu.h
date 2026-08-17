@@ -2,7 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "UI/Core/StealthUserWidget.h"
+#include "UI/Core/BaseWidgets/StealthBaseMenu.h"
+#include "UI/Core/BaseWidgets/StealthBaseWidget.h"
 #include "DialogueMenu.generated.h"
 
 struct FDialogueMessage;
@@ -11,7 +12,7 @@ class UTextBlock;
 class UDialogueOption;
 
 UCLASS()
-class STEALTH_API UDialogueMenu : public UStealthUserWidget
+class STEALTH_API UDialogueMenu : public UStealthBaseMenu
 {
 	GENERATED_BODY()
 	// Methods

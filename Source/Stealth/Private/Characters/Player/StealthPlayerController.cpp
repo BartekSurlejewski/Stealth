@@ -5,6 +5,7 @@
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 #include "UI/Core/StealthHUD.h"
@@ -34,6 +35,14 @@ void AStealthPlayerController::BeginPlay()
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to get Enhanced Input Subsystem!"));
 	}
+
+	HUD = Cast<AStealthHUD>(GetHUD());
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	OnWidgetShownHandle = MsgSubsystem.RegisterListener<FWidgetToggleMessage>(StealthMessageChannels::TAG_Message_UI_WidgetShown, this,
+	                                                                          &AStealthPlayerController::OnWidgetShown);
+	OnWidgetHiddenHandle = MsgSubsystem.RegisterListener<FWidgetToggleMessage>(StealthMessageChannels::TAG_Message_UI_WidgetHidden, this,
+	                                                                           &AStealthPlayerController::OnWidgetHidden);
 }
 
 void AStealthPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -46,6 +55,10 @@ void AStealthPlayerController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 			Subsystem->ClearAllMappings();
 		}
 	}
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	MsgSubsystem.UnregisterListener(OnWidgetShownHandle);
+	MsgSubsystem.UnregisterListener(OnWidgetHiddenHandle);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -75,36 +88,9 @@ void AStealthPlayerController::BindInputActions()
 
 void AStealthPlayerController::ToggleDetailsMenu(const FGameplayTag SubmenuTag)
 {
-	bIsInMenu = !bIsInMenu;
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
-	{
-		//TODO: Move managing menus and cursor show/hide somewhere else
-		if (bIsInMenu)
-		{
-			SetShowMouseCursor(true);
-			Subsystem->AddMappingContext(MenuMappingContext, 1);
-		}
-		else
-		{
-			SetShowMouseCursor(false);
-			Subsystem->RemoveMappingContext(MenuMappingContext);
-		}
-	}
-
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	FGameplayTag MessageTag;
-	if (bIsInMenu)
-	{
-		MessageTag = StealthMessageChannels::TAG_Message_Input_OpenWidget.GetTag();
-	}
-	else
-	{
-		MessageTag = StealthMessageChannels::TAG_Message_Input_CloseWidget.GetTag();
-	}
-
-	const FGameplayTagMessage MessageContent(SubmenuTag);
-	MsgSubsystem.BroadcastMessage(MessageTag, MessageContent);
+	const FGameplayTagMessage Message(SubmenuTag);
+	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Input_ToggleWidget, Message);
 }
 
 void AStealthPlayerController::OnToggleInventoryInput()
@@ -134,4 +120,30 @@ void AStealthPlayerController::OnPrevDetailsMenuInput()
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 	FInputMessage Message;
 	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Input_DetailsMenu_Prev.GetTag(), Message);
+}
+
+void AStealthPlayerController::OnWidgetShown(FGameplayTag Channel, const FWidgetToggleMessage& Message)
+{
+	if (HUD->IsAnyWidgetVisible(EUILayer::Menu))
+	{
+		UGameplayStatics::SetGamePaused(this, true);
+		SetShowMouseCursor(true);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(MenuMappingContext, 1);
+		}
+	}
+}
+
+void AStealthPlayerController::OnWidgetHidden(FGameplayTag Channel, const FWidgetToggleMessage& Message)
+{
+	if (!HUD->IsAnyWidgetVisible(EUILayer::Menu))
+	{
+		UGameplayStatics::SetGamePaused(this, false);
+		SetShowMouseCursor(false);
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
+		{
+			Subsystem->RemoveMappingContext(MenuMappingContext);
+		}
+	}
 }

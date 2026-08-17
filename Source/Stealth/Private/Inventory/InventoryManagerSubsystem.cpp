@@ -1,6 +1,6 @@
 ﻿#include "Inventory/InventoryManagerSubsystem.h"
 
-#include "Characters/NPCs/NpcRegistrySubsystem.h"
+#include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
 #include "Messages/StealthMessages.h"
@@ -71,7 +71,7 @@ UInventoryComponent* UInventoryManagerSubsystem::GetPlayerStash(const FGuid& Sta
 
 UInventoryComponent* UInventoryManagerSubsystem::GetNpcInventory(const FGuid& NpcGuid) const
 {
-	const UNpcRegistrySubsystem* NpcRegistry = UNpcRegistrySubsystem::Get(this);
+	const UCharactersRegistrySubsystem* NpcRegistry = UCharactersRegistrySubsystem::Get(this);
 
 	if (!NpcRegistry)
 	{

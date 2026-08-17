@@ -7,8 +7,7 @@ namespace StealthMessageChannels
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Player_IsInRestrictedAreaChanged, "Message.Player.IsInRestrictedAreaChanged");
 
 	// Input
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_OpenWidget, "Message.Input.OpenWidget");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_CloseWidget, "Message.Input.CloseWidget");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_ToggleWidget, "Message.Input.OpenWidget");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_DetailsMenu_Next, "Message.Input.DetailsMenu.Next");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_DetailsMenu_Prev, "Message.Input.DetailsMenu.Prev");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_Dialogue_OptionChosen, "Message.Input.Dialogue.OptionChosen");
@@ -35,4 +34,8 @@ namespace StealthMessageChannels
 
 	// Interaction
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_InteractionPerformed, "Message.InteractionPerformed");
+
+	// UI
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_UI_WidgetShown, "Message.UI.WidgetShown");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_UI_WidgetHidden, "Message.UI.WidgetHidden");
 }

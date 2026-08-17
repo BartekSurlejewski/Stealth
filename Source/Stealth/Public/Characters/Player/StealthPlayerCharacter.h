@@ -4,7 +4,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
-#include "StealthCharacter.generated.h"
+#include "StealthPlayerCharacter.generated.h"
 
 class UStealthCharacterCollisionsComponent;
 class UInventoryComponent;
@@ -19,7 +19,7 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 
 UCLASS()
-class STEALTH_API AStealthCharacter : public ACharacter, public IAbilitySystemInterface
+class STEALTH_API AStealthPlayerCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 	/*Properties*/
@@ -64,10 +64,13 @@ protected:
 
 	/*Methods*/
 public:
-	AStealthCharacter();
+	AStealthPlayerCharacter();
 
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
@@ -79,15 +82,11 @@ public:
 
 protected:
 	void MoveInput(const FInputActionValue& Value);
-
 	void LookInput(const FInputActionValue& Value);
-
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoAim(float Yaw, float Pitch);
-
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoMove(float Right, float Forward);
-
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoPrimaryInteract();
 	UFUNCTION(BlueprintCallable, Category="Input")

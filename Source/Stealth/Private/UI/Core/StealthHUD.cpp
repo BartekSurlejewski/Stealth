@@ -6,7 +6,6 @@
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 #include "UI/DetailsMenu.h"
-#include "UI/Core/StealthUserWidget.h"
 
 
 void AStealthHUD::BeginPlay()
@@ -14,29 +13,33 @@ void AStealthHUD::BeginPlay()
 	Super::BeginPlay();
 
 	VisibleWidgets.Reserve(MAX_VISIBLE_WIDGETS);
+	VisibleWidgetTags.Reserve(MAX_VISIBLE_WIDGETS);
+	VisibleWidgetsCountByLayer.Add(EUILayer::None, 0);
+	VisibleWidgetsCountByLayer.Add(EUILayer::HUD, 0);
+	VisibleWidgetsCountByLayer.Add(EUILayer::Overlay, 0);
+	VisibleWidgetsCountByLayer.Add(EUILayer::Menu, 0);
+	VisibleWidgetsCountByLayer.Add(EUILayer::Popup, 0);
+	VisibleWidgetsCountByLayer.Add(EUILayer::Loading, 0);
 
 	ShowMainHUD();
 	CreateOptionalHUD();
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	WidgetOpenListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(StealthMessageChannels::TAG_Message_Input_OpenWidget, this,
-	                                                                              &AStealthHUD::OnWidgetOpenMessage);
-	WidgetCloseListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(StealthMessageChannels::TAG_Message_Input_CloseWidget, this,
-	                                                                               &AStealthHUD::OnWidgetCloseMessage);
+	WidgetToggleListenerHandle = MsgSubsystem.RegisterListener<FGameplayTagMessage>(StealthMessageChannels::TAG_Message_Input_ToggleWidget, this,
+	                                                                                &AStealthHUD::OnWidgetToggleMessage);
 }
 
 void AStealthHUD::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	MsgSubsystem.UnregisterListener(WidgetOpenListenerHandle);
-	MsgSubsystem.UnregisterListener(WidgetCloseListenerHandle);
+	MsgSubsystem.UnregisterListener(WidgetToggleListenerHandle);
 
 	Super::EndPlay(EndPlayReason);
 }
 
 void AStealthHUD::ShowMainHUD()
 {
-	for (auto WidgetClass : MainHUDWidgetClasses)
+	for (const auto WidgetClass : MainHUDWidgetClasses)
 	{
 		CreateWidgetInstance(WidgetClass, true);
 	}
@@ -50,65 +53,54 @@ void AStealthHUD::CreateOptionalHUD()
 	}
 }
 
-UStealthUserWidget* AStealthHUD::ShowWidget(FGameplayTag WidgetTag)
+bool AStealthHUD::IsAnyWidgetVisible(EUILayer Layer) const
 {
-	UStealthUserWidget* WidgetInstance = ExistingWidgetsByTag.FindRef(WidgetTag);
+	return VisibleWidgetsCountByLayer[Layer] > 0;
+}
+
+UStealthBaseWidget* AStealthHUD::ShowWidget(const FGameplayTag& WidgetTag)
+{
+	UStealthBaseWidget* WidgetInstance = ExistingWidgetsByTag.FindRef(WidgetTag);
 	if (!WidgetInstance)
 	{
 		UE_LOG(LogStealth, Warning, TEXT("AStealthHUD: No existing widget for tag %s."), *WidgetTag.ToString());
 		return nullptr;
 	}
 
-	if (VisibleWidgets.Contains(WidgetInstance))
+	if (VisibleWidgetTags.Contains(WidgetTag))
 	{
 		return WidgetInstance;
 	}
 
-	WidgetInstance->Show();
+	VisibleWidgetTags.Add(WidgetTag);
 	VisibleWidgets.Add(WidgetInstance);
-
-	if (WidgetInstance->GetPauseGameOnShow())
-	{
-		UGameplayStatics::SetGamePaused(this, true);
-	}
+	VisibleWidgetsCountByLayer[WidgetInstance->GetLayer()] = FMath::Max(0, VisibleWidgetsCountByLayer[WidgetInstance->GetLayer()] + 1);
+	WidgetInstance->Show();
 
 	return WidgetInstance;
 }
 
-void AStealthHUD::HideWidget(FGameplayTag WidgetTag)
+void AStealthHUD::HideWidget(const FGameplayTag& WidgetTag)
 {
-	UStealthUserWidget* WidgetInstance = ExistingWidgetsByTag.FindRef(WidgetTag);
+	UStealthBaseWidget* WidgetInstance = ExistingWidgetsByTag.FindRef(WidgetTag);
 	if (!WidgetInstance)
 	{
 		UE_LOG(LogStealth, Warning, TEXT("AStealthHUD: No existing widget for tag %s."), *WidgetTag.ToString());
 		return;
 	}
 
-	if (!VisibleWidgets.Contains(WidgetInstance))
+	if (!VisibleWidgetTags.Contains(WidgetTag))
 	{
 		return;
 	}
 
-	WidgetInstance->Hide();
+	VisibleWidgetTags.Remove(WidgetTag);
 	VisibleWidgets.Remove(WidgetInstance);
-
-	bool bAnyActiveWidgetPausesGame = false;
-	for (const TObjectPtr<UStealthUserWidget>& VisibleWidget : VisibleWidgets)
-	{
-		if (VisibleWidget->GetPauseGameOnShow())
-		{
-			bAnyActiveWidgetPausesGame = true;
-			break;
-		}
-	}
-
-	if (!bAnyActiveWidgetPausesGame && WidgetInstance->GetPauseGameOnShow())
-	{
-		UGameplayStatics::SetGamePaused(this, false);
-	}
+	VisibleWidgetsCountByLayer[WidgetInstance->GetLayer()] = FMath::Max(0, VisibleWidgetsCountByLayer[WidgetInstance->GetLayer()] - 1);
+	WidgetInstance->Hide();
 }
 
-UStealthUserWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder)
+UStealthBaseWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthBaseWidget> WidgetClass, bool bShow, int32 ZOrder)
 {
 	if (!WidgetClass)
 	{
@@ -122,7 +114,7 @@ UStealthUserWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthUserWi
 		return nullptr;
 	}
 
-	UStealthUserWidget* WidgetInstance = CreateWidget<UStealthUserWidget>(PC, WidgetClass);
+	UStealthBaseWidget* WidgetInstance = CreateWidget<UStealthBaseWidget>(PC, WidgetClass);
 	if (!WidgetInstance || ExistingWidgetsByTag.Contains(WidgetInstance->GetWidgetGameplayTag()))
 	{
 		return nullptr;
@@ -140,7 +132,7 @@ UStealthUserWidget* AStealthHUD::CreateWidgetInstance(TSubclassOf<UStealthUserWi
 	return WidgetInstance;
 }
 
-void AStealthHUD::RemoveAndClearWidget(UStealthUserWidget* InstanceRef)
+void AStealthHUD::RemoveAndClearWidget(UStealthBaseWidget* InstanceRef)
 {
 	if (InstanceRef)
 	{
@@ -150,31 +142,37 @@ void AStealthHUD::RemoveAndClearWidget(UStealthUserWidget* InstanceRef)
 	}
 }
 
-void AStealthHUD::OnWidgetOpenMessage(FGameplayTag Channel, const FGameplayTagMessage& Message)
+void AStealthHUD::OnWidgetToggleMessage(FGameplayTag Channel, const FGameplayTagMessage& Message)
 {
 	if (Message.GameplayTag.MatchesTag(StealthUiTags::TAG_UI_DetailsMenu))
 	{
-		UStealthUserWidget* Widget = ShowWidget(StealthUiTags::TAG_UI_DetailsMenu);
-		if (UDetailsMenu* DetailsMenu = Cast<UDetailsMenu>(Widget))
+		if (VisibleWidgetTags.Contains(StealthUiTags::TAG_UI_DetailsMenu))
 		{
-			DetailsMenu->ShowSubmenu(Message.GameplayTag);
+			// Close details menu
+			HideWidget(StealthUiTags::TAG_UI_DetailsMenu);
+		}
+		else
+		{
+			// Open details menu
+			UStealthBaseWidget* Widget = ShowWidget(StealthUiTags::TAG_UI_DetailsMenu);
+			if (UDetailsMenu* DetailsMenu = Cast<UDetailsMenu>(Widget))
+			{
+				DetailsMenu->ShowSubmenu(Message.GameplayTag);
+			}
 		}
 	}
 	else
 	{
-		ShowWidget(Message.GameplayTag);
-	}
-}
-
-void AStealthHUD::OnWidgetCloseMessage(FGameplayTag Channel, const FGameplayTagMessage& Message)
-{
-	if (Message.GameplayTag.MatchesTag(StealthUiTags::TAG_UI_DetailsMenu))
-	{
-		HideWidget(StealthUiTags::TAG_UI_DetailsMenu);
-	}
-	else
-	{
-		HideWidget(Message.GameplayTag);
+		if (VisibleWidgetTags.Contains(Message.GameplayTag))
+		{
+			// Close
+			HideWidget(Message.GameplayTag);
+		}
+		else
+		{
+			// Open
+			ShowWidget(Message.GameplayTag);
+		}
 	}
 }
 

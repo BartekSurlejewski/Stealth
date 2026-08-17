@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
+#include "Messages/StealthMessages.h"
 #include "StealthGameMode.generated.h"
 
 UCLASS()

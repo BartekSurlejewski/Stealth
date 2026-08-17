@@ -1,7 +1,7 @@
 ﻿#include "TimeSystem/DailyRegimen/DailyRegimenTasks/EnterAreaTask.h"
 
 #include "Characters/NPCs/Prisoners/PrisonerNpcContextComponent.h"
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Engine/TriggerVolume.h"
 
 void UEnterAreaTask::InitializeTask_Implementation()
@@ -44,7 +44,7 @@ void UEnterAreaTask::PerformByPrisoner_Implementation(UPrisonerNpcContextCompone
 
 void UEnterAreaTask::TargetArea_OnActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
-	if (AStealthCharacter* OverlappingStealthCharacter = Cast<AStealthCharacter>(OtherActor))
+	if (AStealthPlayerCharacter* OverlappingStealthCharacter = Cast<AStealthPlayerCharacter>(OtherActor))
 	{
 		OnTaskCompleted.Broadcast(this);
 	}

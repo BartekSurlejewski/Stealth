@@ -1,15 +1,15 @@
-﻿#include "Characters/NPCs/NpcRegistrySubsystem.h"
+﻿#include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/NpcCharacter.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/NpcContextComponent.h"
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Inventory/InventoryComponent.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 
-UNpcRegistrySubsystem* UNpcRegistrySubsystem::Get(const UObject* WorldContextObject)
+UCharactersRegistrySubsystem* UCharactersRegistrySubsystem::Get(const UObject* WorldContextObject)
 {
 	if (!WorldContextObject)
 		return nullptr;
@@ -20,21 +20,21 @@ UNpcRegistrySubsystem* UNpcRegistrySubsystem::Get(const UObject* WorldContextObj
 		return nullptr;
 	}
 	const UGameInstance* GameInstance = World->GetGameInstance();
-	return GameInstance ? GameInstance->GetSubsystem<UNpcRegistrySubsystem>() : nullptr;
+	return GameInstance ? GameInstance->GetSubsystem<UCharactersRegistrySubsystem>() : nullptr;
 }
 
 /*=========================================================================
  * LIFECYCLE
  *=========================================================================*/
 
-void UNpcRegistrySubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void UCharactersRegistrySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	UE_LOG(LogTemp, Warning, TEXT("[NpcRegistry] Subsystem initialized"));
 }
 
-void UNpcRegistrySubsystem::Deinitialize()
+void UCharactersRegistrySubsystem::Deinitialize()
 {
 	ClearRegistry();
 	Super::Deinitialize();
@@ -45,7 +45,7 @@ void UNpcRegistrySubsystem::Deinitialize()
 /*=========================================================================
  * TICKABLE
  *=========================================================================*/
-void UNpcRegistrySubsystem::Tick(float DeltaTime)
+void UCharactersRegistrySubsystem::Tick(float DeltaTime)
 {
 	TimeSinceLastTick += DeltaTime;
 	if (TimeSinceLastTick < TickInterval)
@@ -57,7 +57,7 @@ void UNpcRegistrySubsystem::Tick(float DeltaTime)
 	UpdateAllNpcLocations();
 }
 
-TStatId UNpcRegistrySubsystem::GetStatId() const
+TStatId UCharactersRegistrySubsystem::GetStatId() const
 {
 	RETURN_QUICK_DECLARE_CYCLE_STAT(UNpcRegistrySubsystem, STATGROUP_Tickables);
 }
@@ -67,7 +67,28 @@ TStatId UNpcRegistrySubsystem::GetStatId() const
  * REGISTRATION
  *=========================================================================*/
 
-void UNpcRegistrySubsystem::RegisterNpc(ANpcCharacter* Character, ANpcAiController* Controller)
+void UCharactersRegistrySubsystem::RegisterPlayerCharacter(AStealthPlayerCharacter* NewPlayerCharacter)
+{
+	if (NewPlayerCharacter != PlayerCharacter)
+	{
+		PlayerCharacter = NewPlayerCharacter;
+		if (PlayerCharacter)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[NpcRegistry] Registered player character: %s"), *PlayerCharacter->GetName());
+		}
+	}
+}
+
+void UCharactersRegistrySubsystem::UnregisterPlayerCharacter(AStealthPlayerCharacter* PlayerCharacterToRemove)
+{
+	if (PlayerCharacterToRemove == PlayerCharacter)
+	{
+		PlayerCharacter = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("[NpcRegistry] Unregistered player character"));
+	}
+}
+
+void UCharactersRegistrySubsystem::RegisterNpc(ANpcCharacter* Character, ANpcAiController* Controller)
 {
 	if (!Character || !Controller)
 	{
@@ -129,7 +150,7 @@ void UNpcRegistrySubsystem::RegisterNpc(ANpcCharacter* Character, ANpcAiControll
 	OnNpcRegistered.Broadcast(NpcGUID, Character);
 }
 
-void UNpcRegistrySubsystem::UnregisterNpc(const FGuid& NpcGUID)
+void UCharactersRegistrySubsystem::UnregisterNpc(const FGuid& NpcGUID)
 {
 	const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID);
 	if (!Entry)
@@ -157,7 +178,7 @@ void UNpcRegistrySubsystem::UnregisterNpc(const FGuid& NpcGUID)
 	OnNpcUnregistered.Broadcast(NpcGUID, Character);
 }
 
-void UNpcRegistrySubsystem::UnregisterNpcByCharacter(ANpcCharacter* Character)
+void UCharactersRegistrySubsystem::UnregisterNpcByCharacter(ANpcCharacter* Character)
 {
 	if (!Character)
 		return;
@@ -173,7 +194,13 @@ void UNpcRegistrySubsystem::UnregisterNpcByCharacter(ANpcCharacter* Character)
  * LOOKUPS: By GUID
  *=========================================================================*/
 
-bool UNpcRegistrySubsystem::TryGetNpcEntry(const FGuid& NpcGUID, FNpcRegistryEntry& OutEntry) const
+AStealthPlayerCharacter* UCharactersRegistrySubsystem::GetPlayerCharacter() const
+{
+	return PlayerCharacter;
+}
+
+
+bool UCharactersRegistrySubsystem::TryGetNpcEntry(const FGuid& NpcGUID, FNpcRegistryEntry& OutEntry) const
 {
 	if (const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID))
 	{
@@ -183,35 +210,36 @@ bool UNpcRegistrySubsystem::TryGetNpcEntry(const FGuid& NpcGUID, FNpcRegistryEnt
 	return false;
 }
 
-ANpcCharacter* UNpcRegistrySubsystem::GetNpcCharacter(const FGuid& NpcGUID) const
+ANpcCharacter* UCharactersRegistrySubsystem::GetNpcCharacter(const FGuid& NpcGUID) const
 {
 	const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID);
 	return Entry ? Entry->Character : nullptr;
 }
 
-ANpcAiController* UNpcRegistrySubsystem::GetNpcController(const FGuid& NpcGUID) const
+ANpcAiController* UCharactersRegistrySubsystem::GetNpcController(const FGuid& NpcGUID) const
 {
 	const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID);
 	return Entry ? Entry->Controller : nullptr;
 }
 
-UInventoryComponent* UNpcRegistrySubsystem::GetNpcInventory(const FGuid& NpcGUID) const
+UInventoryComponent* UCharactersRegistrySubsystem::GetNpcInventory(const FGuid& NpcGUID) const
 {
 	const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID);
 	return Entry ? Entry->Inventory : nullptr;
 }
 
-UNpcContextComponent* UNpcRegistrySubsystem::GetNpcContextComponent(const FGuid& NpcGUID) const
+UNpcContextComponent* UCharactersRegistrySubsystem::GetNpcContextComponent(const FGuid& NpcGUID) const
 {
 	const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID);
 	return Entry ? Entry->ContextComponent : nullptr;
 }
 
+
 /*=========================================================================
  * LOOKUPS: Reverse Lookup (Character → GUID)
  *=========================================================================*/
 
-FGuid UNpcRegistrySubsystem::GetNpcGuidByCharacter(ANpcCharacter* Character) const
+FGuid UCharactersRegistrySubsystem::GetNpcGuidByCharacter(ANpcCharacter* Character) const
 {
 	if (!Character)
 		return FGuid();
@@ -220,7 +248,7 @@ FGuid UNpcRegistrySubsystem::GetNpcGuidByCharacter(ANpcCharacter* Character) con
 	return GuidPtr ? *GuidPtr : FGuid();
 }
 
-FGuid UNpcRegistrySubsystem::GetNpcGuidByController(ANpcAiController* Controller) const
+FGuid UCharactersRegistrySubsystem::GetNpcGuidByController(ANpcAiController* Controller) const
 {
 	if (!Controller)
 		return FGuid();
@@ -235,7 +263,7 @@ FGuid UNpcRegistrySubsystem::GetNpcGuidByController(ANpcAiController* Controller
 	return FGuid();
 }
 
-FGuid UNpcRegistrySubsystem::GetNpcGuidByInventory(UInventoryComponent* Inventory) const
+FGuid UCharactersRegistrySubsystem::GetNpcGuidByInventory(UInventoryComponent* Inventory) const
 {
 	if (!Inventory)
 		return FGuid();
@@ -248,7 +276,7 @@ FGuid UNpcRegistrySubsystem::GetNpcGuidByInventory(UInventoryComponent* Inventor
  * QUERIES: Filter Operations
  *=========================================================================*/
 
-void UNpcRegistrySubsystem::GetNpcsInRadius(const FVector& CenterLocation, float Radius, TArray<FGuid>& OutGuids) const
+void UCharactersRegistrySubsystem::GetNpcsInRadius(const FVector& CenterLocation, float Radius, TArray<FGuid>& OutGuids) const
 {
 	OutGuids.Reset();
 
@@ -279,7 +307,7 @@ void UNpcRegistrySubsystem::GetNpcsInRadius(const FVector& CenterLocation, float
 	}
 }
 
-void UNpcRegistrySubsystem::GetNpcsByClass(TSubclassOf<ANpcCharacter> NpcClass, TArray<FGuid>& OutGuids) const
+void UCharactersRegistrySubsystem::GetNpcsByClass(TSubclassOf<ANpcCharacter> NpcClass, TArray<FGuid>& OutGuids) const
 {
 	OutGuids.Reset();
 
@@ -295,7 +323,7 @@ void UNpcRegistrySubsystem::GetNpcsByClass(TSubclassOf<ANpcCharacter> NpcClass, 
 	}
 }
 
-void UNpcRegistrySubsystem::GetAliveNpcs(TArray<FGuid>& OutGuids) const
+void UCharactersRegistrySubsystem::GetAliveNpcs(TArray<FGuid>& OutGuids) const
 {
 	OutGuids.Reset();
 
@@ -308,7 +336,7 @@ void UNpcRegistrySubsystem::GetAliveNpcs(TArray<FGuid>& OutGuids) const
 	}
 }
 
-FGuid UNpcRegistrySubsystem::FindClosestNpc(const FVector& Location, float MaxDistance) const
+FGuid UCharactersRegistrySubsystem::FindClosestNpc(const FVector& Location, float MaxDistance) const
 {
 	TArray<FGuid> Candidates;
 	GetNpcsInRadius(Location, MaxDistance, Candidates);
@@ -337,20 +365,20 @@ FGuid UNpcRegistrySubsystem::FindClosestNpc(const FVector& Location, float MaxDi
 	 * SPATIAL GRID (uniform grid hash for radius queries)
 *=========================================================================*/
 
-FIntPoint UNpcRegistrySubsystem::LocationToCell(const FVector& Location) const
+FIntPoint UCharactersRegistrySubsystem::LocationToCell(const FVector& Location) const
 {
 	return FIntPoint(FMath::FloorToInt(Location.X / SpatialCellSize),
 	                 FMath::FloorToInt(Location.Y / SpatialCellSize));
 }
 
-void UNpcRegistrySubsystem::AddToSpatialGrid(const FGuid& Guid, const FVector& Location)
+void UCharactersRegistrySubsystem::AddToSpatialGrid(const FGuid& Guid, const FVector& Location)
 {
 	const FIntPoint Cell = LocationToCell(Location);
 	SpatialGrid.FindOrAdd(Cell).Add(Guid);
 	GuidToCellMap.Add(Guid, Cell);
 }
 
-void UNpcRegistrySubsystem::RemoveFromSpatialGrid(const FGuid& Guid)
+void UCharactersRegistrySubsystem::RemoveFromSpatialGrid(const FGuid& Guid)
 {
 	if (const FIntPoint* Cell = GuidToCellMap.Find(Guid))
 	{
@@ -366,7 +394,7 @@ void UNpcRegistrySubsystem::RemoveFromSpatialGrid(const FGuid& Guid)
 	}
 }
 
-void UNpcRegistrySubsystem::UpdateSpatialGridEntry(const FGuid& Guid, const FVector& NewLocation)
+void UCharactersRegistrySubsystem::UpdateSpatialGridEntry(const FGuid& Guid, const FVector& NewLocation)
 {
 	const FIntPoint NewCell = LocationToCell(NewLocation);
 	const FIntPoint* OldCell = GuidToCellMap.Find(Guid);
@@ -384,7 +412,7 @@ void UNpcRegistrySubsystem::UpdateSpatialGridEntry(const FGuid& Guid, const FVec
  * BATCH OPERATIONS
  *=========================================================================*/
 
-void UNpcRegistrySubsystem::BroadcastEventToAllNpcs(const FGameplayTag& EventTag)
+void UCharactersRegistrySubsystem::BroadcastEventToAllNpcs(const FGameplayTag& EventTag)
 {
 	TArray<FGuid> Guids;
 	NpcRegistry.GetKeys(Guids);
@@ -401,7 +429,7 @@ void UNpcRegistrySubsystem::BroadcastEventToAllNpcs(const FGameplayTag& EventTag
 	}
 }
 
-void UNpcRegistrySubsystem::UpdateAllNpcLocations()
+void UCharactersRegistrySubsystem::UpdateAllNpcLocations()
 {
 	for (auto& [Guid, Entry] : NpcRegistry)
 	{
@@ -417,13 +445,13 @@ void UNpcRegistrySubsystem::UpdateAllNpcLocations()
  * UTILITY
  *=========================================================================*/
 
-bool UNpcRegistrySubsystem::IsNpcAlive(const FGuid& NpcGUID) const
+bool UCharactersRegistrySubsystem::IsNpcAlive(const FGuid& NpcGUID) const
 {
 	const FNpcRegistryEntry* Entry = NpcRegistry.Find(NpcGUID);
 	return Entry && Entry->IsAlive();
 }
 
-FString UNpcRegistrySubsystem::GetRegistryStats() const
+FString UCharactersRegistrySubsystem::GetRegistryStats() const
 {
 	int32 TotalNpcs = NpcRegistry.Num();
 	int32 AliveNpcs = 0;
@@ -438,7 +466,7 @@ FString UNpcRegistrySubsystem::GetRegistryStats() const
 	                       TotalNpcs, AliveNpcs, TotalNpcs - AliveNpcs);
 }
 
-void UNpcRegistrySubsystem::ClearRegistry()
+void UCharactersRegistrySubsystem::ClearRegistry()
 {
 	NpcRegistry.Reset();
 	CharacterToGuidMap.Reset();

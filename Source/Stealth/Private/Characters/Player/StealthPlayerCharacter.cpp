@@ -1,9 +1,10 @@
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 
 #include "AbilitySystemComponent.h"
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
+#include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/Player/Components/StealthCharacterInteractionComponent.h"
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
@@ -13,7 +14,7 @@
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
-AStealthCharacter::AStealthCharacter()
+AStealthPlayerCharacter::AStealthPlayerCharacter()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -57,7 +58,27 @@ AStealthCharacter::AStealthCharacter()
 	StealthCharacterAbilitiesComponent = CreateDefaultSubobject<UStealthCharacterAbilitiesComponent>(TEXT("Stealth Character Abilities Component"));
 }
 
-void AStealthCharacter::PossessedBy(AController* NewController)
+void AStealthPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UCharactersRegistrySubsystem* CharactersRegistry = UCharactersRegistrySubsystem::Get(this))
+	{
+		CharactersRegistry->RegisterPlayerCharacter(this);
+	}
+}
+
+void AStealthPlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (UCharactersRegistrySubsystem* CharactersRegistry = UCharactersRegistrySubsystem::Get(this))
+	{
+		CharactersRegistry->UnregisterPlayerCharacter(this);
+	}
+}
+
+void AStealthPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
 
@@ -67,7 +88,7 @@ void AStealthCharacter::PossessedBy(AController* NewController)
 	}
 }
 
-void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
+void AStealthPlayerCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
@@ -77,7 +98,7 @@ void AStealthCharacter::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 }
 
-void AStealthCharacter::NotifyActorEndOverlap(AActor* OtherActor)
+void AStealthPlayerCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
 
@@ -87,7 +108,7 @@ void AStealthCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
-AActor* AStealthCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const
+AActor* AStealthPlayerCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const
 {
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
@@ -98,7 +119,7 @@ AActor* AStealthCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDropClass
 }
 
 //~Begin Input
-void AStealthCharacter::MoveInput(const FInputActionValue& Value)
+void AStealthPlayerCharacter::MoveInput(const FInputActionValue& Value)
 {
 	// get the Vector2D move axis
 	FVector2D MovementVector = Value.Get<FVector2D>();
@@ -107,7 +128,7 @@ void AStealthCharacter::MoveInput(const FInputActionValue& Value)
 	DoMove(MovementVector.X, MovementVector.Y);
 }
 
-void AStealthCharacter::LookInput(const FInputActionValue& Value)
+void AStealthPlayerCharacter::LookInput(const FInputActionValue& Value)
 {
 	// get the Vector2D look axis
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
@@ -116,7 +137,7 @@ void AStealthCharacter::LookInput(const FInputActionValue& Value)
 	DoAim(LookAxisVector.X, LookAxisVector.Y);
 }
 
-void AStealthCharacter::DoAim(float Yaw, float Pitch)
+void AStealthPlayerCharacter::DoAim(float Yaw, float Pitch)
 {
 	if (GetController())
 	{
@@ -126,7 +147,7 @@ void AStealthCharacter::DoAim(float Yaw, float Pitch)
 	}
 }
 
-void AStealthCharacter::DoMove(float Right, float Forward)
+void AStealthPlayerCharacter::DoMove(float Right, float Forward)
 {
 	if (GetController())
 	{
@@ -136,7 +157,7 @@ void AStealthCharacter::DoMove(float Right, float Forward)
 	}
 }
 
-void AStealthCharacter::DoPrimaryInteract()
+void AStealthPlayerCharacter::DoPrimaryInteract()
 {
 	if (!InteractionComponent)
 	{
@@ -146,7 +167,7 @@ void AStealthCharacter::DoPrimaryInteract()
 	InteractionComponent->Interact(true);
 }
 
-void AStealthCharacter::DoSecondaryInteract()
+void AStealthPlayerCharacter::DoSecondaryInteract()
 {
 	UE_LOG(LogStealth, Warning, TEXT("Secondary Interact"));
 	if (!InteractionComponent)
@@ -159,7 +180,7 @@ void AStealthCharacter::DoSecondaryInteract()
 
 //~End Input
 
-void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
@@ -167,14 +188,14 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AStealthCharacter::MoveInput);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AStealthPlayerCharacter::MoveInput);
 
 		// Looking/Aiming
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthCharacter::LookInput);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthPlayerCharacter::LookInput);
 
 		// Interaction
-		EnhancedInputComponent->BindAction(PrimaryInteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoPrimaryInteract);
-		EnhancedInputComponent->BindAction(SecondaryInteractAction, ETriggerEvent::Started, this, &AStealthCharacter::DoSecondaryInteract);
+		EnhancedInputComponent->BindAction(PrimaryInteractAction, ETriggerEvent::Started, this, &AStealthPlayerCharacter::DoPrimaryInteract);
+		EnhancedInputComponent->BindAction(SecondaryInteractAction, ETriggerEvent::Started, this, &AStealthPlayerCharacter::DoSecondaryInteract);
 		if (InteractionComponent)
 		{
 			InteractionComponent->InitializeInput(PrimaryInteractAction, SecondaryInteractAction);
@@ -205,7 +226,7 @@ void AStealthCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 }
 
-UAbilitySystemComponent* AStealthCharacter::GetAbilitySystemComponent() const
+UAbilitySystemComponent* AStealthPlayerCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }

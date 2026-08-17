@@ -2,7 +2,7 @@
 
 #include "DrawDebugHelpers.h"
 #include "Async/ParallelFor.h"
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Stealth/Stealth.h"
@@ -113,7 +113,7 @@ float UPlayerExposureSubsystem::CalculateTotalPlayerExposure()
 {
 	if (!PlayerCharacter)
 	{
-		PlayerCharacter = Cast<AStealthCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+		PlayerCharacter = Cast<AStealthPlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 
 		if (!PlayerCharacter)
 		{

@@ -3,7 +3,8 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
-#include "Core/StealthUserWidget.h"
+#include "Core/BaseWidgets/StealthBaseMenu.h"
+#include "Core/BaseWidgets/StealthBaseWidget.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "DetailsMenu.generated.h"
 
@@ -28,7 +29,7 @@ public:
 };
 
 UCLASS(Blueprintable)
-class STEALTH_API UDetailsMenu : public UStealthUserWidget
+class STEALTH_API UDetailsMenu : public UStealthBaseMenu
 {
 	GENERATED_BODY()
 	/*Methods*/

@@ -35,7 +35,7 @@ void UDetailsMenu::OnShow_Implementation()
 	int32 NumWidgets = WidgetSwitcher->GetNumWidgets();
 	for (int i = 0; i < NumWidgets; ++i)
 	{
-		if (UStealthUserWidget* StealthWidget = Cast<UStealthUserWidget>(WidgetSwitcher->GetWidgetAtIndex(i)))
+		if (UStealthBaseWidget* StealthWidget = Cast<UStealthBaseWidget>(WidgetSwitcher->GetWidgetAtIndex(i)))
 		{
 			StealthWidget->Show();
 		}

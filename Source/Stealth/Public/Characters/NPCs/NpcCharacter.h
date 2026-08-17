@@ -5,7 +5,7 @@
 #include "GameFramework/Character.h"
 #include "NpcCharacter.generated.h"
 
-class UNpcRegistrySubsystem;
+class UCharactersRegistrySubsystem;
 class UDialogueComponent;
 class ANpcAiController;
 
@@ -32,7 +32,7 @@ public:
 	const FGuid& GetNpcGUID() const { return NpcGUID; }
 
 	//~Begin IInteractable Interface
-	virtual void PrimaryInteract_Implementation(AStealthCharacter* Interactor) override;
+	virtual void PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const override;
 	virtual FGameplayTag GetPrimaryInteractionRequiredAbilityTag_Implementation() const override;
@@ -47,5 +47,5 @@ protected:
 
 private:
 	UPROPERTY()
-	TObjectPtr<UNpcRegistrySubsystem> NpcRegistrySubsystem;
+	TObjectPtr<UCharactersRegistrySubsystem> NpcRegistrySubsystem;
 };

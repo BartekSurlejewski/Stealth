@@ -3,10 +3,11 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Blueprint/UserWidget.h"
-#include "StealthUserWidget.generated.h"
+#include "UI/Core/StealthUIData.h"
+#include "StealthBaseWidget.generated.h"
 
 UCLASS(Abstract, Blueprintable)
-class STEALTH_API UStealthUserWidget : public UUserWidget
+class STEALTH_API UStealthBaseWidget : public UUserWidget
 {
 	GENERATED_BODY()
 	/*Methods*/
@@ -16,6 +17,7 @@ public:
 	UFUNCTION()
 	void Hide();
 
+	virtual EUILayer GetLayer() const { return EUILayer::None; }
 	FGameplayTag GetWidgetGameplayTag() const { return WidgetGameplayTag; }
 	bool GetPauseGameOnShow() const { return bPauseGameOnShow; }
 

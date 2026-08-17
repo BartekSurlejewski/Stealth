@@ -4,7 +4,7 @@
 #include "Core/StealthWorldSubsystem.h"
 #include "InventoryManagerSubsystem.generated.h"
 
-class UNpcRegistrySubsystem;
+class UCharactersRegistrySubsystem;
 class UItemDefinition;
 class UInventoryComponent;
 

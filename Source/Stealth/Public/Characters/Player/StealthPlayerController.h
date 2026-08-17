@@ -6,8 +6,9 @@
 #include "Inventory/Items/InventoryItem.h"
 #include "StealthPlayerController.generated.h"
 
+class AStealthHUD;
 struct FGameplayTag;
-class AStealthCharacter;
+class AStealthPlayerCharacter;
 class UInputAction;
 class UInputMappingContext;
 
@@ -41,6 +42,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void OnPrevDetailsMenuInput();
 
+private:
+	UFUNCTION()
+	void OnWidgetShown(FGameplayTag Channel, const FWidgetToggleMessage& Message);
+	UFUNCTION()
+	void OnWidgetHidden(FGameplayTag Channel, const FWidgetToggleMessage& Message);
+
 	/*Properties*/
 protected:
 	UPROPERTY(EditAnywhere, Category="Input|Input Mappings")
@@ -61,7 +68,10 @@ protected:
 
 private:
 	UPROPERTY()
-	bool bIsInMenu = false;
-	UPROPERTY()
 	TObjectPtr<AStealthPlayerState> StealthPlayerState;
+	UPROPERTY()
+	TObjectPtr<AStealthHUD> HUD;
+
+	FGameplayMessageListenerHandle OnWidgetShownHandle;
+	FGameplayMessageListenerHandle OnWidgetHiddenHandle;
 };

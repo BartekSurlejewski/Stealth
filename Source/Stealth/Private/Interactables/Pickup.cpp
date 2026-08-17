@@ -19,7 +19,7 @@ APickup::APickup()
 	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
-void APickup::PrimaryInteract_Implementation(AStealthCharacter* Interactor)
+void APickup::PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor)
 {
 	// hide this mesh
 	SetActorHiddenInGame(true);
@@ -29,7 +29,7 @@ void APickup::PrimaryInteract_Implementation(AStealthCharacter* Interactor)
 	SetActorTickEnabled(false);
 }
 
-void APickup::SecondaryInteract_Implementation(AStealthCharacter* Interactor) {}
+void APickup::SecondaryInteract_Implementation(AStealthPlayerCharacter* Interactor) {}
 
 void APickup::SetHighlighted_Implementation(bool bHighlight)
 {

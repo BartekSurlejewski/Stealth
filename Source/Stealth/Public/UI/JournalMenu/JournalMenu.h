@@ -1,13 +1,14 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "UI/Core/StealthUserWidget.h"
+#include "UI/Core/BaseWidgets/StealthBaseMenu.h"
+#include "UI/Core/BaseWidgets/StealthBaseWidget.h"
 #include "JournalMenu.generated.h"
 
 class UVerticalBox;
 
 UCLASS()
-class STEALTH_API UJournalMenu : public UStealthUserWidget
+class STEALTH_API UJournalMenu : public UStealthBaseMenu
 {
 	GENERATED_BODY()
 	/*Methods*/

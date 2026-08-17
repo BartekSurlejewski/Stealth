@@ -3,7 +3,8 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Inventory/Items/InventoryItem.h"
-#include "UI/Core/StealthUserWidget.h"
+#include "UI/Core/BaseWidgets/StealthBaseMenu.h"
+#include "UI/Core/BaseWidgets/StealthBaseWidget.h"
 #include "InventoryMenu.generated.h"
 
 class UInventoryMenuItemSlot;
@@ -14,7 +15,7 @@ class UInventoryComponent;
 class UTextBlock;
 
 UCLASS(Abstract, Blueprintable)
-class STEALTH_API UInventoryMenu : public UStealthUserWidget
+class STEALTH_API UInventoryMenu : public UStealthBaseMenu
 {
 	GENERATED_BODY()
 	/*Methods*/

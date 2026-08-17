@@ -15,7 +15,7 @@ class UInventoryComponent;
 class UGameplayEffect;
 class UGameplayAbility;
 class UStealthCharacterAttributeSet;
-class AStealthCharacter;
+class AStealthPlayerCharacter;
 class UAbilitySystemComponent;
 
 // Used for map storage
@@ -42,7 +42,7 @@ public:
 
 private:
 	UPROPERTY()
-	TObjectPtr<AStealthCharacter> OwningCharacter;
+	TObjectPtr<AStealthPlayerCharacter> OwningCharacter;
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY()

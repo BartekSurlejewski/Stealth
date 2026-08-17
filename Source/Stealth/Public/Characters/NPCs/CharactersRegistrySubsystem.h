@@ -4,8 +4,9 @@
 #include "NpcCharacter.h"
 #include "Tickable.h"
 #include "Subsystems/GameInstanceSubsystem.h"
-#include "NpcRegistrySubsystem.generated.h"
+#include "CharactersRegistrySubsystem.generated.h"
 
+class AStealthPlayerCharacter;
 class ANpcAiController;
 class UNpcContextComponent;
 class UInventoryComponent;
@@ -16,24 +17,24 @@ struct FNpcRegistryEntry
 	GENERATED_BODY()
 
 	// Primary references
-	UPROPERTY(BlueprintReadOnly, Category="NPC|Registry")
+	UPROPERTY(BlueprintReadOnly, Category="Registry|NPC")
 	TObjectPtr<ANpcCharacter> Character;
 
-	UPROPERTY(BlueprintReadOnly, Category="NPC|Registry")
+	UPROPERTY(BlueprintReadOnly, Category="Registry|NPC")
 	TObjectPtr<ANpcAiController> Controller;
 
 	// Cached component references (O(1) access)
-	UPROPERTY(BlueprintReadOnly, Category="NPC|Registry")
+	UPROPERTY(BlueprintReadOnly, Category="Registry|NPC")
 	TObjectPtr<UInventoryComponent> Inventory;
 
-	UPROPERTY(BlueprintReadOnly, Category="NPC|Registry")
+	UPROPERTY(BlueprintReadOnly, Category="Registry|NPC")
 	TObjectPtr<UNpcContextComponent> ContextComponent;
 
 	// Metadata
-	UPROPERTY(BlueprintReadOnly, Category="NPC|Registry")
+	UPROPERTY(BlueprintReadOnly, Category="Registry|NPC")
 	FString NpcName;
 
-	UPROPERTY(BlueprintReadOnly, Category="NPC|Registry")
+	UPROPERTY(BlueprintReadOnly, Category="Registry|NPC")
 	FVector LastKnownLocation;
 
 	// Validation
@@ -57,7 +58,7 @@ struct FNpcRegistryEntry
 };
 
 UCLASS()
-class STEALTH_API UNpcRegistrySubsystem : public UGameInstanceSubsystem, public FTickableGameObject
+class STEALTH_API UCharactersRegistrySubsystem : public UGameInstanceSubsystem, public FTickableGameObject
 {
 	GENERATED_BODY()
 
@@ -69,7 +70,7 @@ public:
 	virtual void Deinitialize() override;
 
 	UFUNCTION(BlueprintCallable, Category="NPC Registry", meta=(WorldContext="WorldContextObject"))
-	static UNpcRegistrySubsystem* Get(const UObject* WorldContextObject);
+	static UCharactersRegistrySubsystem* Get(const UObject* WorldContextObject);
 
 	/*=========================================================================
 	 * TICKABLE
@@ -89,80 +90,89 @@ private:
 	 * REGISTRATION / UNREGISTRATION
 	 *=========================================================================*/
 public:
+	UFUNCTION(Category="Registry|Player")
+	void RegisterPlayerCharacter(AStealthPlayerCharacter* NewPlayerCharacter);
+	UFUNCTION(Category="Registry|Player")
+	void UnregisterPlayerCharacter(AStealthPlayerCharacter* PlayerCharacterToRemove);
+
 	/**
 	 * Register an NPC when it spawns
 	 * Call from ANpcAiController::OnPossess()
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(Category="Registry|NPC")
 	void RegisterNpc(ANpcCharacter* Character, ANpcAiController* Controller);
 
 	/**
 	 * Unregister when NPC is destroyed
 	 * Call from ANpcAiController::EndPlay()
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(Category="Registry|NPC")
 	void UnregisterNpc(const FGuid& NpcGUID);
 
 	/**
 	 * Manual unregister by character (convenience)
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void UnregisterNpcByCharacter(ANpcCharacter* Character);
 
 	/*=========================================================================
 	 * LOOKUPS: By GUID (Primary Key)
 	 *=========================================================================*/
 public:
+	UFUNCTION(BlueprintCallable, Category="Registry|Player")
+	AStealthPlayerCharacter* GetPlayerCharacter() const;
+	
 	/**
 	 * Get complete NPC entry (O(1))
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	bool TryGetNpcEntry(const FGuid& NpcGUID, FNpcRegistryEntry& OutEntry) const;
 
 	/**
 	 * Get NPC character by GUID (O(1))
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	ANpcCharacter* GetNpcCharacter(const FGuid& NpcGUID) const;
 
 	/**
 	 * Get NPC AI controller by GUID (O(1))
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	ANpcAiController* GetNpcController(const FGuid& NpcGUID) const;
 
 	/**
 	 * Get NPC inventory by GUID (O(1))
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	UInventoryComponent* GetNpcInventory(const FGuid& NpcGUID) const;
 
 	/**
 	 * Get NPC context component by GUID (O(1))
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	UNpcContextComponent* GetNpcContextComponent(const FGuid& NpcGUID) const;
 
 	/*=========================================================================
 	 * LOOKUPS: By Character (Reverse Lookup)
 	 *=========================================================================*/
 public:
+
 	/**
 	 * Get GUID from character (O(1) via cached map)
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	FGuid GetNpcGuidByCharacter(ANpcCharacter* Character) const;
 
 	/**
 	 * Get GUID from controller (O(1))
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	FGuid GetNpcGuidByController(ANpcAiController* Controller) const;
 
 	/**
 	 * Get GUID from inventory (O(1) via cached map)
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	FGuid GetNpcGuidByInventory(UInventoryComponent* Inventory) const;
 
 	/*=========================================================================
@@ -174,31 +184,31 @@ public:
 	 * Uses cached LastKnownLocation via spatial grid — call UpdateNpcLocation/UpdateAllNpcLocations
 	 * beforehand if you need this to reflect movement since the last update.
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void GetNpcsInRadius(const FVector& CenterLocation, float Radius, TArray<FGuid>& OutGuids) const;
 
 	/**
 	 * Get NPCs by type (Guard, Prisoner, etc.)
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void GetNpcsByClass(TSubclassOf<ANpcCharacter> NpcClass, TArray<FGuid>& OutGuids) const;
 
 	/**
 	 * Get alive NPCs only
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void GetAliveNpcs(TArray<FGuid>& OutGuids) const;
 
 	/**
 	 * Find closest NPC to location
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	FGuid FindClosestNpc(const FVector& Location, float MaxDistance = 10000.0f) const;
 
 	/**
 	 * Get NPC count
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	int32 GetNpcCount() const { return NpcRegistry.Num(); }
 
 	// Reverse lookup: Controller → GUID (O(1))
@@ -247,14 +257,14 @@ public:
 	/**
 	 * Send event to all context components
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void BroadcastEventToAllNpcs(const FGameplayTag& EventTag);
 
 protected:
 	/**
 	 * Update cached locations for all NPCs
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void UpdateAllNpcLocations();
 
 	/*=========================================================================
@@ -264,19 +274,19 @@ public:
 	/**
 	 * Check if NPC GUID is registered and alive
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	bool IsNpcAlive(const FGuid& NpcGUID) const;
 
 	/**
 	 * Get registry stats (for debugging/monitoring)
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	FString GetRegistryStats() const;
 
 	/**
 	 * Clear all entries (called on map transition)
 	 */
-	UFUNCTION(BlueprintCallable, Category="NPC|Registry")
+	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	void ClearRegistry();
 
 	/*=========================================================================
@@ -297,6 +307,9 @@ public:
 	 * PRIVATE
 	 *=========================================================================*/
 private:
+	UPROPERTY()
+	TObjectPtr<AStealthPlayerCharacter> PlayerCharacter;
+
 	// Primary storage: GUID → Entry
 	UPROPERTY()
 	TMap<FGuid, FNpcRegistryEntry> NpcRegistry;
@@ -308,8 +321,4 @@ private:
 	// Reverse lookup: Inventory → GUID
 	UPROPERTY()
 	TMap<TObjectPtr<UInventoryComponent>, FGuid> InventoryToGuidMap;
-
-	// Cache player pawn for distance checks
-	UPROPERTY()
-	TObjectPtr<class AStealthCharacter> CachedPlayer;
 };

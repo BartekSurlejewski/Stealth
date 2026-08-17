@@ -61,8 +61,8 @@ protected:
 	UFUNCTION()
 	void LosePlayerSight();
 
-	//TODO: think of moving to some subsystem not to hold reference for each NPC
-	APawn* GetPlayerPawn();
+	UFUNCTION()
+	AStealthPlayerCharacter* GetPlayerCharacter() const;
 
 private:
 	void OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message);
@@ -85,8 +85,6 @@ protected:
 	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
 	UPROPERTY()
 	TObjectPtr<ANpcAiController> NpcAiController;
-	UPROPERTY()
-	TSoftObjectPtr<APawn> PlayerPawn;
 	UPROPERTY()
 	FTimerHandle PlayerVisibilityCheckTimerHandle;
 	UPROPERTY()

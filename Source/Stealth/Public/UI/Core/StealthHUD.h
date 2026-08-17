@@ -3,12 +3,13 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
+#include "StealthUIData.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/HUD.h"
 #include "StealthHUD.generated.h"
 
 struct FGameplayTagMessage;
-class UStealthUserWidget;
+class UStealthBaseWidget;
 class UUserWidget;
 
 UCLASS()
@@ -26,39 +27,43 @@ public:
 	void ShowMainHUD();
 	UFUNCTION(BlueprintCallable, Category = "HUD")
 	void CreateOptionalHUD();
+	UFUNCTION(BlueprintCallable, Category = "HUD")
+	bool IsAnyWidgetVisible(EUILayer Layer) const;
 
 private:
 	UFUNCTION(BlueprintCallable, Category = "HUD")
-	UStealthUserWidget* ShowWidget(FGameplayTag WidgetTag);
+	UStealthBaseWidget* ShowWidget(const FGameplayTag& WidgetTag);
 	UFUNCTION(BlueprintCallable, Category = "HUD")
-	void HideWidget(FGameplayTag WidgetTag);
+	void HideWidget(const FGameplayTag& WidgetTag);
 	UFUNCTION()
-	UStealthUserWidget* CreateWidgetInstance(TSubclassOf<UStealthUserWidget> WidgetClass, bool bShow, int32 ZOrder = 0);
+	UStealthBaseWidget* CreateWidgetInstance(TSubclassOf<UStealthBaseWidget> WidgetClass, bool bShow, int32 ZOrder = 0);
 	UFUNCTION()
-	void RemoveAndClearWidget(UStealthUserWidget* InstanceRef);
+	void RemoveAndClearWidget(UStealthBaseWidget* InstanceRef);
 
-	void OnWidgetOpenMessage(FGameplayTag Channel, const FGameplayTagMessage& Message);
-	void OnWidgetCloseMessage(FGameplayTag Channel, const FGameplayTagMessage& Message);
+	void OnWidgetToggleMessage(FGameplayTag Channel, const FGameplayTagMessage& Message);
 
 	/*Properties*/
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HUD|Widgets")
-	TArray<TSubclassOf<UStealthUserWidget>> MainHUDWidgetClasses;
+	TArray<TSubclassOf<UStealthBaseWidget>> MainHUDWidgetClasses;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "HUD|Widgets")
-	TArray<TSubclassOf<UStealthUserWidget>> OptionalHUDWidgetClasses;
+	TArray<TSubclassOf<UStealthBaseWidget>> OptionalHUDWidgetClasses;
 
 	// --- Live widget instances ---
 
 	UPROPERTY(BlueprintReadOnly, Category = "HUD|Widgets")
-	TMap<FGameplayTag, TObjectPtr<UStealthUserWidget>> ExistingWidgetsByTag;
+	TMap<FGameplayTag, TObjectPtr<UStealthBaseWidget>> ExistingWidgetsByTag;
 	UPROPERTY(BlueprintReadOnly, Category = "HUD|Widgets")
-	TSet<TObjectPtr<UStealthUserWidget>> VisibleWidgets;
+	TSet<FGameplayTag> VisibleWidgetTags;
+	UPROPERTY(BlueprintReadOnly, Category = "HUD|Widgets")
+	TArray<TObjectPtr<UStealthBaseWidget>> VisibleWidgets;
+	UPROPERTY(BlueprintReadOnly, Category = "HUD|Widgets")
+	TMap<EUILayer, int32> VisibleWidgetsCountByLayer;
 
 	static constexpr int32 MAX_VISIBLE_WIDGETS = 100;
 
 private:
-	FGameplayMessageListenerHandle WidgetOpenListenerHandle;
-	FGameplayMessageListenerHandle WidgetCloseListenerHandle;
+	FGameplayMessageListenerHandle WidgetToggleListenerHandle;
 };
 
 namespace StealthUiTags

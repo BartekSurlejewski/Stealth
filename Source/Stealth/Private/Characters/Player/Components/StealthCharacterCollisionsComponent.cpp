@@ -1,6 +1,6 @@
 ﻿#include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
 
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Characters/Player/StealthPlayerState.h"
 
 UStealthCharacterCollisionsComponent::UStealthCharacterCollisionsComponent()
@@ -12,7 +12,7 @@ void UStealthCharacterCollisionsComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (AStealthCharacter* PlayerCharacter = Cast<AStealthCharacter>(GetOwner()))
+	if (AStealthPlayerCharacter* PlayerCharacter = Cast<AStealthPlayerCharacter>(GetOwner()))
 	{
 		PlayerState = Cast<AStealthPlayerState>(PlayerCharacter->GetPlayerState());
 	}

@@ -4,6 +4,7 @@
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
 #include "Inventory/Items/InventoryItem.h"
+#include "UI/Core/StealthUIData.h"
 #include "StealthMessages.generated.h"
 
 class UDialogueComponent;
@@ -18,8 +19,7 @@ namespace StealthMessageChannels
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Player_IsInRestrictedAreaChanged);
 
 	// Input
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_OpenWidget);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_CloseWidget);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_ToggleWidget);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Next);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Prev);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_DetailsMenu_Prev);
@@ -46,6 +46,10 @@ namespace StealthMessageChannels
 
 	// Interaction
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_InteractionPerformed);
+
+	// UI
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_UI_WidgetShown);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_UI_WidgetHidden);
 }
 
 USTRUCT(BlueprintType)
@@ -218,4 +222,12 @@ struct FInteractionNotifyMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	FGameplayTag InteractionTag;
+};
+
+USTRUCT(BlueprintType)
+struct FWidgetToggleMessage
+{
+	GENERATED_BODY()
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	EUILayer WidgetLayer;
 };

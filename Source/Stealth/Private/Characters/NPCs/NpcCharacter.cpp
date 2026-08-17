@@ -1,7 +1,7 @@
 #include "Characters/NPCs/NpcCharacter.h"
 
 #include "Characters/NPCs/NpcAiController.h"
-#include "Characters/NPCs/NpcRegistrySubsystem.h"
+#include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "DialogueSystem/DialogueComponent.h"
 #include "DialogueSystem/DialogueManagerSubsystem.h"
@@ -46,7 +46,7 @@ void ANpcCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	NpcRegistrySubsystem = UNpcRegistrySubsystem::Get(this);
+	NpcRegistrySubsystem = UCharactersRegistrySubsystem::Get(this);
 	ANpcAiController* AiController = Cast<ANpcAiController>(GetController());
 	NpcRegistrySubsystem->RegisterNpc(this, AiController);
 }
@@ -73,7 +73,7 @@ void ANpcCharacter::PostEditImport()
 }
 #endif
 
-void ANpcCharacter::PrimaryInteract_Implementation(AStealthCharacter* Interactor)
+void ANpcCharacter::PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor)
 {
 	auto DialogueManager = UDialogueManagerSubsystem::Get(this);
 	if (!DialogueManager || !DialogueComponent)

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Inventory/Items/InventoryItem.h"
-#include "UI/Core/StealthUserWidget.h"
+#include "UI/Core/BaseWidgets/StealthBaseWidget.h"
 #include "InventoryMenuItemSlot.generated.h"
 
 class UButton;
@@ -13,7 +13,7 @@ class UImage;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemClicked, const FInventoryItem&, InventoryItem);
 
 UCLASS()
-class STEALTH_API UInventoryMenuItemSlot : public UStealthUserWidget
+class STEALTH_API UInventoryMenuItemSlot : public UStealthBaseWidget
 {
 	GENERATED_BODY()
 	/*Events*/

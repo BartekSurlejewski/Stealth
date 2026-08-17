@@ -2,7 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayEffect.h"
 #include "GameFramework/PlayerState.h"
@@ -20,7 +20,7 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwningCharacter = Cast<AStealthCharacter>(GetOwner());
+	OwningCharacter = Cast<AStealthPlayerCharacter>(GetOwner());
 	if (OwningCharacter != nullptr)
 	{
 		AbilitySystemComponent = OwningCharacter->GetAbilitySystemComponent();

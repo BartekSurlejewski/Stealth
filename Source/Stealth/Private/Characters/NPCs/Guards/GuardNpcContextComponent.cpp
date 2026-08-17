@@ -2,9 +2,8 @@
 
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/NpcPatrolComponent.h"
-#include "Characters/Player/StealthPlayerState.h"
-// #include "Components/StateTreeComponent.h"
-// #include "Perception/AIPerceptionTypes.h"
+#include "Characters/NPCs/CharactersRegistrySubsystem.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Stealth/Stealth.h"
 
 
@@ -67,7 +66,7 @@ void UGuardNpcContextComponent::LookAtPlayer()
 		return;
 	}
 
-	FVector DirectionToPlayer = PlayerPawn->GetActorLocation() - NpcAiController->GetPawn()->GetActorLocation();
+	FVector DirectionToPlayer = UCharactersRegistrySubsystem::Get(this)->GetPlayerCharacter()->GetActorLocation() - NpcAiController->GetPawn()->GetActorLocation();
 	FRotator LookAtRotation = DirectionToPlayer.Rotation();
 	// Only rotate on Yaw axis, keep current Pitch and Roll
 	LookAtRotation.Pitch = 0.f;

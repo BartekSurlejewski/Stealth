@@ -1,7 +1,7 @@
 ﻿#include "Characters/Player/StealthPlayerState.h"
 
 #include "QuestManagerSubsystem.h"
-#include "Characters/Player/StealthCharacter.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/InventoryManagerSubsystem.h"
@@ -29,7 +29,7 @@ void AStealthPlayerState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerCharacter = Cast<AStealthCharacter>(GetPawn());
+	PlayerCharacter = Cast<AStealthPlayerCharacter>(GetPawn());
 	if (!PlayerCharacter)
 	{
 		UE_LOG(LogStealth, Error, TEXT("PlayerState: Couldn't cast player character to AStealthCharacter."));

@@ -1,14 +1,17 @@
 ﻿#include "Characters/NPCs/NpcContextComponent.h"
 
 #include "TimerManager.h"
+#include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
+#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Engine/World.h"
 #include "Exposure/PlayerExposureSubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Messages/StealthMessages.h"
 #include "Perception/AIPerceptionTypes.h"
+#include "Stealth/Stealth.h"
 
 
 UNpcContextComponent::UNpcContextComponent()
@@ -54,13 +57,14 @@ void UNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 
 	if (bEffectivelySeesPlayer)
 	{
-		LastKnownPlayerPos = GetPlayerPawn()->GetActorLocation();
+		const AStealthPlayerCharacter* PlayerCharacter = GetPlayerCharacter();
+		LastKnownPlayerPos = PlayerCharacter->GetActorLocation();
 	}
 }
 
 void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (Actor != GetPlayerPawn())
+	if (Actor != GetPlayerCharacter())
 	{
 		return;
 	}
@@ -71,7 +75,7 @@ void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulu
 
 void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (!Stimulus.WasSuccessfullySensed() || Actor != GetPlayerPawn())
+	if (!Stimulus.WasSuccessfullySensed() || Actor != GetPlayerCharacter())
 	{
 		return;
 	}
@@ -153,6 +157,18 @@ void UNpcContextComponent::LosePlayerSight()
 	OnPlayerInSightChanged.Broadcast(bEffectivelySeesPlayer);
 }
 
+AStealthPlayerCharacter* UNpcContextComponent::GetPlayerCharacter() const
+{
+	UCharactersRegistrySubsystem* CharactersRegistry = UCharactersRegistrySubsystem::Get(this);
+	if (!CharactersRegistry)
+	{
+		UE_LOG(LogStealth, Error, TEXT("UNpcContextComponent::GetPlayerCharacter: CharactersRegistry is null"));
+		return nullptr;
+	}
+
+	return CharactersRegistry->GetPlayerCharacter();
+}
+
 void UNpcContextComponent::OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message)
 {
 	bIsPlayerInRestrictedArea = Message.bValue;
@@ -173,14 +189,4 @@ void UNpcContextComponent::SendStateTreeEvent(const FGameplayTag& Tag) const
 		return;
 	}
 	StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
-}
-
-APawn* UNpcContextComponent::GetPlayerPawn()
-{
-	if (PlayerPawn == nullptr)
-	{
-		PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	}
-
-	return PlayerPawn.Get();
 }
