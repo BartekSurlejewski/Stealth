@@ -5,6 +5,7 @@
 #include "UObject/Interface.h"
 #include "Pickable.generated.h"
 
+class AStealthPlayerCharacter;
 
 UINTERFACE(MinimalAPI, BlueprintType)
 class UPickable : public UInterface
@@ -20,6 +21,10 @@ class STEALTH_API IPickable
 public:
 	UFUNCTION(BlueprintNativeEvent)
 	void Initialize(UItemDefinition* NewItemDefinition, const int NewQuantity, const FText& InteractPromptText = FText::GetEmpty());
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
+	void OnPickup();
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
+	void OnDrop();
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")
 	UItemDefinition* GetInventoryItem() const;
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Pickup")

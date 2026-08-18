@@ -73,7 +73,7 @@ void ANpcCharacter::PostEditImport()
 }
 #endif
 
-void ANpcCharacter::PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor)
+void ANpcCharacter::PrimaryInteract_Implementation(const UStealthCharacterInteractionComponent* Interactor)
 {
 	auto DialogueManager = UDialogueManagerSubsystem::Get(this);
 	if (!DialogueManager || !DialogueComponent)

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputCoreTypes.h"
 #include "Components/ActorComponent.h"
 #include "StealthCharacterInteractionComponent.generated.h"
 
 
+class IPickable;
 class UStealthCharacterAbilitiesComponent;
 class UInventoryComponent;
 class UCameraComponent;
@@ -15,22 +17,7 @@ class STEALTH_API UStealthCharacterInteractionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-private:
-	UPROPERTY(EditAnywhere, Category ="Pickup", meta = (ClampMin = 0, ClampMax = 100000, Units = "cm"))
-	float MaxInteractionDistance = 300.0f;
-	UPROPERTY()
-	TObjectPtr<UCameraComponent> CachedCamera;
-	UPROPERTY()
-	TObjectPtr<UInventoryComponent> InventoryComponent;
-	UPROPERTY()
-	TObjectPtr<UStealthCharacterAbilitiesComponent> AbilitiesComponent;
-	UPROPERTY()
-	TObjectPtr<AActor> LookAtInteractableActor;
-	UPROPERTY()
-	TObjectPtr<UInputAction> PrimaryInteractInputAction;
-	UPROPERTY()
-	TObjectPtr<UInputAction> SecondaryInteractInputAction;
-
+	/*Methods*/
 public:
 	UStealthCharacterInteractionComponent();
 	virtual void BeginPlay() override;
@@ -58,4 +45,32 @@ public:
 		PrimaryInteractInputAction = NewPrimaryInteractInputAction;
 		SecondaryInteractInputAction = NewSecondaryInteractInputAction;
 	}
+
+	UFUNCTION(BlueprintCallable, Category = "Player|Interaction|Pickup")
+	bool TryPickupItem(AActor* NewPickedItem) const;
+	UFUNCTION(BlueprintCallable, Category = "Player|Interaction|Pickup")
+	void DropPickedItem() const;
+	UFUNCTION()
+	AActor* GetPickedItem() const { return PickedItem; }
+
+	/*Properties*/
+protected:
+	UPROPERTY(BlueprintReadOnly, Category = "Player|Interaction|Pickup")
+	mutable TObjectPtr<AActor> PickedItem;
+
+private:
+	UPROPERTY(EditAnywhere, Category ="Pickup", meta = (ClampMin = 0, ClampMax = 100000, Units = "cm"))
+	float MaxInteractionDistance = 300.0f;
+	UPROPERTY()
+	TObjectPtr<UCameraComponent> CachedCamera;
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> InventoryComponent;
+	UPROPERTY()
+	TObjectPtr<UStealthCharacterAbilitiesComponent> AbilitiesComponent;
+	UPROPERTY()
+	TObjectPtr<AActor> LookAtInteractableActor;
+	UPROPERTY()
+	TObjectPtr<UInputAction> PrimaryInteractInputAction;
+	UPROPERTY()
+	TObjectPtr<UInputAction> SecondaryInteractInputAction;
 };

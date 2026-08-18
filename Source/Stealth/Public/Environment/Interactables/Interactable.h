@@ -2,12 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "GameFramework/GameplayMessageSubsystem.h"
 #include "UObject/Interface.h"
 #include "Interactable.generated.h"
 
+class UStealthCharacterInteractionComponent;
 class UGameplayAbility;
-class AStealthPlayerCharacter;
 
 UINTERFACE(MinimalAPI, BlueprintType)
 class UInteractable : public UInterface
@@ -21,9 +20,9 @@ class STEALTH_API IInteractable
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	void PrimaryInteract(AStealthPlayerCharacter* Interactor);
+	void PrimaryInteract(const UStealthCharacterInteractionComponent* Interactor);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
-	void SecondaryInteract(AStealthPlayerCharacter* Interactor);
+	void SecondaryInteract(const UStealthCharacterInteractionComponent* Interactor);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	void SetHighlighted(bool bHighlight);
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
@@ -37,8 +36,8 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Interaction")
 	FGameplayTag GetPrimaryInteractionMessageTag() const;
 
-	virtual void PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor) {}
-	virtual void SecondaryInteract_Implementation(AStealthPlayerCharacter* Interactor) {}
+	virtual void PrimaryInteract_Implementation(const UStealthCharacterInteractionComponent* Interactor) {}
+	virtual void SecondaryInteract_Implementation(const UStealthCharacterInteractionComponent* Interactor) {}
 	virtual void SetHighlighted_Implementation(bool bHighlight) {}
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }
 	virtual FText GetSecondaryInteractionPrompt_Implementation() const { return FText::GetEmpty(); }

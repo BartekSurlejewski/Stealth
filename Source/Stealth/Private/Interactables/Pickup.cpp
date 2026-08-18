@@ -1,25 +1,28 @@
 #include "Environment/Interactables/Pickup.h"
 
+#include "Characters/Player/StealthPlayerCharacter.h"
+#include "Characters/Player/Components/StealthCharacterInteractionComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Stealth/Stealth.h"
 
 APickup::APickup()
 {
-	PrimaryActorTick.bCanEverTick = false;
-
-	// create the root
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bStartWithTickEnabled = false;
 
 	// create the mesh
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(RootComponent);
 	Mesh->SetSimulatePhysics(true);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Mesh->SetCollisionObjectType(ECC_PhysicsBody);
 	Mesh->SetCollisionResponseToAllChannels(ECR_Block); // collide with world geometry
 	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	Mesh->SetMobility(EComponentMobility::Movable);
+
+	RootComponent = Mesh;
 }
 
-void APickup::PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor)
+void APickup::PrimaryInteract_Implementation(const UStealthCharacterInteractionComponent* Interactor)
 {
 	// hide this mesh
 	SetActorHiddenInGame(true);
@@ -29,7 +32,20 @@ void APickup::PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor
 	SetActorTickEnabled(false);
 }
 
-void APickup::SecondaryInteract_Implementation(AStealthPlayerCharacter* Interactor) {}
+void APickup::SecondaryInteract_Implementation(const UStealthCharacterInteractionComponent* Interactor)
+{
+	UE_LOG(LogStealth, Warning, TEXT("[Pickup] Secondary interaction"));
+
+	if (bIsHoldable)
+	{
+		Interactor->TryPickupItem(this);
+	}
+
+	UE_LOG(LogStealth, Warning, TEXT("[Pickup] SimPhysics=%d AbsLoc=%d Parent=%s"),
+	       Mesh->IsSimulatingPhysics(),
+	       Mesh->IsUsingAbsoluteLocation(),
+	       *GetNameSafe(GetAttachParentActor()));
+}
 
 void APickup::SetHighlighted_Implementation(bool bHighlight)
 {
@@ -38,7 +54,7 @@ void APickup::SetHighlighted_Implementation(bool bHighlight)
 
 FText APickup::GetPrimaryInteractionPrompt_Implementation() const
 {
-	const FText& BaseName = InteractPrompt.IsEmpty() ? ItemDefinition->Name : InteractPrompt;
+	const FText& BaseName = PrimaryInteractPrompt.IsEmpty() ? ItemDefinition->Name : PrimaryInteractPrompt;
 
 	if (Quantity > 1)
 	{
@@ -50,7 +66,7 @@ FText APickup::GetPrimaryInteractionPrompt_Implementation() const
 
 FText APickup::GetSecondaryInteractionPrompt_Implementation() const
 {
-	return IInteractable::GetSecondaryInteractionPrompt_Implementation();
+	return SecondaryInteractPrompt;
 }
 
 FGameplayTag APickup::GetPrimaryInteractionRequiredAbilityTag_Implementation() const
@@ -67,7 +83,30 @@ void APickup::Initialize_Implementation(UItemDefinition* NewItemDefinition, cons
 {
 	this->ItemDefinition = NewItemDefinition;
 	this->Quantity = NewQuantity;
-	this->InteractPrompt = NewInteractPrompt;
+	this->PrimaryInteractPrompt = NewInteractPrompt;
+}
+
+void APickup::OnPickup_Implementation()
+{
+	UE_LOG(LogStealth, Warning, TEXT("[Pickup] On Pickup"));
+
+	Mesh->SetSimulatePhysics(false);
+	Mesh->SetUsingAbsoluteLocation(false);
+	Mesh->SetUsingAbsoluteRotation(false);
+	Mesh->SetUsingAbsoluteScale(false);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Fix for mesh being detached when disabling physics
+	RootComponent = Mesh;
+}
+
+void APickup::OnDrop_Implementation()
+{
+	Mesh->SetSimulatePhysics(true);
+	Mesh->SetUsingAbsoluteLocation(true);
+	Mesh->SetUsingAbsoluteRotation(true);
+	Mesh->SetUsingAbsoluteScale(true);
+	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
 UItemDefinition* APickup::GetInventoryItem_Implementation() const

@@ -32,7 +32,7 @@ public:
 	const FGuid& GetNpcGUID() const { return NpcGUID; }
 
 	//~Begin IInteractable Interface
-	virtual void PrimaryInteract_Implementation(AStealthPlayerCharacter* Interactor) override;
+	virtual void PrimaryInteract_Implementation(const UStealthCharacterInteractionComponent* Interactor) override;
 	virtual void SetHighlighted_Implementation(bool bHighlight) override;
 	virtual FText GetPrimaryInteractionPrompt_Implementation() const override;
 	virtual FGameplayTag GetPrimaryInteractionRequiredAbilityTag_Implementation() const override;

@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
 #include "GameplayTagContainer.h"
+#include "Inventory/Pickable.h"
 #include "StealthPlayerCharacter.generated.h"
 
 class UStealthCharacterCollisionsComponent;
@@ -22,45 +23,6 @@ UCLASS()
 class STEALTH_API AStealthPlayerCharacter : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
-	/*Properties*/
-protected:
-#pragma region Components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UCameraComponent> FirstPersonCamera;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStealthCharacterInteractionComponent> InteractionComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStealthCharacterCollisionsComponent> CollisionsComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Stimuli", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components|Ability System", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
-#pragma endregion
-
-#pragma region Input
-	// TODO: Rework input binding to assign actions in a single place
-	UPROPERTY(EditAnywhere, Category ="Input")
-	TObjectPtr<UInputAction> JumpAction;
-	UPROPERTY(EditAnywhere, Category ="Input")
-	TObjectPtr<UInputAction> MoveAction;
-	UPROPERTY(EditAnywhere, Category ="Input")
-	TObjectPtr<UInputAction> LookAction;
-	UPROPERTY(EditAnywhere, Category ="Input")
-	TObjectPtr<UInputAction> CrouchAction;
-	UPROPERTY(EditDefaultsOnly, Category ="Input")
-	TObjectPtr<UInputAction> PrimaryInteractAction;
-	UPROPERTY(EditDefaultsOnly, Category ="Input")
-	TObjectPtr<UInputAction> SecondaryInteractAction;
-	UPROPERTY(EditDefaultsOnly, Category ="Input")
-	TObjectPtr<UInputAction> SprintAction;
-#pragma endregion
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ability System")
-	TObjectPtr<UStealthCharacterAttributeSet> AttributeSet;
 
 	/*Methods*/
 public:
@@ -91,4 +53,44 @@ protected:
 	virtual void DoPrimaryInteract();
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSecondaryInteract();
+
+	/*Properties*/
+protected:
+#pragma region Components
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCameraComponent> FirstPersonCamera;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStealthCharacterInteractionComponent> InteractionComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStealthCharacterCollisionsComponent> CollisionsComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Stimuli", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAIPerceptionStimuliSourceComponent> StimuliSourceComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Ability System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Ability System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
+#pragma endregion
+
+#pragma region Input
+	// TODO: Rework input binding to assign actions in a single place
+	UPROPERTY(EditAnywhere, Category ="Player|Input")
+	TObjectPtr<UInputAction> JumpAction;
+	UPROPERTY(EditAnywhere, Category ="Player|Input")
+	TObjectPtr<UInputAction> MoveAction;
+	UPROPERTY(EditAnywhere, Category ="Player|Input")
+	TObjectPtr<UInputAction> LookAction;
+	UPROPERTY(EditAnywhere, Category ="Player|Input")
+	TObjectPtr<UInputAction> CrouchAction;
+	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
+	TObjectPtr<UInputAction> PrimaryInteractAction;
+	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
+	TObjectPtr<UInputAction> SecondaryInteractAction;
+	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
+	TObjectPtr<UInputAction> SprintAction;
+#pragma endregion
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Ability System")
+	TObjectPtr<UStealthCharacterAttributeSet> AttributeSet;
 };

@@ -3,7 +3,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "Abilities/GameplayAbility.h"
 #include "Camera/CameraComponent.h"
-#include "Characters/Player/StealthPlayerCharacter.h"
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
@@ -130,6 +129,12 @@ AActor* UStealthCharacterInteractionComponent::GetLookAtInteractableActor() cons
 
 void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction) const
 {
+	if (!bIsPrimaryInteraction && PickedItem)
+	{
+		DropPickedItem();
+		return;
+	}
+
 	if (!LookAtInteractableActor || !LookAtInteractableActor->Implements<UInteractable>())
 	{
 		return;
@@ -142,8 +147,8 @@ void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction)
 	if (!RequiredAbilityTag.IsValid())
 	{
 		bIsPrimaryInteraction
-			? IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, Cast<AStealthPlayerCharacter>(GetOwner()))
-			: IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, Cast<AStealthPlayerCharacter>(GetOwner()));
+			? IInteractable::Execute_PrimaryInteract(LookAtInteractableActor, this)
+			: IInteractable::Execute_SecondaryInteract(LookAtInteractableActor, this);
 	}
 	else if (AbilitiesComponent)
 	{
@@ -162,4 +167,36 @@ void UStealthCharacterInteractionComponent::Interact(bool bIsPrimaryInteraction)
 		int32 QuantityAfterAdd = 0;
 		InventoryComponent->TryAddItem(IPickable::Execute_GetInventoryItem(LookAtInteractableActor), QuantityAfterAdd, IPickable::Execute_GetQuantity(LookAtInteractableActor));
 	}
+}
+
+bool UStealthCharacterInteractionComponent::TryPickupItem(AActor* NewPickedItem) const
+{
+	if (!NewPickedItem || PickedItem)
+	{
+		return false;
+	}
+
+	if (NewPickedItem->Implements<UPickable>())
+	{
+		IPickable::Execute_OnPickup(NewPickedItem);
+	}
+
+	NewPickedItem->AttachToComponent(CachedCamera, FAttachmentTransformRules::KeepWorldTransform);
+	PickedItem = NewPickedItem;
+	return true;
+}
+
+void UStealthCharacterInteractionComponent::DropPickedItem() const
+{
+	if (!PickedItem)
+	{
+		return;
+	}
+
+	if (PickedItem->Implements<UPickable>())
+	{
+		IPickable::Execute_OnDrop(PickedItem);
+	}
+	PickedItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	PickedItem = nullptr;
 }

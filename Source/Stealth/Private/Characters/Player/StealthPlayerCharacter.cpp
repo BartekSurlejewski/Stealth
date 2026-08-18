@@ -19,6 +19,7 @@ AStealthPlayerCharacter::AStealthPlayerCharacter()
 	PrimaryActorTick.bCanEverTick = false;
 
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
+	RootComponent = GetCapsuleComponent();
 
 	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
 	FirstPersonMesh->SetupAttachment(GetMesh());
