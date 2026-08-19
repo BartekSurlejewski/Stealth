@@ -1,0 +1,106 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "Housing/HouseData.h"
+#include "StealthAiTypes.generated.h"
+
+class AActor;
+class ANpcCharacter;
+class ANpcAiController;
+
+/**
+ * Behavior and Alert level of an NPC
+ */
+UENUM(BlueprintType)
+enum class ENpcAlertLevel : uint8
+{
+	Unaware UMETA(DisplayName = "Unaware / Routine"),
+	Suspicious UMETA(DisplayName = "Suspicious / Inquiring"),
+	Alerted UMETA(DisplayName = "Alerted / Investigating"),
+	Hostile UMETA(DisplayName = "Hostile / Combat / Alarm")
+};
+
+/**
+ * Perception snapshot passed to StateTree and listeners
+ */
+USTRUCT(BlueprintType)
+struct FStateTreeAiPerceptionData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float Awareness = 0.0f; // 0.0 to 100.0
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bHasPlayerLineOfSight = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bEffectivelySeesPlayer = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	FVector LastKnownPlayerPosition = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	FVector LastHeardSoundLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float TimeSinceLastStimulus = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	TWeakObjectPtr<AActor> LastPerceivedActor = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	FGameplayTag LastStimulusTag;
+};
+
+/**
+ * Structured payload for crime events dispatched across AI systems
+ */
+USTRUCT(BlueprintType)
+struct FAiCrimeEventPayload
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
+	FName HouseId = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
+	EHouseCrimeType CrimeType = EHouseCrimeType::Trespassing;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
+	FVector CrimeLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
+	TWeakObjectPtr<AActor> Perpetrator = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
+	TWeakObjectPtr<AActor> VictimOrTarget = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
+	bool bIsPrimaryInvestigator = false;
+};
+
+/**
+ * Information about an active activity slot / smart object
+ */
+USTRUCT(BlueprintType)
+struct FActivitySlotClaim
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
+	FGuid ClaimerGuid;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
+	TWeakObjectPtr<AActor> TargetActor = nullptr;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
+	FGameplayTag ActivityTag;
+
+	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
+	float ClaimTimestamp = 0.0f;
+};

@@ -5,6 +5,7 @@
 #include "DailyRegimenTask.generated.h"
 
 class UPrisonerNpcContextComponent;
+class UNpcContextComponent;
 
 UCLASS(Abstract, Blueprintable, EditInlineNew, DefaultToInstanced)
 class STEALTH_API UDailyRegimenTask : public UObject
@@ -37,7 +38,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Time")
 	bool IsActiveAtTime(const int32& DayTimeInMinutes) const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "DailyTask")
+	void PerformByNpc(UNpcContextComponent* NpcContext);
+	virtual void PerformByNpc_Implementation(UNpcContextComponent* NpcContext);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "DailyTask")
 	void PerformByPrisoner(UPrisonerNpcContextComponent* PrisonerContext);
 	virtual void PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext);
 

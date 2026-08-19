@@ -1,6 +1,7 @@
 ﻿#include "Housing/HousingSubsystem.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/NpcContextComponent.h"
+#include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Housing/HouseComponent.h"
 #include "Stealth/Stealth.h"
@@ -152,11 +153,22 @@ void UHousingSubsystem::ReportCrime(const FHouseCrimeReport& CrimeReport)
 	UHouseComponent* House = GetHouseById(CrimeReport.HouseId);
 	if (!House) return;
 
+	// Build structured AI Crime Payload
+	FAiCrimeEventPayload BasePayload;
+	BasePayload.HouseId = CrimeReport.HouseId;
+	BasePayload.CrimeType = CrimeReport.CrimeType;
+	BasePayload.CrimeLocation = CrimeReport.CrimeLocation;
+	BasePayload.Perpetrator = CrimeReport.Perpetrator;
+	BasePayload.VictimOrTarget = CrimeReport.VictimOrTarget;
+	BasePayload.bIsPrimaryInvestigator = false;
+
 	// 1. Alert Owners if they are alive and have context
 	for (const FGuid& OwnerGuid : House->GetOwnerGuids())
 	{
 		if (UNpcContextComponent* Context = Registry->GetNpcContextComponent(OwnerGuid))
 		{
+			Context->HandleCrimeReported(BasePayload);
+
 			if (CrimeReport.CrimeType == EHouseCrimeType::Theft && TheftStateTreeEventTag.IsValid())
 			{
 				Context->SendStateTreeEvent(TheftStateTreeEventTag);
@@ -170,12 +182,34 @@ void UHousingSubsystem::ReportCrime(const FHouseCrimeReport& CrimeReport)
 
 	// 2. Alert nearby NPCs / Guards within hearing/awareness radius of the crime location
 	TArray<FGuid> NearbyGuids;
-	Registry->GetNpcsInRadius(CrimeReport.CrimeLocation, 1500.0f, NearbyGuids);
+	Registry->GetNpcsInRadius(CrimeReport.CrimeLocation, 2000.0f, NearbyGuids);
+
+	// Find closest responder among nearby NPCs
+	FGuid ClosestResponderGuid;
+	float ClosestDistSq = MAX_FLT;
+
+	for (const FGuid& NearbyGuid : NearbyGuids)
+	{
+		if (const ANpcCharacter* NearbyNpc = Registry->GetNpcCharacter(NearbyGuid))
+		{
+			const float DistSq = FVector::DistSquared(NearbyNpc->GetActorLocation(), CrimeReport.CrimeLocation);
+			if (DistSq < ClosestDistSq)
+			{
+				ClosestDistSq = DistSq;
+				ClosestResponderGuid = NearbyGuid;
+			}
+		}
+	}
+
 	for (const FGuid& NearbyGuid : NearbyGuids)
 	{
 		if (UNpcContextComponent* Context = Registry->GetNpcContextComponent(NearbyGuid))
 		{
-			// If nearby NPCs see or hear the crime, trigger suspicion/alert
+			FAiCrimeEventPayload ResponderPayload = BasePayload;
+			ResponderPayload.bIsPrimaryInvestigator = (NearbyGuid == ClosestResponderGuid);
+
+			Context->HandleCrimeReported(ResponderPayload);
+
 			if (IntrusionStateTreeEventTag.IsValid())
 			{
 				Context->SendStateTreeEvent(IntrusionStateTreeEventTag);

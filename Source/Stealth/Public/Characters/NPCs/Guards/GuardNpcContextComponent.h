@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "Characters/NPCs/NpcContextComponent.h"
@@ -16,43 +16,35 @@ class STEALTH_API UGuardNpcContextComponent : public UNpcContextComponent
 {
 	GENERATED_BODY()
 
-	/*Properties*/
 public:
-	// State (read from State Tree)
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
-	EGuardBehaviourState BehaviourState = EGuardBehaviourState::Patrol;
-
-	UPROPERTY(BlueprintReadOnly, Category="Guard|State")
+	UPROPERTY(BlueprintReadOnly, Category = "Guard|State")
 	int32 GlobalAlarmLevel = 0;
 
-	// Patrol
-	UPROPERTY(BlueprintReadWrite, Category="Guard|Patrol")
+	UPROPERTY(BlueprintReadWrite, Category = "Guard|Patrol")
 	int32 CurrentPatrolIndex = 0;
 
-private:
-	UPROPERTY()
-	TObjectPtr<UNpcPatrolComponent> PatrolComponent;
-
-	/*Methods*/
 public:
 	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Guard|Patrol")
+	UNpcPatrolComponent* GetPatrolComponent() const;
+
+	UFUNCTION(BlueprintPure, Category = "Guard|Patrol")
 	AActor* GetCurrentPatrolPoint() const;
-	UFUNCTION(BlueprintCallable)
+
+	UFUNCTION(BlueprintCallable, Category = "Guard|Patrol")
 	void IncrementPatrolIndex() const;
 
-	// External systems API
-	UFUNCTION(BlueprintCallable)
-	void SetBehaviourState(const EGuardBehaviourState& NewBehaviourState);
-
-	UFUNCTION(BlueprintPure)
+	UFUNCTION(BlueprintPure, Category = "Guard|Patrol")
 	bool IsOnWalkingPatrol() const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Guard|Actions")
 	void LookAtPlayer();
 
 private:
 	UFUNCTION()
 	void OnAlarmChanged(int32 NewLevel, const FVector& SourceLocation);
+
+	UPROPERTY()
+	mutable TObjectPtr<UNpcPatrolComponent> PatrolComponent;
 };

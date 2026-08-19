@@ -1,5 +1,7 @@
 ﻿#include "TimeSystem/DailyRegimen/DailyRegimenTasks/DailyRegimenTask.h"
 
+#include "Characters/NPCs/NpcContextComponent.h"
+#include "Characters/NPCs/Prisoners/PrisonerNpcContextComponent.h"
 #include "Stealth/Stealth.h"
 
 void UDailyRegimenTask::InitializeTask_Implementation()
@@ -33,4 +35,11 @@ bool UDailyRegimenTask::IsActiveAtTime(const int32& DayTimeInMinutes) const
 	}
 }
 
-void UDailyRegimenTask::PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext) {}
+void UDailyRegimenTask::PerformByNpc_Implementation(UNpcContextComponent* NpcContext)
+{
+}
+
+void UDailyRegimenTask::PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext)
+{
+	PerformByNpc(PrisonerContext);
+}

@@ -1,76 +1,79 @@
-﻿#include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
-
+#include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/Guards/NpcPatrolComponent.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Stealth/Stealth.h"
 
-
-class UStateTreeComponent;
-
 void UGuardNpcContextComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	GetPatrolComponent();
+}
 
-	PatrolComponent = NpcAiController->GetPawn()->FindComponentByClass<UNpcPatrolComponent>();
+UNpcPatrolComponent* UGuardNpcContextComponent::GetPatrolComponent() const
+{
+	if (!PatrolComponent)
+	{
+		if (NpcAiController && NpcAiController->GetPawn())
+		{
+			PatrolComponent = NpcAiController->GetPawn()->FindComponentByClass<UNpcPatrolComponent>();
+		}
+		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+		{
+			PatrolComponent = Pawn->FindComponentByClass<UNpcPatrolComponent>();
+		}
+		else if (GetOwner())
+		{
+			PatrolComponent = GetOwner()->FindComponentByClass<UNpcPatrolComponent>();
+		}
+	}
+	return PatrolComponent.Get();
 }
 
 AActor* UGuardNpcContextComponent::GetCurrentPatrolPoint() const
 {
-	if (!PatrolComponent)
+	if (UNpcPatrolComponent* PatrolComp = GetPatrolComponent())
 	{
-		return nullptr;
+		return PatrolComp->GetCurrentTarget();
 	}
-
-	return PatrolComponent->GetCurrentTarget();
+	return nullptr;
 }
 
 void UGuardNpcContextComponent::IncrementPatrolIndex() const
 {
-	if (!PatrolComponent)
+	if (UNpcPatrolComponent* PatrolComp = GetPatrolComponent())
 	{
-		return;
-	}
-
-	PatrolComponent->IncrementTargetIndex();
-}
-
-void UGuardNpcContextComponent::SetBehaviourState(const EGuardBehaviourState& NewBehaviourState)
-{
-	UE_LOG(LogStealth, Log, TEXT("[%s] Changing state to %hhd"), *GetOwner()->GetName(), NewBehaviourState);
-
-	if (BehaviourState != NewBehaviourState)
-	{
-		BehaviourState = NewBehaviourState;
-		OnBehaviourStateChanged.Broadcast(BehaviourState);
+		PatrolComp->IncrementTargetIndex();
 	}
 }
 
 bool UGuardNpcContextComponent::IsOnWalkingPatrol() const
 {
-	//TODO: this won't work at the scene start, since state tree seems to call it before BeginPlay. Fix somehow
-	if (!PatrolComponent)
+	if (UNpcPatrolComponent* PatrolComp = GetPatrolComponent())
 	{
-		return false;
+		return PatrolComp->IsOnWalkingPatrol();
 	}
-
-	return PatrolComponent->IsOnWalkingPatrol();
+	return false;
 }
-
 
 void UGuardNpcContextComponent::LookAtPlayer()
 {
-	if (!NpcAiController)
+	if (!NpcAiController || !NpcAiController->GetPawn())
 	{
 		return;
 	}
 
-	FVector DirectionToPlayer = UCharactersRegistrySubsystem::Get(this)->GetPlayerCharacter()->GetActorLocation() - NpcAiController->GetPawn()->GetActorLocation();
+	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
+	if (!Player)
+	{
+		return;
+	}
+
+	FVector DirectionToPlayer = Player->GetActorLocation() - NpcAiController->GetPawn()->GetActorLocation();
 	FRotator LookAtRotation = DirectionToPlayer.Rotation();
-	// Only rotate on Yaw axis, keep current Pitch and Roll
-	LookAtRotation.Pitch = 0.f;
-	LookAtRotation.Roll = 0.f;
+	LookAtRotation.Pitch = 0.0f;
+	LookAtRotation.Roll = 0.0f;
 
 	NpcAiController->GetPawn()->SetActorRotation(LookAtRotation);
 }
@@ -78,5 +81,8 @@ void UGuardNpcContextComponent::LookAtPlayer()
 void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVector& SourceLocation)
 {
 	GlobalAlarmLevel = NewLevel;
-	if (NewLevel >= 2) {}
+	if (NewLevel >= 2)
+	{
+		SetAlertLevel(ENpcAlertLevel::Hostile);
+	}
 }
