@@ -5,6 +5,7 @@
 #include "GameplayTagContainer.h"
 #include "NpcAiController.generated.h"
 
+class UNpcScheduleComponent;
 class UInventoryComponent;
 struct FGameplayTag;
 class UStateTreeAIComponent;
@@ -28,12 +29,14 @@ protected:
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	FGameplayTag ChangedStateEventTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNpcScheduleComponent> ScheduleComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
+	FGameplayTag ChangedStateEventTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
 	FGuid NpcGUID;
 };

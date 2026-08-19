@@ -1,6 +1,7 @@
 #include "Characters/NPCs/NpcAiController.h"
 
 #include "Characters/NPCs/NpcCharacter.h"
+#include "Characters/NPCs/AI/Schedule/NpcScheduleComponent.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Inventory/InventoryComponent.h"
 #include "Perception/AIPerceptionComponent.h"
@@ -11,6 +12,7 @@ ANpcAiController::ANpcAiController()
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
 	StateTreeAIComponent = CreateDefaultSubobject<UStateTreeAIComponent>("State Tree AI Component");
 	NpcInventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
+	ScheduleComponent = CreateDefaultSubobject<UNpcScheduleComponent>("Schedule Component");
 }
 
 void ANpcAiController::OnPossess(APawn* InPawn)

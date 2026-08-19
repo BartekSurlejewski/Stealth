@@ -2,6 +2,7 @@
 
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
+#include "Characters/NPCs/AI/Schedule/NpcScheduleComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "DialogueSystem/DialogueComponent.h"
 #include "DialogueSystem/DialogueManagerSubsystem.h"
@@ -21,7 +22,7 @@ ANpcCharacter::ANpcCharacter()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
 
-	DialogueComponent = CreateDefaultSubobject<UDialogueComponent>("DialogueComponent");
+	DialogueComponent = CreateDefaultSubobject<UDialogueComponent>("Dialogue Component");
 
 	if (!HasAnyFlags(RF_ClassDefaultObject))
 	{

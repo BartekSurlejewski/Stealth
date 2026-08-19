@@ -40,8 +40,8 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 	FVector LastHeardSoundLocation = FVector::ZeroVector;
 };
 
-USTRUCT(meta = (DisplayName = "NPC Perception Evaluator"))
-struct STEALTH_API FStateTreePerceptionEvaluator : public FStateTreeEvaluatorBase
+USTRUCT(meta = (DisplayName = "NPC Perception Evaluator", Category = "NPC"))
+struct STEALTH_API FStateTreePerceptionEvaluator : public FStateTreeEvaluatorCommonBase
 {
 	GENERATED_BODY()
 

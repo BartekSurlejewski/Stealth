@@ -81,10 +81,10 @@ struct FNpcSuspicionChangedMessage
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite, Category="Message")
-	FGuid NpcGUID;
+	float CurrentSuspicion = 0.0f;
 
 	UPROPERTY(BlueprintReadWrite, Category="Message")
-	float CurrentSuspicion = 0.0f;
+	FGuid NpcGUID;
 
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	bool bHasLineOfSight = false;

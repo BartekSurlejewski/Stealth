@@ -67,6 +67,11 @@ class STEALTH_API UNpcScheduleAsset : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+	virtual FPrimaryAssetId GetPrimaryAssetId() const override
+	{
+		return FPrimaryAssetId(TEXT("NpcSchedule"), GetFName());
+	}
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Schedule")
 	FGameplayTag ArchetypeTag;
 

@@ -34,8 +34,8 @@ struct STEALTH_API FStateTreeTask_NpcInvestigateInstanceData
 	bool bHasReachedLocation = false;
 };
 
-USTRUCT(meta = (DisplayName = "NPC Investigate Location"))
-struct STEALTH_API FStateTreeTask_NpcInvestigate : public FStateTreeTaskBase
+USTRUCT(meta = (DisplayName = "NPC Investigate Location", Category = "NPC"))
+struct STEALTH_API FStateTreeTask_NpcInvestigate : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 

@@ -32,8 +32,8 @@ struct STEALTH_API FStateTreeTask_PerformRoutineInstanceData
 	bool bHasArrivedAtActivity = false;
 };
 
-USTRUCT(meta = (DisplayName = "NPC Perform Routine"))
-struct STEALTH_API FStateTreeTask_PerformRoutine : public FStateTreeTaskBase
+USTRUCT(meta = (DisplayName = "NPC Perform Routine", Category = "NPC"))
+struct STEALTH_API FStateTreeTask_PerformRoutine : public FStateTreeTaskCommonBase
 {
 	GENERATED_BODY()
 

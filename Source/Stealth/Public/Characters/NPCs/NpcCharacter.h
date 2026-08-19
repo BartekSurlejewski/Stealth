@@ -5,6 +5,7 @@
 #include "GameFramework/Character.h"
 #include "NpcCharacter.generated.h"
 
+class UNpcScheduleComponent;
 class UCharactersRegistrySubsystem;
 class UDialogueComponent;
 class ANpcAiController;

@@ -35,8 +35,8 @@ struct STEALTH_API FStateTreeScheduleEvaluatorInstanceData
 	int32 Priority = 0;
 };
 
-USTRUCT(meta = (DisplayName = "NPC Schedule Evaluator"))
-struct STEALTH_API FStateTreeScheduleEvaluator : public FStateTreeEvaluatorBase
+USTRUCT(meta = (DisplayName = "NPC Schedule Evaluator", Category = "NPC"))
+struct STEALTH_API FStateTreeScheduleEvaluator : public FStateTreeEvaluatorCommonBase
 {
 	GENERATED_BODY()
 

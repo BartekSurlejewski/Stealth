@@ -24,16 +24,16 @@ public:
 		return FPrimaryAssetId(TEXT("QuestDefinition"), GetFName());
 	}
 
-	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category="Presentation")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Presentation")
 	FText QuestTitle;
 
 	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Presentation", meta=(MultiLine=true))
 	FText QuestDescription;
 
-	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category="Presentation")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Presentation")
 	FGameplayTag QuestCategory;
 
-	UPROPERTY(BlueprintReadOnly,EditDefaultsOnly, Category="Structure")
+	UPROPERTY(BlueprintReadOnly, EditDefaultsOnly, Category="Structure")
 	bool bIsSequential = true;
 
 	UPROPERTY(EditDefaultsOnly, Instanced, Category="Structure")
