@@ -2,11 +2,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/WorldSettings.h"
+#include "Housing/HouseData.h"
 #include "StealthWorldSettings.generated.h"
 
 class ATargetPoint;
 class UDailyRegimenTask;
-class ARuntimeDataContainer;
 
 UCLASS()
 class STEALTH_API AStealthWorldSettings : public AWorldSettings
