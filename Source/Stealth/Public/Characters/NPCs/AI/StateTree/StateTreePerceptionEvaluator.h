@@ -16,6 +16,9 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 	TObjectPtr<UNpcContextComponent> NpcContext = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
+	FGameplayTag CurrentStateTag;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
 	float Awareness = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
@@ -26,6 +29,9 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Output")
 	bool bEffectivelySeesPlayer = false;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
+	bool bIsPlayerPerformingIllegalAction = false;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
 	FVector LastKnownPlayerPos = FVector::ZeroVector;

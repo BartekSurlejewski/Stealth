@@ -24,6 +24,7 @@ enum class EGuardBehaviourState : uint8
 	Alarm
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
@@ -35,6 +36,9 @@ class STEALTH_API UNpcContextComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
+	FOnNpcStateChanged OnNpcStateChanged;
+
 	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
 	FOnBehaviourStateChanged OnBehaviourStateChanged;
 
@@ -66,7 +70,16 @@ public:
 	virtual void HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload);
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	FGameplayTag GetCurrentStateTag() const { return CurrentStateTag; }
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	const FGuid& GetNpcGuid() const { return OwnerNpcGuid; }
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	bool IsPlayerInRestrictedArea() const { return bIsPlayerInRestrictedArea; }
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	virtual bool IsPlayerPerformingIllegalAction(const AStealthPlayerCharacter* Player) const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	float GetAwareness() const { return CurrentSuspicion; }
@@ -92,6 +105,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "NPC|State")
 	void AddSuspicion(float Amount);
 
+	/** Single source of truth for NPC state */
+	UFUNCTION(BlueprintCallable, Category = "NPC|State")
+	void SetNpcState(const FGameplayTag& NewStateTag);
+
 	UFUNCTION(BlueprintCallable, Category = "NPC|State")
 	void SetAlertLevel(ENpcAlertLevel NewAlertLevel);
 
@@ -116,6 +133,12 @@ private:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC")
 	TObjectPtr<UNpcProfile> Profile;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
+	FGameplayTag CurrentStateTag;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
+	FGuid OwnerNpcGuid;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
 	float CurrentSuspicion = 0.0f;

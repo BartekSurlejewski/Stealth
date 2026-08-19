@@ -1,8 +1,11 @@
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/NpcAiController.h"
+#include "Characters/NPCs/NpcCharacter.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
+#include "AbilitySystemComponent.h"
+#include "AbilitySystemInterface.h"
 #include "Engine/World.h"
 #include "Exposure/PlayerExposureSubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
@@ -23,6 +26,20 @@ void UNpcContextComponent::BeginPlay()
 
 	StateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeAIComponent>();
 	NpcAiController = Cast<ANpcAiController>(GetOwner());
+
+	CurrentStateTag = StealthAiTags::TAG_NPC_State_Unaware;
+
+	if (const UCharactersRegistrySubsystem* Registry = UCharactersRegistrySubsystem::Get(this))
+	{
+		if (NpcAiController)
+		{
+			OwnerNpcGuid = Registry->GetNpcGuidByController(NpcAiController);
+		}
+		else if (ANpcCharacter* NpcChar = Cast<ANpcCharacter>(GetOwner()))
+		{
+			OwnerNpcGuid = Registry->GetNpcGuidByCharacter(NpcChar);
+		}
+	}
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
 	PlayerInRestrictedAreaListenerHandle = MsgSubsystem.RegisterListener<FBooleanMessage>(
@@ -52,35 +69,71 @@ void UNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 	EvaluateAlertState();
 }
 
+bool UNpcContextComponent::IsPlayerPerformingIllegalAction(const AStealthPlayerCharacter* Player) const
+{
+	if (!Player)
+	{
+		return false;
+	}
+
+	// 1. Check trespassing in restricted area
+	if (bIsPlayerInRestrictedArea)
+	{
+		return true;
+	}
+
+	// 2. Check GAS gameplay tags for illegal or suspicious states
+	if (const IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Player))
+	{
+		if (const UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
+		{
+			if (ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Illegal) ||
+				ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Trespassing))
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 void UNpcContextComponent::UpdateSuspicion(float DeltaTime)
 {
 	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
 	const bool bHasPlayer = (Player != nullptr);
+	const float DecayRate = Profile ? Profile->SuspicionDecayPerSecond : 8.0f;
 
 	if (bHasPlayer && bHasPlayerLineOfSight)
 	{
 		LastKnownPlayerPos = Player->GetActorLocation();
 
-		float GainRate = Profile ? Profile->SuspicionGainPerSecond_Sight : 40.0f;
-		if (!IsLookingDirectlyAtPlayer(Player))
+		// Accumulate suspicion ONLY if player is doing something illegal
+		if (IsPlayerPerformingIllegalAction(Player))
 		{
-			GainRate = Profile ? Profile->SuspicionGainPerSecond_Peripheral : 15.0f;
+			float GainRate = Profile ? Profile->SuspicionGainPerSecond_Sight : 40.0f;
+			if (!IsLookingDirectlyAtPlayer(Player))
+			{
+				GainRate = Profile ? Profile->SuspicionGainPerSecond_Peripheral : 15.0f;
+			}
+
+			// Always see player within close range
+			const float Dist = FVector::Dist(GetOwner()->GetActorLocation(), Player->GetActorLocation());
+			const float AlwaysSeeRange = Profile ? Profile->AlwaysSeePlayerRange : 100.0f;
+			const float EffectiveExposure = (Dist <= AlwaysSeeRange) ? 1.0f : CalculatePlayerExposureMultiplier();
+
+			CurrentSuspicion += GainRate * EffectiveExposure * DeltaTime;
+			TimeSinceLastStimulus = 0.0f;
 		}
-
-		const float ExposureMultiplier = CalculatePlayerExposureMultiplier();
-
-		// Always see player within close range
-		const float Dist = FVector::Dist(GetOwner()->GetActorLocation(), Player->GetActorLocation());
-		const float AlwaysSeeRange = Profile ? Profile->AlwaysSeePlayerRange : 100.0f;
-		const float EffectiveExposure = (Dist <= AlwaysSeeRange) ? 1.0f : ExposureMultiplier;
-
-		CurrentSuspicion += GainRate * EffectiveExposure * DeltaTime;
-		TimeSinceLastStimulus = 0.0f;
+		else
+		{
+			// Player is in sight, but is behaving legally in a permitted area -> Suspicion decays
+			CurrentSuspicion -= DecayRate * DeltaTime;
+		}
 	}
 	else
 	{
 		// Decay suspicion when out of sight
-		const float DecayRate = Profile ? Profile->SuspicionDecayPerSecond : 8.0f;
 		CurrentSuspicion -= DecayRate * DeltaTime;
 	}
 
@@ -101,33 +154,78 @@ void UNpcContextComponent::EvaluateAlertState()
 {
 	const float AlertThreshold = Profile ? Profile->SuspicionThreshold_Alert : 100.0f;
 
-	ENpcAlertLevel NewAlertLevel = ENpcAlertLevel::Unaware;
-	EGuardBehaviourState NewBehaviour = EGuardBehaviourState::Patrol;
+	FGameplayTag TargetStateTag = StealthAiTags::TAG_NPC_State_Unaware;
 
 	if (CurrentSuspicion >= 100.0f || (bIsPlayerInRestrictedArea && bEffectivelySeesPlayer))
 	{
-		NewAlertLevel = ENpcAlertLevel::Hostile;
-		NewBehaviour = EGuardBehaviourState::Alarm;
+		TargetStateTag = StealthAiTags::TAG_NPC_State_Combat;
 	}
 	else if (CurrentSuspicion >= AlertThreshold)
 	{
-		NewAlertLevel = ENpcAlertLevel::Alerted;
-		NewBehaviour = EGuardBehaviourState::Alerted;
+		TargetStateTag = StealthAiTags::TAG_NPC_State_Alerted;
 	}
 	else if (CurrentSuspicion > 5.0f)
 	{
-		NewAlertLevel = ENpcAlertLevel::Suspicious;
-		NewBehaviour = EGuardBehaviourState::Suspicious;
+		TargetStateTag = StealthAiTags::TAG_NPC_State_Suspicious;
+	}
+	else
+	{
+		TargetStateTag = StealthAiTags::TAG_NPC_State_Unaware;
 	}
 
-	if (AlertLevel != NewAlertLevel)
+	SetNpcState(TargetStateTag);
+}
+
+void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
+{
+	if (CurrentStateTag == NewStateTag || !NewStateTag.IsValid())
 	{
-		SetAlertLevel(NewAlertLevel);
+		return;
 	}
 
-	if (CurrentBehaviourState != NewBehaviour)
+	const FGameplayTag PreviousStateTag = CurrentStateTag;
+	CurrentStateTag = NewStateTag;
+
+	// Synchronize legacy enum properties for backwards compatibility
+	if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Combat) || NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Dead))
 	{
-		SetBehaviourState(NewBehaviour);
+		AlertLevel = ENpcAlertLevel::Hostile;
+		CurrentBehaviourState = EGuardBehaviourState::Alarm;
+	}
+	else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Alerted) || NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search))
+	{
+		AlertLevel = ENpcAlertLevel::Alerted;
+		CurrentBehaviourState = (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search)) ? EGuardBehaviourState::Search : EGuardBehaviourState::Alerted;
+	}
+	else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Suspicious))
+	{
+		AlertLevel = ENpcAlertLevel::Suspicious;
+		CurrentBehaviourState = EGuardBehaviourState::Suspicious;
+	}
+	else
+	{
+		AlertLevel = ENpcAlertLevel::Unaware;
+		CurrentBehaviourState = EGuardBehaviourState::Patrol;
+	}
+
+	// 1. Notify StateTree directly so behavior transitions immediately
+	SendStateTreeEvent(CurrentStateTag);
+
+	// 2. Broadcast internal delegates for local listeners (UI, AnimInstance, Character)
+	OnNpcStateChanged.Broadcast(CurrentStateTag, PreviousStateTag);
+	OnAlertLevelChanged.Broadcast(AlertLevel);
+	OnBehaviourStateChanged.Broadcast(CurrentBehaviourState);
+
+	// 3. Broadcast global message via GameplayMessageSubsystem for loose coupling across systems
+	if (UWorld* World = GetWorld())
+	{
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(World);
+		FNpcStateChangedMessage Msg;
+		Msg.NpcGUID = OwnerNpcGuid;
+		Msg.PreviousStateTag = PreviousStateTag;
+		Msg.NewStateTag = CurrentStateTag;
+		Msg.Suspicion = CurrentSuspicion;
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_NPC_StateChanged, Msg);
 	}
 }
 
@@ -204,10 +302,7 @@ void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& S
 	const float SuspicionGain = FMath::Clamp(Stimulus.Strength * 30.0f, 10.0f, 60.0f);
 	AddSuspicion(SuspicionGain);
 
-	if (InvestigateActivityTag.IsValid())
-	{
-		SendStateTreeEvent(InvestigateActivityTag);
-	}
+	SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_NoiseHeard);
 }
 
 void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload)
@@ -219,21 +314,15 @@ void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& Crime
 	if (CrimePayload.bIsPrimaryInvestigator)
 	{
 		AddSuspicion(100.0f);
-		SetAlertLevel(ENpcAlertLevel::Hostile);
-		if (AlarmActivityTag.IsValid())
-		{
-			SendStateTreeEvent(AlarmActivityTag);
-		}
+		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
 	}
 	else
 	{
 		AddSuspicion(50.0f);
-		SetAlertLevel(ENpcAlertLevel::Alerted);
-		if (InvestigateActivityTag.IsValid())
-		{
-			SendStateTreeEvent(InvestigateActivityTag);
-		}
+		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
 	}
+
+	SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_CrimeReported);
 }
 
 void UNpcContextComponent::AddSuspicion(float Amount)
@@ -245,34 +334,44 @@ void UNpcContextComponent::AddSuspicion(float Amount)
 
 void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 {
-	if (AlertLevel != NewAlertLevel)
+	switch (NewAlertLevel)
 	{
-		AlertLevel = NewAlertLevel;
-		OnAlertLevelChanged.Broadcast(AlertLevel);
-
-		switch (AlertLevel)
-		{
-		case ENpcAlertLevel::Suspicious:
-			if (SuspiciousActivityTag.IsValid()) SendStateTreeEvent(SuspiciousActivityTag);
-			break;
-		case ENpcAlertLevel::Alerted:
-			if (AlertedActivityTag.IsValid()) SendStateTreeEvent(AlertedActivityTag);
-			break;
-		case ENpcAlertLevel::Hostile:
-			if (AlarmActivityTag.IsValid()) SendStateTreeEvent(AlarmActivityTag);
-			break;
-		default:
-			break;
-		}
+	case ENpcAlertLevel::Hostile:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
+		break;
+	case ENpcAlertLevel::Alerted:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
+		break;
+	case ENpcAlertLevel::Suspicious:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Suspicious);
+		break;
+	case ENpcAlertLevel::Unaware:
+	default:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
+		break;
 	}
 }
 
 void UNpcContextComponent::SetBehaviourState(EGuardBehaviourState NewState)
 {
-	if (CurrentBehaviourState != NewState)
+	switch (NewState)
 	{
-		CurrentBehaviourState = NewState;
-		OnBehaviourStateChanged.Broadcast(CurrentBehaviourState);
+	case EGuardBehaviourState::Alarm:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
+		break;
+	case EGuardBehaviourState::Search:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Search);
+		break;
+	case EGuardBehaviourState::Alerted:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
+		break;
+	case EGuardBehaviourState::Suspicious:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Suspicious);
+		break;
+	case EGuardBehaviourState::Patrol:
+	default:
+		SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
+		break;
 	}
 }
 
@@ -302,9 +401,5 @@ void UNpcContextComponent::OnPlayerInRestrictedAreaChanged(FGameplayTag Channel,
 	if (bIsPlayerInRestrictedArea && bEffectivelySeesPlayer)
 	{
 		AddSuspicion(50.0f);
-		if (SuspiciousActivityTag.IsValid())
-		{
-			SendStateTreeEvent(SuspiciousActivityTag);
-		}
 	}
 }

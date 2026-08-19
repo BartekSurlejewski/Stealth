@@ -2,12 +2,33 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "Housing/HouseData.h"
 #include "StealthAiTypes.generated.h"
 
 class AActor;
 class ANpcCharacter;
 class ANpcAiController;
+
+namespace StealthAiTags
+{
+	// NPC State Tags (Single Source of Truth)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Unaware);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Suspicious);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Alerted);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Combat);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Search);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Dead);
+
+	// NPC Event / Trigger Tags
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Investigate);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_NoiseHeard);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_CrimeReported);
+
+	// Player Status Tags
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Illegal);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Trespassing);
+}
 
 /**
  * Behavior and Alert level of an NPC

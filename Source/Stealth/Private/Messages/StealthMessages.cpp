@@ -38,4 +38,9 @@ namespace StealthMessageChannels
 	// UI
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_UI_WidgetShown, "Message.UI.WidgetShown");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_UI_WidgetHidden, "Message.UI.WidgetHidden");
+
+	// NPC
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_NPC_StateChanged, "Message.NPC.StateChanged");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_NPC_SuspicionChanged, "Message.NPC.SuspicionChanged");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_NPC_CrimeAlert, "Message.NPC.CrimeAlert");
 }

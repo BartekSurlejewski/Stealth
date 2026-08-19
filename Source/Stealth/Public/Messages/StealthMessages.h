@@ -50,7 +50,45 @@ namespace StealthMessageChannels
 	// UI
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_UI_WidgetShown);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_UI_WidgetHidden);
+
+	// NPC
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_NPC_StateChanged);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_NPC_SuspicionChanged);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_NPC_CrimeAlert);
 }
+
+USTRUCT(BlueprintType)
+struct FNpcStateChangedMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGuid NpcGUID;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGameplayTag PreviousStateTag;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGameplayTag NewStateTag;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	float Suspicion = 0.0f;
+};
+
+USTRUCT(BlueprintType)
+struct FNpcSuspicionChangedMessage
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	FGuid NpcGUID;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	float CurrentSuspicion = 0.0f;
+
+	UPROPERTY(BlueprintReadWrite, Category="Message")
+	bool bHasLineOfSight = false;
+};
 
 USTRUCT(BlueprintType)
 struct FBooleanMessage
