@@ -29,6 +29,20 @@ namespace StealthAiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Illegal);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Trespassing);
 
+	// NPC Activity Tags (Schedule & Routines)
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Patrol);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_GuardPost);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Pub);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Sleep);
+
+	// NPC Location Tags
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Default);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Courtyard);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Gate);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Prison);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Tavern);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Barracks);
+
 	// NPC Focus Tags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_None);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Routine);
@@ -63,6 +77,18 @@ enum class ENpcBehaviourState : uint8
 
 // Typedef alias for backward compatibility
 using EGuardBehaviourState = ENpcBehaviourState;
+
+/**
+ * Patrol traversal pattern for patrol routes
+ */
+UENUM(BlueprintType)
+enum class EPatrolMode : uint8
+{
+	Loop     UMETA(DisplayName = "Loop (0 -> 1 -> 2 -> 0)"),
+	PingPong UMETA(DisplayName = "Ping-Pong (0 -> 1 -> 2 -> 1 -> 0)"),
+	Once     UMETA(DisplayName = "Once (Stop at last waypoint)"),
+	Random   UMETA(DisplayName = "Random Waypoint")
+};
 
 /**
  * Focus priority hierarchy: Higher numerical values preempt lower ones.

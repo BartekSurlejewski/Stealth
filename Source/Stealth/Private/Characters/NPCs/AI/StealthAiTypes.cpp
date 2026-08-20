@@ -19,6 +19,20 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Illegal, "Player.State.Illegal");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Trespassing, "Player.State.Trespassing");
 
+	// NPC Activity Tags (Schedule & Routines)
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Patrol, "NPC.Activity.Patrol");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_GuardPost, "NPC.Activity.GuardPost");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Pub, "NPC.Activity.Pub");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Sleep, "NPC.Activity.Sleep");
+
+	// NPC Location Tags
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Default, "NPC.Location.Default");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Courtyard, "NPC.Location.Courtyard");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Gate, "NPC.Location.Gate");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Prison, "NPC.Location.Prison");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Tavern, "NPC.Location.Tavern");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Barracks, "NPC.Location.Barracks");
+
 	// NPC Focus Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_None, "NPC.Focus.None");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Routine, "NPC.Focus.Routine");

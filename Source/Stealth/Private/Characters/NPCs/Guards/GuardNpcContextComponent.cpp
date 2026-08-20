@@ -1,6 +1,7 @@
 #include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
-#include "Characters/NPCs/Guards/NpcPatrolComponent.h"
+#include "Characters/NPCs/AI/Patrol/PatrolRoute.h"
+#include "Characters/NPCs/AI/Patrol/PatrolSubsystem.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Stealth/Stealth.h"
@@ -8,53 +9,101 @@
 void UGuardNpcContextComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	GetPatrolComponent();
 }
 
-UNpcPatrolComponent* UGuardNpcContextComponent::GetPatrolComponent() const
+APatrolRoute* UGuardNpcContextComponent::GetActivePatrolRoute() const
 {
-	if (!PatrolComponent)
+	return ActivePatrolRoute.Get();
+}
+
+void UGuardNpcContextComponent::SetActivePatrolRoute(APatrolRoute* NewRoute)
+{
+	ActivePatrolRoute = NewRoute;
+	CurrentPatrolIndex = 0;
+	bMovingForward = true;
+}
+
+APatrolRoute* UGuardNpcContextComponent::AssignPatrolRouteForLocation(const FGameplayTag& LocationTag)
+{
+	if (!LocationTag.IsValid())
 	{
+		ActivePatrolRoute = nullptr;
+		return nullptr;
+	}
+
+	if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(this))
+	{
+		FVector RequesterPos = FVector::ZeroVector;
 		if (NpcAiController && NpcAiController->GetPawn())
 		{
-			PatrolComponent = NpcAiController->GetPawn()->FindComponentByClass<UNpcPatrolComponent>();
+			RequesterPos = NpcAiController->GetPawn()->GetActorLocation();
 		}
 		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
 		{
-			PatrolComponent = Pawn->FindComponentByClass<UNpcPatrolComponent>();
+			RequesterPos = Pawn->GetActorLocation();
 		}
-		else if (GetOwner())
+
+		APatrolRoute* FoundRoute = Subsystem->GetPatrolRouteByLocationTag(LocationTag, RequesterPos);
+		if (FoundRoute)
 		{
-			PatrolComponent = GetOwner()->FindComponentByClass<UNpcPatrolComponent>();
+			ActivePatrolRoute = FoundRoute;
+			ResumePatrol();
+			return FoundRoute;
 		}
 	}
-	return PatrolComponent.Get();
+
+	ActivePatrolRoute = nullptr;
+	return nullptr;
 }
 
 AActor* UGuardNpcContextComponent::GetCurrentPatrolPoint() const
 {
-	if (UNpcPatrolComponent* PatrolComp = GetPatrolComponent())
+	if (const APatrolRoute* Route = GetActivePatrolRoute())
 	{
-		return PatrolComp->GetCurrentTarget();
+		return Route->GetWaypoint(CurrentPatrolIndex);
 	}
 	return nullptr;
 }
 
-void UGuardNpcContextComponent::IncrementPatrolIndex() const
+void UGuardNpcContextComponent::IncrementPatrolIndex()
 {
-	if (UNpcPatrolComponent* PatrolComp = GetPatrolComponent())
+	if (const APatrolRoute* Route = GetActivePatrolRoute())
 	{
-		PatrolComp->IncrementTargetIndex();
+		CurrentPatrolIndex = Route->GetNextWaypointIndex(CurrentPatrolIndex, bMovingForward);
 	}
+}
+
+void UGuardNpcContextComponent::ResumePatrol()
+{
+	if (const APatrolRoute* Route = GetActivePatrolRoute())
+	{
+		FVector RequesterPos = FVector::ZeroVector;
+		if (NpcAiController && NpcAiController->GetPawn())
+		{
+			RequesterPos = NpcAiController->GetPawn()->GetActorLocation();
+		}
+		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+		{
+			RequesterPos = Pawn->GetActorLocation();
+		}
+
+		if (!RequesterPos.IsZero())
+		{
+			CurrentPatrolIndex = Route->GetClosestWaypointIndex(RequesterPos);
+		}
+	}
+}
+
+void UGuardNpcContextComponent::ResetPatrol()
+{
+	CurrentPatrolIndex = 0;
+	bMovingForward = true;
 }
 
 bool UGuardNpcContextComponent::IsOnWalkingPatrol() const
 {
-	if (UNpcPatrolComponent* PatrolComp = GetPatrolComponent())
-	{
-		return PatrolComp->IsOnWalkingPatrol();
-	}
-	return false;
+	const APatrolRoute* Route = GetActivePatrolRoute();
+	return (Route != nullptr && Route->HasValidWaypoints());
 }
 
 void UGuardNpcContextComponent::LookAtPlayer()
