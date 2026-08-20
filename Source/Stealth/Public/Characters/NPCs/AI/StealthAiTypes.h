@@ -24,6 +24,12 @@ namespace StealthAiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Investigate);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_NoiseHeard);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_CrimeReported);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_PlayerSpotted);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_PlayerLost);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Distraction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_FocusCleared);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_SearchExpired);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_ResumeRoutine);
 
 	// Player Status Tags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Illegal);
@@ -35,13 +41,11 @@ namespace StealthAiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Pub);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Sleep);
 
-	// NPC Location Tags
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Default);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Courtyard);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Gate);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Prison);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Tavern);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Location_Barracks);
+	// Noise Tags
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Footstep);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Distraction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Major);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Critical);
 
 	// NPC Focus Tags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_None);
@@ -68,15 +72,27 @@ enum class ENpcAlertLevel : uint8
 UENUM(BlueprintType)
 enum class ENpcBehaviourState : uint8
 {
-	Routine    UMETA(DisplayName = "Routine / Patrol / Schedule"),
+	Routine UMETA(DisplayName = "Routine / Patrol / Schedule"),
 	Suspicious UMETA(DisplayName = "Suspicious"),
-	Alerted    UMETA(DisplayName = "Alerted"),
-	Search     UMETA(DisplayName = "Search"),
-	Combat     UMETA(DisplayName = "Combat / Alarm")
+	Alerted UMETA(DisplayName = "Alerted"),
+	Search UMETA(DisplayName = "Search"),
+	Combat UMETA(DisplayName = "Combat / Alarm")
 };
 
 // Typedef alias for backward compatibility
 using EGuardBehaviourState = ENpcBehaviourState;
+
+/**
+ * Noise classification for hearing stimuli
+ */
+UENUM(BlueprintType)
+enum class ENpcNoiseType : uint8
+{
+	Subtle UMETA(DisplayName = "Subtle / Footsteps"),
+	Distraction UMETA(DisplayName = "Distraction / Thrown Rock"),
+	Major UMETA(DisplayName = "Major Disturbance / Glass Shatter"),
+	Critical UMETA(DisplayName = "Critical / Explosion / Death Scream")
+};
 
 /**
  * Patrol traversal pattern for patrol routes
@@ -84,10 +100,10 @@ using EGuardBehaviourState = ENpcBehaviourState;
 UENUM(BlueprintType)
 enum class EPatrolMode : uint8
 {
-	Loop     UMETA(DisplayName = "Loop (0 -> 1 -> 2 -> 0)"),
+	Loop UMETA(DisplayName = "Loop (0 -> 1 -> 2 -> 0)"),
 	PingPong UMETA(DisplayName = "Ping-Pong (0 -> 1 -> 2 -> 1 -> 0)"),
-	Once     UMETA(DisplayName = "Once (Stop at last waypoint)"),
-	Random   UMETA(DisplayName = "Random Waypoint")
+	Once UMETA(DisplayName = "Once (Stop at last waypoint)"),
+	Random UMETA(DisplayName = "Random Waypoint")
 };
 
 /**
@@ -96,13 +112,13 @@ enum class EPatrolMode : uint8
 UENUM(BlueprintType)
 enum class ENpcFocusPriority : uint8
 {
-	None                = 0,
-	Routine             = 10,  // Daily activity / idle facing
-	MinorDistraction    = 20,  // Soft noise, rock throw, whistling
-	MajorDisturbance    = 30,  // Open door in secure area, blood, missing item
-	CriticalDisturbance = 40,  // Dead / incapacitated body
-	SuspiciousPlayer    = 50,  // Player spotted in restricted zone / sneaking
-	CombatTarget        = 60   // Confirmed hostile player in combat
+	None = 0,
+	Routine = 10, // Daily activity / idle facing
+	MinorDistraction = 20, // Soft noise, rock throw, whistling
+	MajorDisturbance = 30, // Open door in secure area, blood, missing item
+	CriticalDisturbance = 40, // Dead / incapacitated body
+	SuspiciousPlayer = 50, // Player spotted in restricted zone / sneaking
+	CombatTarget = 60 // Confirmed hostile player in combat
 };
 
 /**

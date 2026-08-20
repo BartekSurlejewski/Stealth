@@ -48,6 +48,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
 	FOnNpcFocusChanged OnNpcFocusChanged;
 
+	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
+	FOnNpcNoiseHeard OnNoiseHeard;
+
 public:
 	UNpcContextComponent();
 
@@ -58,8 +61,8 @@ public:
 	UFUNCTION()
 	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus);
 
-	UFUNCTION()
-	virtual void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+	UFUNCTION(BlueprintCallable, Category = "NPC|Perception")
+	virtual bool OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
 
 	/** Handle crime report dispatched from HousingSubsystem */
 	UFUNCTION(BlueprintCallable, Category = "NPC|Crime")
@@ -158,6 +161,9 @@ protected:
 
 	UFUNCTION()
 	void HandleFocusChanged(const FNpcFocusTarget& NewFocus, const FNpcFocusTarget& PreviousFocus);
+
+	UFUNCTION()
+	void HandleNoiseHeard(ENpcNoiseType NoiseType, const FVector& NoiseLocation);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC|Profile")

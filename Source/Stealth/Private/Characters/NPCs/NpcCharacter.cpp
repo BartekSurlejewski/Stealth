@@ -23,6 +23,7 @@ ANpcCharacter::ANpcCharacter()
 	GetCharacterMovement()->AirControl = 0.5f;
 
 	DialogueComponent = CreateDefaultSubobject<UDialogueComponent>("Dialogue Component");
+	ScheduleComponent = CreateDefaultSubobject<UNpcScheduleComponent>("Schedule Component");
 
 	if (!HasAnyFlags(RF_ClassDefaultObject))
 	{

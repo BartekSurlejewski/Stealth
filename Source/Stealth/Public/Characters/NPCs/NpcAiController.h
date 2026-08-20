@@ -42,8 +42,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UNpcScheduleComponent> ScheduleComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UNpcSuspicionComponent> SuspicionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UNpcFocusComponent> FocusComponent;

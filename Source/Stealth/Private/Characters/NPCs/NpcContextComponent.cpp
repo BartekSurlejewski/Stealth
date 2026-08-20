@@ -53,6 +53,7 @@ void UNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		SuspicionComponent->OnSuspicionChanged.RemoveDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
 		SuspicionComponent->OnAlertStateEvaluated.RemoveDynamic(this, &UNpcContextComponent::HandleAlertStateEvaluated);
 		SuspicionComponent->OnPlayerInSightChanged.RemoveDynamic(this, &UNpcContextComponent::HandlePlayerInSightChanged);
+		SuspicionComponent->OnNoiseHeard.RemoveDynamic(this, &UNpcContextComponent::HandleNoiseHeard);
 	}
 
 	if (FocusComponent)
@@ -76,6 +77,7 @@ void UNpcContextComponent::BindToSubcomponents()
 		SuspicionComp->OnSuspicionChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
 		SuspicionComp->OnAlertStateEvaluated.AddUniqueDynamic(this, &UNpcContextComponent::HandleAlertStateEvaluated);
 		SuspicionComp->OnPlayerInSightChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandlePlayerInSightChanged);
+		SuspicionComp->OnNoiseHeard.AddUniqueDynamic(this, &UNpcContextComponent::HandleNoiseHeard);
 	}
 
 	UNpcFocusComponent* FocusComp = GetFocusComponent();
@@ -250,13 +252,13 @@ void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulu
 	}
 }
 
-void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
+bool UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
 	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		SuspicionComp->OnHearingStimulus(Actor, Stimulus);
-		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_NoiseHeard);
+		return SuspicionComp->OnHearingStimulus(Actor, Stimulus);
 	}
+	return false;
 }
 
 void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload)
@@ -349,6 +351,8 @@ void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
 	const FGameplayTag PreviousStateTag = CurrentStateTag;
 	CurrentStateTag = NewStateTag;
 
+	UE_LOG(LogStealth, Warning, TEXT("NpcContextComponent: New State Tag: %s"), *NewStateTag.GetTagName().ToString())
+
 	// Synchronize subcomponents
 	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
@@ -376,6 +380,12 @@ void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
 
 	// 1. Notify StateTree directly so behavior transitions immediately
 	SendStateTreeEvent(CurrentStateTag);
+
+	if (PreviousStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search) && NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Unaware))
+	{
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_SearchExpired);
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_ResumeRoutine);
+	}
 
 	// 2. Broadcast internal delegates for local listeners (UI, AnimInstance, Character)
 	OnNpcStateChanged.Broadcast(CurrentStateTag, PreviousStateTag);
@@ -426,10 +436,54 @@ void UNpcContextComponent::HandleSuspicionChanged(float NewSuspicion)
 
 void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
 {
+	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
+	const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction(Player);
+	const ENpcBehaviourState CurrentState = GetBehaviourState();
+	const ENpcAlertLevel CurrentAlert = GetAlertLevel();
+
+	if (bInSight)
+	{
+		// Only fire PlayerSpotted if the NPC is in combat/search (reacquiring target),
+		// if the player is actively committing an illegal act, or if NPC is hostile
+		if (CurrentState == ENpcBehaviourState::Combat ||
+		    CurrentState == ENpcBehaviourState::Search ||
+		    CurrentAlert == ENpcAlertLevel::Hostile ||
+		    bIsIllegal)
+		{
+			SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_PlayerSpotted);
+		}
+	}
+	else
+	{
+		// Only fire PlayerLost if the NPC was actively in combat, search, or hostile
+		if (CurrentState == ENpcBehaviourState::Combat ||
+		    CurrentState == ENpcBehaviourState::Search ||
+		    CurrentAlert == ENpcAlertLevel::Hostile)
+		{
+			SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_PlayerLost);
+		}
+	}
+
 	OnPlayerInSightChanged.Broadcast(bInSight);
 }
 
 void UNpcContextComponent::HandleFocusChanged(const FNpcFocusTarget& NewFocus, const FNpcFocusTarget& PreviousFocus)
 {
+	if (NewFocus.IsValid() && NewFocus.Priority >= ENpcFocusPriority::MinorDistraction)
+	{
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_Distraction);
+	}
+	else if (!NewFocus.IsValid() && PreviousFocus.IsValid())
+	{
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_FocusCleared);
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_ResumeRoutine);
+	}
+
 	OnNpcFocusChanged.Broadcast(NewFocus, PreviousFocus);
+}
+
+void UNpcContextComponent::HandleNoiseHeard(ENpcNoiseType NoiseType, const FVector& NoiseLocation)
+{
+	SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_NoiseHeard);
+	OnNoiseHeard.Broadcast(NoiseType, NoiseLocation);
 }

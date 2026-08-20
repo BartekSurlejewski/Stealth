@@ -43,6 +43,8 @@ public:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	TObjectPtr<UDialogueComponent> DialogueComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNpcScheduleComponent> ScheduleComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
 	FGuid NpcGUID;
 

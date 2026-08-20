@@ -21,7 +21,7 @@ public:
 	float SuspicionDecayPerSecond = 8.f;
 
 	UPROPERTY(EditDefaultsOnly, Category="Suspicion")
-	float SuspicionThreshold_Alert = 100.f;
+	float SuspicionThreshold_Alert = 75.f;
 
 	// Perception
 	UPROPERTY(EditDefaultsOnly, Category="Perception")

@@ -16,7 +16,6 @@ ANpcAiController::ANpcAiController()
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
 	StateTreeAIComponent = CreateDefaultSubobject<UStateTreeAIComponent>("State Tree AI Component");
 	NpcInventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
-	ScheduleComponent = CreateDefaultSubobject<UNpcScheduleComponent>("Schedule Component");
 	SuspicionComponent = CreateDefaultSubobject<UNpcSuspicionComponent>("Suspicion Component");
 	FocusComponent = CreateDefaultSubobject<UNpcFocusComponent>("Focus Component");
 }

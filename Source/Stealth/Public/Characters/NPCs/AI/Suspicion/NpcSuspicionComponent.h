@@ -18,6 +18,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcAlertLevelChanged, ENpcAlertLe
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcPlayerInSightChanged, bool, IsPlayerInDirectSight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcAlertStateEvaluated, const FGameplayTag&, TargetStateTag, ENpcAlertLevel, NewAlertLevel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcNoiseHeard, ENpcNoiseType, NoiseType, const FVector&, NoiseLocation);
 
 /**
  * Component responsible exclusively for sensory stimulus processing,
@@ -51,12 +52,21 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "NPC|Suspicion|Events")
 	FOnNpcAlertStateEvaluated OnAlertStateEvaluated;
 
+	UPROPERTY(BlueprintAssignable, Category = "NPC|Suspicion|Events")
+	FOnNpcNoiseHeard OnNoiseHeard;
+
 	// Perception callbacks
 	UFUNCTION()
 	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus);
 
-	UFUNCTION()
-	virtual void OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+	UFUNCTION(BlueprintCallable, Category = "NPC|Suspicion")
+	virtual bool OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+
+	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
+	ENpcNoiseType ClassifyNoiseStimulus(const FAIStimulus& Stimulus) const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
+	bool ShouldReactToNoise(ENpcNoiseType NoiseType, const FAIStimulus& Stimulus) const;
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Suspicion")
 	virtual void HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload);
@@ -154,6 +164,12 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "NPC|Suspicion")
 	float TimeSinceLastStimulus = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "NPC|Suspicion")
+	float LostPlayerSightDuration = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "NPC|Suspicion")
+	float SearchDurationTimer = 0.0f;
 
 	UPROPERTY(BlueprintReadOnly, Category = "NPC|Suspicion")
 	TWeakObjectPtr<AActor> LastPerceivedActor = nullptr;

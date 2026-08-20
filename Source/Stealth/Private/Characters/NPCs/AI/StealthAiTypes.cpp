@@ -14,6 +14,12 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_Investigate, "NPC.Event.Investigate");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_NoiseHeard, "NPC.Event.NoiseHeard");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_CrimeReported, "NPC.Event.CrimeReported");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_PlayerSpotted, "NPC.Event.PlayerSpotted");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_PlayerLost, "NPC.Event.PlayerLost");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_Distraction, "NPC.Event.Distraction");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_FocusCleared, "NPC.Event.FocusCleared");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_SearchExpired, "NPC.Event.SearchExpired");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_ResumeRoutine, "NPC.Event.ResumeRoutine");
 
 	// Player Status Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Illegal, "Player.State.Illegal");
@@ -25,13 +31,11 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Pub, "NPC.Activity.Pub");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Sleep, "NPC.Activity.Sleep");
 
-	// NPC Location Tags
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Default, "NPC.Location.Default");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Courtyard, "NPC.Location.Courtyard");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Gate, "NPC.Location.Gate");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Prison, "NPC.Location.Prison");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Tavern, "NPC.Location.Tavern");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Location_Barracks, "NPC.Location.Barracks");
+	// Noise Tags
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Footstep, "Noise.Footstep");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Distraction, "Noise.Distraction");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Major, "Noise.Major");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Critical, "Noise.Critical");
 
 	// NPC Focus Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_None, "NPC.Focus.None");
