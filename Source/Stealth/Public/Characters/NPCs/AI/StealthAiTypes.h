@@ -52,14 +52,17 @@ enum class ENpcAlertLevel : uint8
 };
 
 UENUM(BlueprintType)
-enum class EGuardBehaviourState : uint8
+enum class ENpcBehaviourState : uint8
 {
-	Patrol,
-	Suspicious,
-	Alerted,
-	Search,
-	Alarm
+	Routine    UMETA(DisplayName = "Routine / Patrol / Schedule"),
+	Suspicious UMETA(DisplayName = "Suspicious"),
+	Alerted    UMETA(DisplayName = "Alerted"),
+	Search     UMETA(DisplayName = "Search"),
+	Combat     UMETA(DisplayName = "Combat / Alarm")
 };
+
+// Typedef alias for backward compatibility
+using EGuardBehaviourState = ENpcBehaviourState;
 
 /**
  * Focus priority hierarchy: Higher numerical values preempt lower ones.

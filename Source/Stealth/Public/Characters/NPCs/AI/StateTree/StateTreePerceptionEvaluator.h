@@ -25,6 +25,9 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
+	ENpcBehaviourState BehaviourState = ENpcBehaviourState::Routine;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
 	bool bHasPlayerLineOfSight = false;
 
 	UPROPERTY(EditAnywhere, Category = "Output")

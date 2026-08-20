@@ -199,25 +199,25 @@ void UNpcSuspicionComponent::EvaluateAlertState()
 	{
 		TargetStateTag = StealthAiTags::TAG_NPC_State_Combat;
 		AlertLevel = ENpcAlertLevel::Hostile;
-		CurrentBehaviourState = EGuardBehaviourState::Alarm;
+		CurrentBehaviourState = ENpcBehaviourState::Combat;
 	}
 	else if (CurrentSuspicion >= AlertThreshold)
 	{
 		TargetStateTag = StealthAiTags::TAG_NPC_State_Alerted;
 		AlertLevel = ENpcAlertLevel::Alerted;
-		CurrentBehaviourState = EGuardBehaviourState::Alerted;
+		CurrentBehaviourState = ENpcBehaviourState::Alerted;
 	}
 	else if (CurrentSuspicion > 5.0f)
 	{
 		TargetStateTag = StealthAiTags::TAG_NPC_State_Suspicious;
 		AlertLevel = ENpcAlertLevel::Suspicious;
-		CurrentBehaviourState = EGuardBehaviourState::Suspicious;
+		CurrentBehaviourState = ENpcBehaviourState::Suspicious;
 	}
 	else
 	{
 		TargetStateTag = StealthAiTags::TAG_NPC_State_Unaware;
 		AlertLevel = ENpcAlertLevel::Unaware;
-		CurrentBehaviourState = EGuardBehaviourState::Patrol;
+		CurrentBehaviourState = ENpcBehaviourState::Routine;
 	}
 
 	OnAlertStateEvaluated.Broadcast(TargetStateTag, AlertLevel);
@@ -383,41 +383,41 @@ void UNpcSuspicionComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 	switch (NewAlertLevel)
 	{
 	case ENpcAlertLevel::Hostile:
-		CurrentBehaviourState = EGuardBehaviourState::Alarm;
+		CurrentBehaviourState = ENpcBehaviourState::Combat;
 		break;
 	case ENpcAlertLevel::Alerted:
-		CurrentBehaviourState = EGuardBehaviourState::Alerted;
+		CurrentBehaviourState = ENpcBehaviourState::Alerted;
 		break;
 	case ENpcAlertLevel::Suspicious:
-		CurrentBehaviourState = EGuardBehaviourState::Suspicious;
+		CurrentBehaviourState = ENpcBehaviourState::Suspicious;
 		break;
 	case ENpcAlertLevel::Unaware:
 	default:
-		CurrentBehaviourState = EGuardBehaviourState::Patrol;
+		CurrentBehaviourState = ENpcBehaviourState::Routine;
 		break;
 	}
 
 	OnBehaviourStateChanged.Broadcast(CurrentBehaviourState);
 }
 
-void UNpcSuspicionComponent::SetBehaviourState(EGuardBehaviourState NewState)
+void UNpcSuspicionComponent::SetBehaviourState(ENpcBehaviourState NewState)
 {
 	CurrentBehaviourState = NewState;
 	OnBehaviourStateChanged.Broadcast(CurrentBehaviourState);
 
 	switch (NewState)
 	{
-	case EGuardBehaviourState::Alarm:
+	case ENpcBehaviourState::Combat:
 		AlertLevel = ENpcAlertLevel::Hostile;
 		break;
-	case EGuardBehaviourState::Search:
-	case EGuardBehaviourState::Alerted:
+	case ENpcBehaviourState::Search:
+	case ENpcBehaviourState::Alerted:
 		AlertLevel = ENpcAlertLevel::Alerted;
 		break;
-	case EGuardBehaviourState::Suspicious:
+	case ENpcBehaviourState::Suspicious:
 		AlertLevel = ENpcAlertLevel::Suspicious;
 		break;
-	case EGuardBehaviourState::Patrol:
+	case ENpcBehaviourState::Routine:
 	default:
 		AlertLevel = ENpcAlertLevel::Unaware;
 		break;

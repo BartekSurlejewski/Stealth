@@ -15,7 +15,7 @@ struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcSuspicionChanged, float, NewSuspicion);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcPlayerInSightChanged, bool, IsPlayerInDirectSight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcAlertStateEvaluated, const FGameplayTag&, TargetStateTag, ENpcAlertLevel, NewAlertLevel);
 
@@ -68,7 +68,7 @@ public:
 	void SetAlertLevel(ENpcAlertLevel NewAlertLevel);
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Suspicion")
-	void SetBehaviourState(EGuardBehaviourState NewState);
+	void SetBehaviourState(ENpcBehaviourState NewState);
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
 	float GetSuspicion() const { return CurrentSuspicion; }
@@ -77,7 +77,7 @@ public:
 	ENpcAlertLevel GetAlertLevel() const { return AlertLevel; }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
-	EGuardBehaviourState GetBehaviourState() const { return CurrentBehaviourState; }
+	ENpcBehaviourState GetBehaviourState() const { return CurrentBehaviourState; }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
 	bool HasPlayerLineOfSight() const { return bHasPlayerLineOfSight; }
@@ -138,7 +138,7 @@ protected:
 	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|Suspicion")
-	EGuardBehaviourState CurrentBehaviourState = EGuardBehaviourState::Patrol;
+	ENpcBehaviourState CurrentBehaviourState = ENpcBehaviourState::Routine;
 
 	UPROPERTY(BlueprintReadOnly, Category = "NPC|Suspicion")
 	FVector LastKnownPlayerPos = FVector::ZeroVector;

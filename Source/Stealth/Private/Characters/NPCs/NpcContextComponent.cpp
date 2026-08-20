@@ -162,13 +162,13 @@ ENpcAlertLevel UNpcContextComponent::GetAlertLevel() const
 	return ENpcAlertLevel::Unaware;
 }
 
-EGuardBehaviourState UNpcContextComponent::GetBehaviourState() const
+ENpcBehaviourState UNpcContextComponent::GetBehaviourState() const
 {
 	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetBehaviourState();
 	}
-	return EGuardBehaviourState::Patrol;
+	return ENpcBehaviourState::Routine;
 }
 
 bool UNpcContextComponent::HasPlayerLineOfSight() const
@@ -311,7 +311,7 @@ void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 	}
 }
 
-void UNpcContextComponent::SetBehaviourState(EGuardBehaviourState NewState)
+void UNpcContextComponent::SetBehaviourState(ENpcBehaviourState NewState)
 {
 	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
@@ -320,19 +320,19 @@ void UNpcContextComponent::SetBehaviourState(EGuardBehaviourState NewState)
 
 	switch (NewState)
 	{
-	case EGuardBehaviourState::Alarm:
+	case ENpcBehaviourState::Combat:
 		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
 		break;
-	case EGuardBehaviourState::Search:
+	case ENpcBehaviourState::Search:
 		SetNpcState(StealthAiTags::TAG_NPC_State_Search);
 		break;
-	case EGuardBehaviourState::Alerted:
+	case ENpcBehaviourState::Alerted:
 		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
 		break;
-	case EGuardBehaviourState::Suspicious:
+	case ENpcBehaviourState::Suspicious:
 		SetNpcState(StealthAiTags::TAG_NPC_State_Suspicious);
 		break;
-	case EGuardBehaviourState::Patrol:
+	case ENpcBehaviourState::Routine:
 	default:
 		SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
 		break;
@@ -362,7 +362,7 @@ void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
 		}
 		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search))
 		{
-			SuspicionComp->SetBehaviourState(EGuardBehaviourState::Search);
+			SuspicionComp->SetBehaviourState(ENpcBehaviourState::Search);
 		}
 		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Suspicious))
 		{

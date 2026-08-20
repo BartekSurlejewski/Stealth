@@ -14,7 +14,7 @@ class AStealthPlayerCharacter;
 struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, EGuardBehaviourState, NewBehaviourState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSuspicionChanged, float, NewSuspicion);
@@ -85,7 +85,7 @@ public:
 	ENpcAlertLevel GetAlertLevel() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	EGuardBehaviourState GetBehaviourState() const;
+	ENpcBehaviourState GetBehaviourState() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	bool HasPlayerLineOfSight() const;
@@ -117,7 +117,7 @@ public:
 	void SetAlertLevel(ENpcAlertLevel NewAlertLevel);
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void SetBehaviourState(EGuardBehaviourState NewState);
+	void SetBehaviourState(ENpcBehaviourState NewState);
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Focus")
 	bool RequestFocus(const FNpcFocusTarget& NewFocusCandidate);

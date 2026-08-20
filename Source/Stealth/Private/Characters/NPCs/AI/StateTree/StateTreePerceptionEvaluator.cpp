@@ -61,6 +61,7 @@ void FStateTreePerceptionEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	InstanceData.CurrentStateTag = InstanceData.NpcContext->GetCurrentStateTag();
 	InstanceData.Awareness = InstanceData.NpcContext->GetAwareness();
 	InstanceData.AlertLevel = InstanceData.NpcContext->GetAlertLevel();
+	InstanceData.BehaviourState = InstanceData.NpcContext->GetBehaviourState();
 	InstanceData.bHasPlayerLineOfSight = InstanceData.NpcContext->HasPlayerLineOfSight();
 	InstanceData.bEffectivelySeesPlayer = InstanceData.NpcContext->EffectivelySeesPlayer();
 	InstanceData.bIsPlayerPerformingIllegalAction = InstanceData.NpcContext->IsPlayerPerformingIllegalAction(InstanceData.NpcContext->GetPlayerCharacter());
