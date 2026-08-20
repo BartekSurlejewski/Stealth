@@ -106,6 +106,20 @@ bool UGuardNpcContextComponent::IsOnWalkingPatrol() const
 	return (Route != nullptr && Route->HasValidWaypoints());
 }
 
+AActor* UGuardNpcContextComponent::GetStandingGuardSpot() const
+{
+	if (const APatrolRoute* Route = GetActivePatrolRoute())
+	{
+		return Route->GetStandingGuardSpot();
+	}
+	return nullptr;
+}
+
+bool UGuardNpcContextComponent::HasStandingGuardSpot() const
+{
+	return GetStandingGuardSpot() != nullptr;
+}
+
 void UGuardNpcContextComponent::LookAtPlayer()
 {
 	if (!NpcAiController || !NpcAiController->GetPawn())

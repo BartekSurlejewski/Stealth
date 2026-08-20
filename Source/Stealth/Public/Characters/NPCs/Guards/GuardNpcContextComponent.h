@@ -59,6 +59,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Guard|Patrol")
 	bool IsOnWalkingPatrol() const;
 
+	/** Get standing guard spot from active patrol route */
+	UFUNCTION(BlueprintPure, Category = "Guard|Patrol")
+	AActor* GetStandingGuardSpot() const;
+
+	/** Check if active patrol route has a designated standing guard spot */
+	UFUNCTION(BlueprintPure, Category = "Guard|Patrol")
+	bool HasStandingGuardSpot() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Guard|Actions")
 	void LookAtPlayer();
 

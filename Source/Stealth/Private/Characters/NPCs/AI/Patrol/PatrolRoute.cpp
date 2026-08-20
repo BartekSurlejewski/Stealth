@@ -1,5 +1,7 @@
 #include "Characters/NPCs/AI/Patrol/PatrolRoute.h"
 #include "Characters/NPCs/AI/Patrol/PatrolSubsystem.h"
+#include "Characters/NPCs/AI/ActivityPointSubsystem.h"
+#include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Engine/World.h"
 
 APatrolRoute::APatrolRoute()
@@ -16,10 +18,29 @@ void APatrolRoute::BeginPlay()
 	{
 		Subsystem->RegisterPatrolRoute(this);
 	}
+
+	if (StandingGuardSpot && LocationTag.IsValid())
+	{
+		if (UActivityPointSubsystem* ActivitySubsystem = UActivityPointSubsystem::Get(this))
+		{
+			FGameplayTagContainer ActivityTags;
+			ActivityTags.AddTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+			ActivityTags.AddTag(LocationTag);
+			ActivitySubsystem->RegisterActivityPoint(StandingGuardSpot.Get(), ActivityTags);
+		}
+	}
 }
 
 void APatrolRoute::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	if (StandingGuardSpot)
+	{
+		if (UActivityPointSubsystem* ActivitySubsystem = UActivityPointSubsystem::Get(this))
+		{
+			ActivitySubsystem->UnregisterActivityPoint(StandingGuardSpot.Get());
+		}
+	}
+
 	if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(this))
 	{
 		Subsystem->UnregisterPatrolRoute(this);
@@ -149,4 +170,9 @@ bool APatrolRoute::HasValidWaypoints() const
 		}
 	}
 	return false;
+}
+
+AActor* APatrolRoute::GetStandingGuardSpot() const
+{
+	return StandingGuardSpot.Get();
 }

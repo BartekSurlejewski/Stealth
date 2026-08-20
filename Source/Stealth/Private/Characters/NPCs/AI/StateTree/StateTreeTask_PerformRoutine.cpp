@@ -70,31 +70,77 @@ EStateTreeRunStatus FStateTreeTask_PerformRoutine::EnterState(FStateTreeExecutio
 		InstanceData.CurrentActivityTag = InstanceData.ExpectedActivityTag;
 	}
 
-	AActor* Target = InstanceData.TargetActivityPoint.Get();
-	if (Target)
-	{
-		InstanceData.Controller->MoveToActor(Target, InstanceData.AcceptanceRadius);
-		return EStateTreeRunStatus::Running;
-	}
+	const bool bIsGuardPost = InstanceData.CurrentActivityTag.MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+	const bool bIsPatrol = InstanceData.CurrentActivityTag.MatchesTag(StealthAiTags::TAG_NPC_Activity_Patrol);
 
-	// If no single activity point, check if this is a patrol routine based on location tag
-	if (InstanceData.GuardContext)
+	// For GuardPost, resolve StandingGuardSpot from patrol route if not claimed via ActivityPointSubsystem
+	if (bIsGuardPost && !InstanceData.TargetActivityPoint.IsValid())
 	{
-		InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
-		if (AActor* Waypoint = InstanceData.GuardContext->GetCurrentPatrolPoint())
+		if (InstanceData.GuardContext)
 		{
-			InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+			InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
+			if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+			{
+				if (AActor* Spot = Route->GetStandingGuardSpot())
+				{
+					InstanceData.TargetActivityPoint = Spot;
+				}
+				else if (AActor* Waypoint = Route->GetWaypoint(0))
+				{
+					InstanceData.TargetActivityPoint = Waypoint;
+				}
+			}
+		}
+		else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+		{
+			const FVector Pos = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;
+			InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
+			if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+			{
+				if (AActor* Spot = Route->GetStandingGuardSpot())
+				{
+					InstanceData.TargetActivityPoint = Spot;
+				}
+				else if (AActor* Waypoint = Route->GetWaypoint(0))
+				{
+					InstanceData.TargetActivityPoint = Waypoint;
+				}
+			}
 		}
 	}
-	else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+
+	// 1. Single Activity Point Routine (bed, table, chair, or guard standing spot)
+	if (!bIsPatrol && InstanceData.TargetActivityPoint.IsValid())
 	{
-		const FVector Pos = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;
-		InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
-		if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+		AActor* Target = InstanceData.TargetActivityPoint.Get();
+		if (Target)
 		{
-			if (AActor* Waypoint = Route->GetWaypoint(0))
+			InstanceData.Controller->MoveToActor(Target, InstanceData.AcceptanceRadius);
+			return EStateTreeRunStatus::Running;
+		}
+	}
+
+	// 2. Patrol routine
+	if (bIsPatrol || !bIsGuardPost)
+	{
+		if (InstanceData.GuardContext)
+		{
+			InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
+			if (AActor* Waypoint = InstanceData.GuardContext->GetCurrentPatrolPoint())
 			{
 				InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+			}
+		}
+		else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+		{
+			const FVector Pos = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;
+			InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
+			if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+			{
+				if (AActor* Waypoint = Route->GetWaypoint(0))
+				{
+					InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+				}
 			}
 		}
 	}
@@ -159,30 +205,74 @@ EStateTreeRunStatus FStateTreeTask_PerformRoutine::Tick(FStateTreeExecutionConte
 			InstanceData.Controller->StopMovement();
 			InstanceData.Controller->ClearFocus(EAIFocusPriority::Gameplay);
 
-			AActor* NewTarget = InstanceData.TargetActivityPoint.Get();
-			if (NewTarget)
-			{
-				InstanceData.Controller->MoveToActor(NewTarget, InstanceData.AcceptanceRadius);
-				return EStateTreeRunStatus::Running;
-			}
+			const bool bNewIsGuardPost = InstanceData.CurrentActivityTag.MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+			const bool bNewIsPatrol = InstanceData.CurrentActivityTag.MatchesTag(StealthAiTags::TAG_NPC_Activity_Patrol);
 
-			if (InstanceData.GuardContext)
+			if (bNewIsGuardPost && !InstanceData.TargetActivityPoint.IsValid())
 			{
-				InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
-				if (AActor* Waypoint = InstanceData.GuardContext->GetCurrentPatrolPoint())
+				if (InstanceData.GuardContext)
 				{
-					InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+					InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
+					if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+					{
+						if (AActor* Spot = Route->GetStandingGuardSpot())
+						{
+							InstanceData.TargetActivityPoint = Spot;
+						}
+						else if (AActor* Waypoint = Route->GetWaypoint(0))
+						{
+							InstanceData.TargetActivityPoint = Waypoint;
+						}
+					}
+				}
+				else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+				{
+					const FVector Pos = Pawn->GetActorLocation();
+					InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
+					if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+					{
+						if (AActor* Spot = Route->GetStandingGuardSpot())
+						{
+							InstanceData.TargetActivityPoint = Spot;
+						}
+						else if (AActor* Waypoint = Route->GetWaypoint(0))
+						{
+							InstanceData.TargetActivityPoint = Waypoint;
+						}
+					}
 				}
 			}
-			else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+
+			if (!bNewIsPatrol && InstanceData.TargetActivityPoint.IsValid())
 			{
-				const FVector Pos = Pawn->GetActorLocation();
-				InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
-				if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+				AActor* NewTarget = InstanceData.TargetActivityPoint.Get();
+				if (NewTarget)
 				{
-					if (AActor* Waypoint = Route->GetWaypoint(0))
+					InstanceData.Controller->MoveToActor(NewTarget, InstanceData.AcceptanceRadius);
+					return EStateTreeRunStatus::Running;
+				}
+			}
+
+			if (bNewIsPatrol || !bNewIsGuardPost)
+			{
+				if (InstanceData.GuardContext)
+				{
+					InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
+					if (AActor* Waypoint = InstanceData.GuardContext->GetCurrentPatrolPoint())
 					{
 						InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+					}
+				}
+				else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+				{
+					const FVector Pos = Pawn->GetActorLocation();
+					InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
+					if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
+					{
+						if (AActor* Waypoint = Route->GetWaypoint(0))
+						{
+							InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+						}
 					}
 				}
 			}
@@ -265,12 +355,27 @@ EStateTreeRunStatus FStateTreeTask_PerformRoutine::Tick(FStateTreeExecutionConte
 	// 3. Fallback: If neither TargetActivityPoint nor ActivePatrolRoute were found at start, retry resolving route
 	if (InstanceData.ScheduleComponent)
 	{
+		const bool bFallbackIsGuardPost = InstanceData.CurrentActivityTag.MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+
 		if (InstanceData.GuardContext)
 		{
 			InstanceData.ActivePatrolRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.CurrentLocationTag);
-			if (AActor* Waypoint = InstanceData.GuardContext->GetCurrentPatrolPoint())
+			if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
 			{
-				InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+				if (bFallbackIsGuardPost)
+				{
+					AActor* Spot = Route->GetStandingGuardSpot() ? Route->GetStandingGuardSpot() : Route->GetWaypoint(0);
+					if (Spot)
+					{
+						InstanceData.TargetActivityPoint = Spot;
+						InstanceData.Controller->MoveToActor(Spot, InstanceData.AcceptanceRadius);
+						return EStateTreeRunStatus::Running;
+					}
+				}
+				else if (AActor* Waypoint = InstanceData.GuardContext->GetCurrentPatrolPoint())
+				{
+					InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
+				}
 			}
 		}
 		else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
@@ -279,7 +384,17 @@ EStateTreeRunStatus FStateTreeTask_PerformRoutine::Tick(FStateTreeExecutionConte
 			InstanceData.ActivePatrolRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.CurrentLocationTag, Pos);
 			if (APatrolRoute* Route = InstanceData.ActivePatrolRoute.Get())
 			{
-				if (AActor* Waypoint = Route->GetWaypoint(0))
+				if (bFallbackIsGuardPost)
+				{
+					AActor* Spot = Route->GetStandingGuardSpot() ? Route->GetStandingGuardSpot() : Route->GetWaypoint(0);
+					if (Spot)
+					{
+						InstanceData.TargetActivityPoint = Spot;
+						InstanceData.Controller->MoveToActor(Spot, InstanceData.AcceptanceRadius);
+						return EStateTreeRunStatus::Running;
+					}
+				}
+				else if (AActor* Waypoint = Route->GetWaypoint(0))
 				{
 					InstanceData.Controller->MoveToActor(Waypoint, InstanceData.AcceptanceRadius);
 				}

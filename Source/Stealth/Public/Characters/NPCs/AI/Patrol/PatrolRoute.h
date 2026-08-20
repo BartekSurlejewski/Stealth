@@ -76,4 +76,8 @@ public:
 	/** Check if route has at least one valid waypoint actor */
 	UFUNCTION(BlueprintPure, Category = "Patrol")
 	bool HasValidWaypoints() const;
+
+	/** Get the standing guard spot actor if assigned */
+	UFUNCTION(BlueprintPure, Category = "Patrol")
+	AActor* GetStandingGuardSpot() const;
 };

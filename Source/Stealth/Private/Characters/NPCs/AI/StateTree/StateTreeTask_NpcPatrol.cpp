@@ -2,6 +2,7 @@
 #include "Characters/NPCs/AI/Patrol/PatrolRoute.h"
 #include "Characters/NPCs/AI/Patrol/PatrolSubsystem.h"
 #include "Characters/NPCs/AI/Schedule/NpcScheduleComponent.h"
+#include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "StateTreeExecutionContext.h"
@@ -70,7 +71,13 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::EnterState(FStateTreeExecutionCont
 		return EStateTreeRunStatus::Running;
 	}
 
-	if (InstanceData.GuardContext)
+	const bool bIsGuardPost = InstanceData.ScheduleComponent && InstanceData.ScheduleComponent->GetActiveActivityTag().MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+
+	if (bIsGuardPost && Route->GetStandingGuardSpot())
+	{
+		InstanceData.CurrentTargetWaypoint = Route->GetStandingGuardSpot();
+	}
+	else if (InstanceData.GuardContext)
 	{
 		InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
 	}
@@ -130,10 +137,22 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::Tick(FStateTreeExecutionContext& C
 		if (ActiveLoc.IsValid() && ActiveLoc != InstanceData.LocationTag)
 		{
 			InstanceData.LocationTag = ActiveLoc;
+			const bool bIsGuardPost = InstanceData.ScheduleComponent->GetActiveActivityTag().MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+
 			if (InstanceData.GuardContext)
 			{
 				InstanceData.ActiveRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.LocationTag);
-				InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
+				if (APatrolRoute* RouteActor = InstanceData.ActiveRoute.Get())
+				{
+					if (bIsGuardPost && RouteActor->GetStandingGuardSpot())
+					{
+						InstanceData.CurrentTargetWaypoint = RouteActor->GetStandingGuardSpot();
+					}
+					else
+					{
+						InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
+					}
+				}
 			}
 			else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
 			{
@@ -141,7 +160,14 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::Tick(FStateTreeExecutionContext& C
 				InstanceData.ActiveRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.LocationTag, Pos);
 				if (APatrolRoute* NewRoute = InstanceData.ActiveRoute.Get())
 				{
-					InstanceData.CurrentTargetWaypoint = NewRoute->GetWaypoint(0);
+					if (bIsGuardPost && NewRoute->GetStandingGuardSpot())
+					{
+						InstanceData.CurrentTargetWaypoint = NewRoute->GetStandingGuardSpot();
+					}
+					else
+					{
+						InstanceData.CurrentTargetWaypoint = NewRoute->GetWaypoint(0);
+					}
 				}
 			}
 
@@ -160,11 +186,23 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::Tick(FStateTreeExecutionContext& C
 	APatrolRoute* Route = InstanceData.ActiveRoute.Get();
 	if (!Route || !Route->HasValidWaypoints())
 	{
+		const bool bIsGuardPost = InstanceData.ScheduleComponent && InstanceData.ScheduleComponent->GetActiveActivityTag().MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+
 		// Fallback retry if route was not yet registered during EnterState
 		if (InstanceData.GuardContext)
 		{
 			InstanceData.ActiveRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.LocationTag);
-			InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
+			if (APatrolRoute* RouteActor = InstanceData.ActiveRoute.Get())
+			{
+				if (bIsGuardPost && RouteActor->GetStandingGuardSpot())
+				{
+					InstanceData.CurrentTargetWaypoint = RouteActor->GetStandingGuardSpot();
+				}
+				else
+				{
+					InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
+				}
+			}
 		}
 		else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
 		{
@@ -172,7 +210,14 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::Tick(FStateTreeExecutionContext& C
 			InstanceData.ActiveRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.LocationTag, Pos);
 			if (APatrolRoute* NewRoute = InstanceData.ActiveRoute.Get())
 			{
-				InstanceData.CurrentTargetWaypoint = NewRoute->GetWaypoint(0);
+				if (bIsGuardPost && NewRoute->GetStandingGuardSpot())
+				{
+					InstanceData.CurrentTargetWaypoint = NewRoute->GetStandingGuardSpot();
+				}
+				else
+				{
+					InstanceData.CurrentTargetWaypoint = NewRoute->GetWaypoint(0);
+				}
 			}
 		}
 
@@ -184,8 +229,16 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::Tick(FStateTreeExecutionContext& C
 		return EStateTreeRunStatus::Running;
 	}
 
+	const bool bIsGuardPost = InstanceData.ScheduleComponent && InstanceData.ScheduleComponent->GetActiveActivityTag().MatchesTag(StealthAiTags::TAG_NPC_Activity_GuardPost);
+
 	if (InstanceData.bIsWaitingAtWaypoint)
 	{
+		// For guard post duty, remain standing in place on watch without cycling waypoints
+		if (bIsGuardPost)
+		{
+			return EStateTreeRunStatus::Running;
+		}
+
 		InstanceData.CurrentWaitTimer -= DeltaTime;
 		if (InstanceData.CurrentWaitTimer <= 0.0f)
 		{
