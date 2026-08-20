@@ -28,6 +28,15 @@ namespace StealthAiTags
 	// Player Status Tags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Illegal);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Player_State_Trespassing);
+
+	// NPC Focus Tags
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_None);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Routine);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Noise_Distraction);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Disturbance_Environment);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Disturbance_DeadBody);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player_Suspicious);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player_Hostile);
 }
 
 /**
@@ -40,6 +49,80 @@ enum class ENpcAlertLevel : uint8
 	Suspicious UMETA(DisplayName = "Suspicious / Inquiring"),
 	Alerted UMETA(DisplayName = "Alerted / Investigating"),
 	Hostile UMETA(DisplayName = "Hostile / Combat / Alarm")
+};
+
+UENUM(BlueprintType)
+enum class EGuardBehaviourState : uint8
+{
+	Patrol,
+	Suspicious,
+	Alerted,
+	Search,
+	Alarm
+};
+
+/**
+ * Focus priority hierarchy: Higher numerical values preempt lower ones.
+ */
+UENUM(BlueprintType)
+enum class ENpcFocusPriority : uint8
+{
+	None                = 0,
+	Routine             = 10,  // Daily activity / idle facing
+	MinorDistraction    = 20,  // Soft noise, rock throw, whistling
+	MajorDisturbance    = 30,  // Open door in secure area, blood, missing item
+	CriticalDisturbance = 40,  // Dead / incapacitated body
+	SuspiciousPlayer    = 50,  // Player spotted in restricted zone / sneaking
+	CombatTarget        = 60   // Confirmed hostile player in combat
+};
+
+/**
+ * Snapshot of what the NPC is currently focusing on
+ */
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcFocusTarget
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	FGameplayTag FocusTag = FGameplayTag::EmptyTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	ENpcFocusPriority Priority = ENpcFocusPriority::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	TWeakObjectPtr<AActor> FocusActor = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	FVector FocusLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	float Duration = 0.0f; // 0 = indefinite until cleared or preempted
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	float RemainingTime = 0.0f;
+
+	/** Modifier applied to peripheral vision / pickpocket difficulty while focused (0.0 to 1.0) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	float AwarenessReductionMultiplier = 0.5f;
+
+	bool IsValid() const
+	{
+		return Priority > ENpcFocusPriority::None && (FocusActor.IsValid() || !FocusLocation.IsZero());
+	}
+
+	bool operator==(const FNpcFocusTarget& Other) const
+	{
+		return FocusTag == Other.FocusTag
+			&& Priority == Other.Priority
+			&& FocusActor == Other.FocusActor
+			&& FocusLocation.Equals(Other.FocusLocation, 1.0f);
+	}
+
+	bool operator!=(const FNpcFocusTarget& Other) const
+	{
+		return !(*this == Other);
+	}
 };
 
 /**

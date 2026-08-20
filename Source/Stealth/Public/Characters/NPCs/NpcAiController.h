@@ -7,6 +7,8 @@
 
 class UNpcScheduleComponent;
 class UInventoryComponent;
+class UNpcFocusComponent;
+class UNpcSuspicionComponent;
 struct FGameplayTag;
 class UStateTreeAIComponent;
 class UPlayerExposureSubsystem;
@@ -20,6 +22,12 @@ class STEALTH_API ANpcAiController : public AAIController
 
 public:
 	ANpcAiController();
+
+	UFUNCTION(BlueprintPure, Category = "AI Components")
+	UNpcFocusComponent* GetFocusComponent() const { return FocusComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "AI Components")
+	UNpcSuspicionComponent* GetSuspicionComponent() const { return SuspicionComponent; }
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
@@ -35,6 +43,10 @@ protected:
 	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UNpcScheduleComponent> ScheduleComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNpcSuspicionComponent> SuspicionComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNpcFocusComponent> FocusComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
 	FGameplayTag ChangedStateEventTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|Identification")

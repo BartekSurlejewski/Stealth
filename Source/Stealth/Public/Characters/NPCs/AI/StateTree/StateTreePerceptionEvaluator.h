@@ -38,6 +38,12 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Output")
 	FVector LastHeardSoundLocation = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
+	FNpcFocusTarget CurrentFocus;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
+	bool bIsDistracted = false;
 };
 
 USTRUCT(meta = (DisplayName = "NPC Perception Evaluator", Category = "NPC"))

@@ -3,21 +3,23 @@
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/NpcCharacter.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
+#include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
-#include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "Engine/World.h"
-#include "Exposure/PlayerExposureSubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Messages/StealthMessages.h"
-#include "Perception/AIPerceptionTypes.h"
 #include "Stealth/Stealth.h"
+
+namespace
+{
+	static const FVector StaticZeroVector = FVector::ZeroVector;
+	static const FNpcFocusTarget StaticEmptyFocusTarget;
+}
 
 UNpcContextComponent::UNpcContextComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
-	PrimaryComponentTick.TickInterval = 0.05f; // 20 Hz for smooth suspicion accumulation
+	PrimaryComponentTick.bCanEverTick = false; // Context is an interface facade; ticking is handled by dedicated components
 }
 
 void UNpcContextComponent::BeginPlay()
@@ -41,284 +43,235 @@ void UNpcContextComponent::BeginPlay()
 		}
 	}
 
-	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	PlayerInRestrictedAreaListenerHandle = MsgSubsystem.RegisterListener<FBooleanMessage>(
-		StealthMessageChannels::TAG_Message_Player_IsInRestrictedAreaChanged,
-		this,
-		&UNpcContextComponent::OnPlayerInRestrictedAreaChanged
-	);
+	BindToSubcomponents();
 }
 
 void UNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (PlayerInRestrictedAreaListenerHandle.IsValid())
+	if (SuspicionComponent)
 	{
-		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-		MsgSubsystem.UnregisterListener(PlayerInRestrictedAreaListenerHandle);
+		SuspicionComponent->OnSuspicionChanged.RemoveDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
+		SuspicionComponent->OnAlertStateEvaluated.RemoveDynamic(this, &UNpcContextComponent::HandleAlertStateEvaluated);
+		SuspicionComponent->OnPlayerInSightChanged.RemoveDynamic(this, &UNpcContextComponent::HandlePlayerInSightChanged);
+	}
+
+	if (FocusComponent)
+	{
+		FocusComponent->OnNpcFocusChanged.RemoveDynamic(this, &UNpcContextComponent::HandleFocusChanged);
 	}
 
 	Super::EndPlay(EndPlayReason);
 }
 
-void UNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UNpcContextComponent::BindToSubcomponents()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent();
+	if (SuspicionComp)
+	{
+		if (Profile && !SuspicionComp->GetProfile())
+		{
+			SuspicionComp->SetProfile(Profile);
+		}
 
-	TimeSinceLastStimulus += DeltaTime;
-	UpdateSuspicion(DeltaTime);
-	EvaluateAlertState();
+		SuspicionComp->OnSuspicionChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
+		SuspicionComp->OnAlertStateEvaluated.AddUniqueDynamic(this, &UNpcContextComponent::HandleAlertStateEvaluated);
+		SuspicionComp->OnPlayerInSightChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandlePlayerInSightChanged);
+	}
+
+	UNpcFocusComponent* FocusComp = GetFocusComponent();
+	if (FocusComp)
+	{
+		FocusComp->OnNpcFocusChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandleFocusChanged);
+	}
+}
+
+UNpcSuspicionComponent* UNpcContextComponent::GetSuspicionComponent() const
+{
+	if (!SuspicionComponent)
+	{
+		if (GetOwner())
+		{
+			SuspicionComponent = GetOwner()->FindComponentByClass<UNpcSuspicionComponent>();
+		}
+		if (!SuspicionComponent && NpcAiController)
+		{
+			SuspicionComponent = NpcAiController->FindComponentByClass<UNpcSuspicionComponent>();
+		}
+	}
+	return SuspicionComponent;
+}
+
+UNpcFocusComponent* UNpcContextComponent::GetFocusComponent() const
+{
+	if (!FocusComponent)
+	{
+		if (GetOwner())
+		{
+			FocusComponent = GetOwner()->FindComponentByClass<UNpcFocusComponent>();
+		}
+		if (!FocusComponent && NpcAiController)
+		{
+			FocusComponent = NpcAiController->FindComponentByClass<UNpcFocusComponent>();
+		}
+	}
+	return FocusComponent;
+}
+
+void UNpcContextComponent::SetProfile(UNpcProfile* InProfile)
+{
+	Profile = InProfile;
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		SuspicionComp->SetProfile(InProfile);
+	}
+}
+
+bool UNpcContextComponent::IsPlayerInRestrictedArea() const
+{
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		return SuspicionComp->IsPlayerInRestrictedArea();
+	}
+	return false;
 }
 
 bool UNpcContextComponent::IsPlayerPerformingIllegalAction(const AStealthPlayerCharacter* Player) const
 {
-	if (!Player)
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		return false;
+		return SuspicionComp->IsPlayerPerformingIllegalAction(Player);
 	}
-
-	// 1. Check trespassing in restricted area
-	if (bIsPlayerInRestrictedArea)
-	{
-		return true;
-	}
-
-	// 2. Check GAS gameplay tags for illegal or suspicious states
-	if (const IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Player))
-	{
-		if (const UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
-		{
-			if (ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Illegal) ||
-				ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Trespassing))
-			{
-				return true;
-			}
-		}
-	}
-
 	return false;
 }
 
-void UNpcContextComponent::UpdateSuspicion(float DeltaTime)
+float UNpcContextComponent::GetAwareness() const
 {
-	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
-	const bool bHasPlayer = (Player != nullptr);
-	const float DecayRate = Profile ? Profile->SuspicionDecayPerSecond : 8.0f;
-
-	if (bHasPlayer && bHasPlayerLineOfSight)
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		LastKnownPlayerPos = Player->GetActorLocation();
-
-		// Accumulate suspicion ONLY if player is doing something illegal
-		if (IsPlayerPerformingIllegalAction(Player))
-		{
-			float GainRate = Profile ? Profile->SuspicionGainPerSecond_Sight : 40.0f;
-			if (!IsLookingDirectlyAtPlayer(Player))
-			{
-				GainRate = Profile ? Profile->SuspicionGainPerSecond_Peripheral : 15.0f;
-			}
-
-			// Always see player within close range
-			const float Dist = FVector::Dist(GetOwner()->GetActorLocation(), Player->GetActorLocation());
-			const float AlwaysSeeRange = Profile ? Profile->AlwaysSeePlayerRange : 100.0f;
-			const float EffectiveExposure = (Dist <= AlwaysSeeRange) ? 1.0f : CalculatePlayerExposureMultiplier();
-
-			CurrentSuspicion += GainRate * EffectiveExposure * DeltaTime;
-			TimeSinceLastStimulus = 0.0f;
-		}
-		else
-		{
-			// Player is in sight, but is behaving legally in a permitted area -> Suspicion decays
-			CurrentSuspicion -= DecayRate * DeltaTime;
-		}
+		return SuspicionComp->GetSuspicion();
 	}
-	else
-	{
-		// Decay suspicion when out of sight
-		CurrentSuspicion -= DecayRate * DeltaTime;
-	}
-
-	CurrentSuspicion = FMath::Clamp(CurrentSuspicion, 0.0f, 100.0f);
-	OnSuspicionChanged.Broadcast(CurrentSuspicion);
-
-	// Update effective sight flag based on threshold
-	const bool bWasEffectivelySeeing = bEffectivelySeesPlayer;
-	bEffectivelySeesPlayer = bHasPlayerLineOfSight && (CurrentSuspicion > 10.0f);
-
-	if (bWasEffectivelySeeing != bEffectivelySeesPlayer)
-	{
-		OnPlayerInSightChanged.Broadcast(bEffectivelySeesPlayer);
-	}
+	return 0.0f;
 }
 
-void UNpcContextComponent::EvaluateAlertState()
+ENpcAlertLevel UNpcContextComponent::GetAlertLevel() const
 {
-	const float AlertThreshold = Profile ? Profile->SuspicionThreshold_Alert : 100.0f;
-
-	FGameplayTag TargetStateTag = StealthAiTags::TAG_NPC_State_Unaware;
-
-	if (CurrentSuspicion >= 100.0f || (bIsPlayerInRestrictedArea && bEffectivelySeesPlayer))
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		TargetStateTag = StealthAiTags::TAG_NPC_State_Combat;
+		return SuspicionComp->GetAlertLevel();
 	}
-	else if (CurrentSuspicion >= AlertThreshold)
-	{
-		TargetStateTag = StealthAiTags::TAG_NPC_State_Alerted;
-	}
-	else if (CurrentSuspicion > 5.0f)
-	{
-		TargetStateTag = StealthAiTags::TAG_NPC_State_Suspicious;
-	}
-	else
-	{
-		TargetStateTag = StealthAiTags::TAG_NPC_State_Unaware;
-	}
-
-	SetNpcState(TargetStateTag);
+	return ENpcAlertLevel::Unaware;
 }
 
-void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
+EGuardBehaviourState UNpcContextComponent::GetBehaviourState() const
 {
-	if (CurrentStateTag == NewStateTag || !NewStateTag.IsValid())
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		return;
+		return SuspicionComp->GetBehaviourState();
 	}
-
-	const FGameplayTag PreviousStateTag = CurrentStateTag;
-	CurrentStateTag = NewStateTag;
-
-	// Synchronize legacy enum properties for backwards compatibility
-	if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Combat) || NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Dead))
-	{
-		AlertLevel = ENpcAlertLevel::Hostile;
-		CurrentBehaviourState = EGuardBehaviourState::Alarm;
-	}
-	else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Alerted) || NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search))
-	{
-		AlertLevel = ENpcAlertLevel::Alerted;
-		CurrentBehaviourState = (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search)) ? EGuardBehaviourState::Search : EGuardBehaviourState::Alerted;
-	}
-	else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Suspicious))
-	{
-		AlertLevel = ENpcAlertLevel::Suspicious;
-		CurrentBehaviourState = EGuardBehaviourState::Suspicious;
-	}
-	else
-	{
-		AlertLevel = ENpcAlertLevel::Unaware;
-		CurrentBehaviourState = EGuardBehaviourState::Patrol;
-	}
-
-	// 1. Notify StateTree directly so behavior transitions immediately
-	SendStateTreeEvent(CurrentStateTag);
-
-	// 2. Broadcast internal delegates for local listeners (UI, AnimInstance, Character)
-	OnNpcStateChanged.Broadcast(CurrentStateTag, PreviousStateTag);
-	OnAlertLevelChanged.Broadcast(AlertLevel);
-	OnBehaviourStateChanged.Broadcast(CurrentBehaviourState);
-
-	// 3. Broadcast global message via GameplayMessageSubsystem for loose coupling across systems
-	if (UWorld* World = GetWorld())
-	{
-		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(World);
-		FNpcStateChangedMessage Msg;
-		Msg.NpcGUID = OwnerNpcGuid;
-		Msg.PreviousStateTag = PreviousStateTag;
-		Msg.NewStateTag = CurrentStateTag;
-		Msg.Suspicion = CurrentSuspicion;
-		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_NPC_StateChanged, Msg);
-	}
+	return EGuardBehaviourState::Patrol;
 }
 
-float UNpcContextComponent::CalculatePlayerExposureMultiplier() const
+bool UNpcContextComponent::HasPlayerLineOfSight() const
 {
-	float Multiplier = 1.0f;
-
-	if (const UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this))
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		Multiplier = ExposureSubsystem->GetCurrentTotalExposure();
+		return SuspicionComp->HasPlayerLineOfSight();
 	}
-
-	if (const AStealthPlayerCharacter* Player = GetPlayerCharacter())
-	{
-		if (Player->bIsCrouched && Profile)
-		{
-			Multiplier *= Profile->CrouchSuspicionMultiplier;
-		}
-	}
-
-	return FMath::Clamp(Multiplier, 0.05f, 1.0f);
+	return false;
 }
 
-bool UNpcContextComponent::IsLookingDirectlyAtPlayer(const AStealthPlayerCharacter* Player) const
+bool UNpcContextComponent::EffectivelySeesPlayer() const
 {
-	if (!Player || !GetOwner())
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		return false;
+		return SuspicionComp->EffectivelySeesPlayer();
 	}
+	return false;
+}
 
-	const FVector Forward = GetOwner()->GetActorForwardVector();
-	const FVector DirToPlayer = (Player->GetActorLocation() - GetOwner()->GetActorLocation()).GetSafeNormal();
-	const float Dot = FVector::DotProduct(Forward, DirToPlayer);
+const FVector& UNpcContextComponent::GetLastKnownPlayerPos() const
+{
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		return SuspicionComp->GetLastKnownPlayerPos();
+	}
+	return StaticZeroVector;
+}
 
-	return Dot >= 0.707f; // Within ~45 degrees of center view
+const FVector& UNpcContextComponent::GetLastHeardSoundLocation() const
+{
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		return SuspicionComp->GetLastHeardSoundLocation();
+	}
+	return StaticZeroVector;
+}
+
+const FNpcFocusTarget& UNpcContextComponent::GetCurrentFocus() const
+{
+	if (const UNpcFocusComponent* FocusComp = GetFocusComponent())
+	{
+		return FocusComp->GetCurrentFocus();
+	}
+	return StaticEmptyFocusTarget;
+}
+
+bool UNpcContextComponent::IsDistracted() const
+{
+	if (const UNpcFocusComponent* FocusComp = GetFocusComponent())
+	{
+		return FocusComp->IsDistracted();
+	}
+	return false;
+}
+
+bool UNpcContextComponent::RequestFocus(const FNpcFocusTarget& NewFocusCandidate)
+{
+	if (UNpcFocusComponent* FocusComp = GetFocusComponent())
+	{
+		return FocusComp->RequestFocus(NewFocusCandidate);
+	}
+	return false;
+}
+
+void UNpcContextComponent::ClearFocus(ENpcFocusPriority MinimumPriorityToClear)
+{
+	if (UNpcFocusComponent* FocusComp = GetFocusComponent())
+	{
+		FocusComp->ClearFocus(MinimumPriorityToClear);
+	}
 }
 
 void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (!Actor)
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		return;
-	}
-
-	if (Actor == GetPlayerCharacter())
-	{
-		bHasPlayerLineOfSight = (Stimulus.WasSuccessfullySensed() && Stimulus.Strength >= 0.05f);
-		if (bHasPlayerLineOfSight)
-		{
-			LastKnownPlayerPos = Actor->GetActorLocation();
-			TimeSinceLastStimulus = 0.0f;
-		}
-	}
-	else if (Stimulus.WasSuccessfullySensed())
-	{
-		// Non-player stimulus (e.g., dead bodies, suspicious disturbances)
-		LastPerceivedActor = const_cast<AActor*>(Actor);
-		TimeSinceLastStimulus = 0.0f;
-		AddSuspicion(25.0f);
+		SuspicionComp->OnSightStimulus(Actor, Stimulus);
 	}
 }
 
 void UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (!Stimulus.WasSuccessfullySensed())
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		return;
+		SuspicionComp->OnHearingStimulus(Actor, Stimulus);
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_NoiseHeard);
 	}
-
-	LastHeardSoundLocation = Stimulus.StimulusLocation;
-	TimeSinceLastStimulus = 0.0f;
-
-	// Scale suspicion by sound strength
-	const float SuspicionGain = FMath::Clamp(Stimulus.Strength * 30.0f, 10.0f, 60.0f);
-	AddSuspicion(SuspicionGain);
-
-	SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_NoiseHeard);
 }
 
 void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload)
 {
-	LastHeardSoundLocation = CrimePayload.CrimeLocation;
-	LastKnownPlayerPos = CrimePayload.CrimeLocation;
-	TimeSinceLastStimulus = 0.0f;
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		SuspicionComp->HandleCrimeReported(CrimePayload);
+	}
 
 	if (CrimePayload.bIsPrimaryInvestigator)
 	{
-		AddSuspicion(100.0f);
 		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
 	}
 	else
 	{
-		AddSuspicion(50.0f);
 		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
 	}
 
@@ -327,13 +280,19 @@ void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& Crime
 
 void UNpcContextComponent::AddSuspicion(float Amount)
 {
-	CurrentSuspicion = FMath::Clamp(CurrentSuspicion + Amount, 0.0f, 100.0f);
-	OnSuspicionChanged.Broadcast(CurrentSuspicion);
-	EvaluateAlertState();
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		SuspicionComp->AddSuspicion(Amount);
+	}
 }
 
 void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 {
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		SuspicionComp->SetAlertLevel(NewAlertLevel);
+	}
+
 	switch (NewAlertLevel)
 	{
 	case ENpcAlertLevel::Hostile:
@@ -354,6 +313,11 @@ void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 
 void UNpcContextComponent::SetBehaviourState(EGuardBehaviourState NewState)
 {
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		SuspicionComp->SetBehaviourState(NewState);
+	}
+
 	switch (NewState)
 	{
 	case EGuardBehaviourState::Alarm:
@@ -372,6 +336,62 @@ void UNpcContextComponent::SetBehaviourState(EGuardBehaviourState NewState)
 	default:
 		SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
 		break;
+	}
+}
+
+void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
+{
+	if (CurrentStateTag == NewStateTag || !NewStateTag.IsValid())
+	{
+		return;
+	}
+
+	const FGameplayTag PreviousStateTag = CurrentStateTag;
+	CurrentStateTag = NewStateTag;
+
+	// Synchronize subcomponents
+	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Combat) || NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Dead))
+		{
+			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Hostile);
+		}
+		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Alerted))
+		{
+			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Alerted);
+		}
+		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search))
+		{
+			SuspicionComp->SetBehaviourState(EGuardBehaviourState::Search);
+		}
+		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Suspicious))
+		{
+			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Suspicious);
+		}
+		else
+		{
+			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Unaware);
+		}
+	}
+
+	// 1. Notify StateTree directly so behavior transitions immediately
+	SendStateTreeEvent(CurrentStateTag);
+
+	// 2. Broadcast internal delegates for local listeners (UI, AnimInstance, Character)
+	OnNpcStateChanged.Broadcast(CurrentStateTag, PreviousStateTag);
+	OnAlertLevelChanged.Broadcast(GetAlertLevel());
+	OnBehaviourStateChanged.Broadcast(GetBehaviourState());
+
+	// 3. Broadcast global message via GameplayMessageSubsystem for loose coupling across systems
+	if (UWorld* World = GetWorld())
+	{
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(World);
+		FNpcStateChangedMessage Msg;
+		Msg.NpcGUID = OwnerNpcGuid;
+		Msg.PreviousStateTag = PreviousStateTag;
+		Msg.NewStateTag = CurrentStateTag;
+		Msg.Suspicion = GetAwareness();
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_NPC_StateChanged, Msg);
 	}
 }
 
@@ -394,12 +414,22 @@ AStealthPlayerCharacter* UNpcContextComponent::GetPlayerCharacter() const
 	return CharactersRegistry->GetPlayerCharacter();
 }
 
-void UNpcContextComponent::OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message)
+void UNpcContextComponent::HandleAlertStateEvaluated(const FGameplayTag& TargetStateTag, ENpcAlertLevel NewAlertLevel)
 {
-	bIsPlayerInRestrictedArea = Message.bValue;
+	SetNpcState(TargetStateTag);
+}
 
-	if (bIsPlayerInRestrictedArea && bEffectivelySeesPlayer)
-	{
-		AddSuspicion(50.0f);
-	}
+void UNpcContextComponent::HandleSuspicionChanged(float NewSuspicion)
+{
+	OnSuspicionChanged.Broadcast(NewSuspicion);
+}
+
+void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
+{
+	OnPlayerInSightChanged.Broadcast(bInSight);
+}
+
+void UNpcContextComponent::HandleFocusChanged(const FNpcFocusTarget& NewFocus, const FNpcFocusTarget& PreviousFocus)
+{
+	OnNpcFocusChanged.Broadcast(NewFocus, PreviousFocus);
 }

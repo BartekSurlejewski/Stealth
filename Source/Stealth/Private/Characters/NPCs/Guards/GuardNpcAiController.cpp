@@ -18,23 +18,4 @@ void AGuardNpcAiController::OnPossess(APawn* InPawn)
 void AGuardNpcAiController::OnTargetPerceptionUpdated(AActor* TargetActor, FAIStimulus Stimulus)
 {
 	Super::OnTargetPerceptionUpdated(TargetActor, Stimulus);
-
-	if (!GuardContext) return;
-
-	// Sight
-	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
-	{
-		FAIStimulus ModifiedStimulus = Stimulus;
-
-		GuardContext->OnSightStimulus(TargetActor, ModifiedStimulus);
-		return;
-	}
-	
-
-	// Hearing
-	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
-	{
-		GuardContext->OnHearingStimulus(TargetActor, Stimulus);
-		return;
-	}
 }

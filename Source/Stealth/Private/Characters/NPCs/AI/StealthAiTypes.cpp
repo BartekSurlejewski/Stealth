@@ -18,4 +18,13 @@ namespace StealthAiTags
 	// Player Status Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Illegal, "Player.State.Illegal");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Trespassing, "Player.State.Trespassing");
+
+	// NPC Focus Tags
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_None, "NPC.Focus.None");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Routine, "NPC.Focus.Routine");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Noise_Distraction, "NPC.Focus.Noise.Distraction");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Disturbance_Environment, "NPC.Focus.Disturbance.Environment");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Disturbance_DeadBody, "NPC.Focus.Disturbance.DeadBody");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player_Suspicious, "NPC.Focus.Player.Suspicious");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player_Hostile, "NPC.Focus.Player.Hostile");
 }

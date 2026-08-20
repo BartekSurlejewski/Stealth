@@ -34,7 +34,12 @@ EStateTreeRunStatus FStateTreeTask_NpcInvestigate::EnterState(FStateTreeExecutio
 
 	if (InstanceData.InvestigateLocation.IsZero() && InstanceData.NpcContext)
 	{
-		if (!InstanceData.NpcContext->GetLastKnownPlayerPos().IsZero())
+		const FNpcFocusTarget& CurrentFocus = InstanceData.NpcContext->GetCurrentFocus();
+		if (CurrentFocus.IsValid() && !CurrentFocus.FocusLocation.IsZero())
+		{
+			InstanceData.InvestigateLocation = CurrentFocus.FocusLocation;
+		}
+		else if (!InstanceData.NpcContext->GetLastKnownPlayerPos().IsZero())
 		{
 			InstanceData.InvestigateLocation = InstanceData.NpcContext->GetLastKnownPlayerPos();
 		}
@@ -100,5 +105,10 @@ void FStateTreeTask_NpcInvestigate::ExitState(FStateTreeExecutionContext& Contex
 	{
 		InstanceData.Controller->StopMovement();
 		InstanceData.Controller->ClearFocus(EAIFocusPriority::Gameplay);
+	}
+
+	if (InstanceData.NpcContext)
+	{
+		InstanceData.NpcContext->ClearFocus(ENpcFocusPriority::MajorDisturbance);
 	}
 }
