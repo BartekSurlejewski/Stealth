@@ -58,6 +58,11 @@ void FStateTreeScheduleEvaluator::Tick(FStateTreeExecutionContext& Context, cons
 		}
 	}
 
+	if (!InstanceData.ScheduleComponent->GetActiveSlot().ActivityTag.IsValid())
+	{
+		InstanceData.ScheduleComponent->EvaluateSchedule();
+	}
+
 	const FNpcScheduleSlot& Slot = InstanceData.ScheduleComponent->GetActiveSlot();
 	InstanceData.ActiveActivityTag = Slot.ActivityTag;
 	InstanceData.ActiveLocationTag = Slot.LocationTag;

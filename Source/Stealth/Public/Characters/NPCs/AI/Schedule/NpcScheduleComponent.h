@@ -53,6 +53,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Schedule|Tags")
 	FGameplayTag ScheduleActivityChangedEventTag;
 
+	UFUNCTION(BlueprintPure, Category = "Schedule")
+	UNpcContextComponent* GetContextComponent() const;
+
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Schedule")
 	FNpcScheduleSlot ActiveSlot;

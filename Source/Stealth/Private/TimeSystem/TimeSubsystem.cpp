@@ -38,11 +38,19 @@ void UTimeSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	ETimeOfDay StartingTimeOfDay = Data.CurrentTimeOfDay;
 	CheckTimeOfDay();
 
-	if (StartingTimeOfDay == Data.CurrentTimeOfDay) // Event was already invoked if time of day changed at the start
+	if (UGameplayMessageSubsystem::HasInstance(this))
 	{
 		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-		FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
-		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
+
+		if (StartingTimeOfDay == Data.CurrentTimeOfDay) // Event was already invoked if time of day changed at the start
+		{
+			FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
+			MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
+		}
+
+		// Broadcast initial time so all listeners receive starting clock time immediately
+		FTimeChangedMessage TimeMessage(Data.CurrentHour, Data.CurrentMinute);
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeChanged, TimeMessage);
 	}
 }
 
@@ -71,9 +79,12 @@ void UTimeSubsystem::Tick(float DeltaTime)
 	{
 		Data.LastMinute = Data.CurrentMinute;
 
-		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-		FTimeChangedMessage Message(Data.CurrentHour, Data.CurrentMinute);
-		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeChanged, Message);
+		if (UGameplayMessageSubsystem::HasInstance(this))
+		{
+			UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+			FTimeChangedMessage Message(Data.CurrentHour, Data.CurrentMinute);
+			MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeChanged, Message);
+		}
 	}
 
 	CheckTimeOfDay();
@@ -120,6 +131,18 @@ void UTimeSubsystem::SetTime(const int32& NewDay, const int32& NewHour, const in
 {
 	Data.CurrentDay = NewDay;
 	Data.SecondsElapsedInDay = (NewHour * 3600) + (NewMinute * 60) + NewSecond;
+	Data.CurrentHour = NewHour;
+	Data.CurrentMinute = NewMinute;
+	Data.LastMinute = NewMinute;
+
+	CheckTimeOfDay();
+
+	if (UGameplayMessageSubsystem::HasInstance(this))
+	{
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+		FTimeChangedMessage Message(Data.CurrentHour, Data.CurrentMinute);
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeChanged, Message);
+	}
 }
 
 void UTimeSubsystem::SetClockTimeScale(const float NewClockTimeScale) { ClockTimeScale = NewClockTimeScale; }
@@ -134,9 +157,12 @@ void UTimeSubsystem::CheckTimeOfDay()
 			{
 				Data.CurrentTimeOfDay = ETimeOfDay::Night;
 
-				UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-				FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
-				MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
+				if (UGameplayMessageSubsystem::HasInstance(this))
+				{
+					UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+					FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
+					MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
+				}
 
 				UE_LOG(LogStealth, Log, TEXT("Time of day changed to night"));
 			}
@@ -148,9 +174,12 @@ void UTimeSubsystem::CheckTimeOfDay()
 			{
 				Data.CurrentTimeOfDay = ETimeOfDay::Day;
 
-				UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-				FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
-				MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
+				if (UGameplayMessageSubsystem::HasInstance(this))
+				{
+					UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+					FTimeOfDayChangedMessage Message(Data.CurrentTimeOfDay);
+					MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Time_TimeOfDayChanged, Message);
+				}
 
 				UE_LOG(LogStealth, Log, TEXT("Time of day changed to day"));
 			}

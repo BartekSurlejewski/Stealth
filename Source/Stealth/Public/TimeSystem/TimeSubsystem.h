@@ -62,7 +62,10 @@ public:
 	int32 GetCurrentDay() const { return Data.CurrentDay; }
 
 	UFUNCTION(BlueprintCallable)
-	int32 GetCurrentDayTimeAsMinutes() const { return Data.CurrentHour * 60 + Data.CurrentMinute; }
+	int32 GetCurrentDayTimeAsMinutes() const
+	{
+		return FMath::Clamp(FMath::FloorToInt32(Data.SecondsElapsedInDay / 60.0f) % (24 * 60), 0, 24 * 60 - 1);
+	}
 
 	UFUNCTION(BlueprintCallable)
 	float GetTimeOfDayNormalized() const;

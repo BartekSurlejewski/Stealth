@@ -99,15 +99,88 @@ EStateTreeRunStatus FStateTreeTask_NpcPatrol::Tick(FStateTreeExecutionContext& C
 		return EStateTreeRunStatus::Failed;
 	}
 
-	APatrolRoute* Route = InstanceData.ActiveRoute.Get();
-	if (!Route || !Route->HasValidWaypoints())
+	APawn* Pawn = InstanceData.Controller->GetPawn();
+	if (!Pawn)
 	{
 		return EStateTreeRunStatus::Running;
 	}
 
-	APawn* Pawn = InstanceData.Controller->GetPawn();
-	if (!Pawn)
+	if (!InstanceData.ScheduleComponent)
 	{
+		InstanceData.ScheduleComponent = InstanceData.Controller->FindComponentByClass<UNpcScheduleComponent>();
+		if (!InstanceData.ScheduleComponent && Pawn)
+		{
+			InstanceData.ScheduleComponent = Pawn->FindComponentByClass<UNpcScheduleComponent>();
+		}
+	}
+
+	if (!InstanceData.GuardContext)
+	{
+		InstanceData.GuardContext = InstanceData.Controller->FindComponentByClass<UGuardNpcContextComponent>();
+		if (!InstanceData.GuardContext && Pawn)
+		{
+			InstanceData.GuardContext = Pawn->FindComponentByClass<UGuardNpcContextComponent>();
+		}
+	}
+
+	// Dynamic Schedule Location change detection
+	if (InstanceData.ScheduleComponent)
+	{
+		const FGameplayTag ActiveLoc = InstanceData.ScheduleComponent->GetActiveLocationTag();
+		if (ActiveLoc.IsValid() && ActiveLoc != InstanceData.LocationTag)
+		{
+			InstanceData.LocationTag = ActiveLoc;
+			if (InstanceData.GuardContext)
+			{
+				InstanceData.ActiveRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.LocationTag);
+				InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
+			}
+			else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+			{
+				const FVector Pos = Pawn->GetActorLocation();
+				InstanceData.ActiveRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.LocationTag, Pos);
+				if (APatrolRoute* NewRoute = InstanceData.ActiveRoute.Get())
+				{
+					InstanceData.CurrentTargetWaypoint = NewRoute->GetWaypoint(0);
+				}
+			}
+
+			InstanceData.bIsWaitingAtWaypoint = false;
+			InstanceData.CurrentWaitTimer = 0.0f;
+
+			if (AActor* Target = InstanceData.CurrentTargetWaypoint.Get())
+			{
+				InstanceData.Controller->ClearFocus(EAIFocusPriority::Gameplay);
+				InstanceData.Controller->MoveToActor(Target, InstanceData.AcceptanceRadius);
+			}
+			return EStateTreeRunStatus::Running;
+		}
+	}
+
+	APatrolRoute* Route = InstanceData.ActiveRoute.Get();
+	if (!Route || !Route->HasValidWaypoints())
+	{
+		// Fallback retry if route was not yet registered during EnterState
+		if (InstanceData.GuardContext)
+		{
+			InstanceData.ActiveRoute = InstanceData.GuardContext->AssignPatrolRouteForLocation(InstanceData.LocationTag);
+			InstanceData.CurrentTargetWaypoint = InstanceData.GuardContext->GetCurrentPatrolPoint();
+		}
+		else if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(Context.GetOwner()))
+		{
+			const FVector Pos = Pawn->GetActorLocation();
+			InstanceData.ActiveRoute = Subsystem->GetPatrolRouteByLocationTag(InstanceData.LocationTag, Pos);
+			if (APatrolRoute* NewRoute = InstanceData.ActiveRoute.Get())
+			{
+				InstanceData.CurrentTargetWaypoint = NewRoute->GetWaypoint(0);
+			}
+		}
+
+		if (AActor* Target = InstanceData.CurrentTargetWaypoint.Get())
+		{
+			InstanceData.Controller->MoveToActor(Target, InstanceData.AcceptanceRadius);
+		}
+
 		return EStateTreeRunStatus::Running;
 	}
 

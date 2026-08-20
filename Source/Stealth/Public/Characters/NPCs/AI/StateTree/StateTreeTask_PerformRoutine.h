@@ -44,6 +44,12 @@ struct STEALTH_API FStateTreeTask_PerformRoutineInstanceData
 
 	UPROPERTY()
 	bool bHasArrivedAtActivity = false;
+
+	UPROPERTY()
+	FGameplayTag CurrentActivityTag;
+
+	UPROPERTY()
+	FGameplayTag CurrentLocationTag;
 };
 
 USTRUCT(meta = (DisplayName = "NPC Perform Routine", Category = "NPC"))

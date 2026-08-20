@@ -4,12 +4,14 @@
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/NpcCharacter.h"
+#include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "TimeSystem/TimeSubsystem.h"
 #include "Messages/StealthMessages.h"
 
 UNpcScheduleComponent::UNpcScheduleComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	ScheduleActivityChangedEventTag = StealthAiTags::TAG_NPC_Event_ResumeRoutine;
 }
 
 void UNpcScheduleComponent::BeginPlay()
@@ -92,15 +94,48 @@ void UNpcScheduleComponent::EvaluateSchedule(int32 WorldTimeInMinutes)
 
 			OnScheduleSlotChanged.Broadcast(ActiveSlot, PreviousSlot);
 
-			if (ScheduleActivityChangedEventTag.IsValid())
+			if (UNpcContextComponent* Context = GetContextComponent())
 			{
-				if (UNpcContextComponent* Context = GetOwner()->FindComponentByClass<UNpcContextComponent>())
+				if (ScheduleActivityChangedEventTag.IsValid())
 				{
 					Context->SendStateTreeEvent(ScheduleActivityChangedEventTag);
+				}
+				Context->SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_ResumeRoutine);
+			}
+		}
+	}
+}
+
+UNpcContextComponent* UNpcScheduleComponent::GetContextComponent() const
+{
+	if (AActor* Owner = GetOwner())
+	{
+		if (UNpcContextComponent* Context = Owner->FindComponentByClass<UNpcContextComponent>())
+		{
+			return Context;
+		}
+		if (const APawn* OwnerPawn = Cast<APawn>(Owner))
+		{
+			if (const AController* Controller = OwnerPawn->GetController())
+			{
+				if (UNpcContextComponent* CtrlContext = Controller->FindComponentByClass<UNpcContextComponent>())
+				{
+					return CtrlContext;
+				}
+			}
+		}
+		else if (const AController* Controller = Cast<AController>(Owner))
+		{
+			if (const APawn* PossessedPawn = Controller->GetPawn())
+			{
+				if (UNpcContextComponent* PawnContext = PossessedPawn->FindComponentByClass<UNpcContextComponent>())
+				{
+					return PawnContext;
 				}
 			}
 		}
 	}
+	return nullptr;
 }
 
 FGuid UNpcScheduleComponent::GetOwnerNpcGuid() const
@@ -110,8 +145,21 @@ FGuid UNpcScheduleComponent::GetOwnerNpcGuid() const
 		return Npc->GetNpcGUID();
 	}
 
+	if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+	{
+		if (const ANpcCharacter* PawnNpc = Cast<ANpcCharacter>(Pawn))
+		{
+			return PawnNpc->GetNpcGUID();
+		}
+	}
+
 	if (const ANpcAiController* Controller = Cast<ANpcAiController>(GetOwner()))
 	{
+		if (const ANpcCharacter* PossessedNpc = Cast<ANpcCharacter>(Controller->GetPawn()))
+		{
+			return PossessedNpc->GetNpcGUID();
+		}
+
 		if (const UCharactersRegistrySubsystem* Registry = UCharactersRegistrySubsystem::Get(this))
 		{
 			return Registry->GetNpcGuidByController(const_cast<ANpcAiController*>(Controller));
