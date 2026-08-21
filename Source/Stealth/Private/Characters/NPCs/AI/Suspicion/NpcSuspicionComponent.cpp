@@ -2,17 +2,16 @@
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/NpcAiController.h"
-#include "Characters/NPCs/NpcCharacter.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystemInterface.h"
 #include "Engine/World.h"
 #include "Exposure/PlayerExposureSubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "Legality/LegalitySubsystem.h"
 #include "Messages/StealthMessages.h"
 #include "Perception/AIPerceptionTypes.h"
-#include "Stealth/Stealth.h"
+
 
 UNpcSuspicionComponent::UNpcSuspicionComponent()
 {
@@ -27,13 +26,6 @@ void UNpcSuspicionComponent::BeginPlay()
 
 	GetAiController();
 	GetFocusComponent();
-
-	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	PlayerInRestrictedAreaListenerHandle = MsgSubsystem.RegisterListener<FBooleanMessage>(
-		StealthMessageChannels::TAG_Message_Player_IsInRestrictedAreaChanged,
-		this,
-		&UNpcSuspicionComponent::OnPlayerInRestrictedAreaChanged
-	);
 }
 
 void UNpcSuspicionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -102,30 +94,11 @@ AStealthPlayerCharacter* UNpcSuspicionComponent::GetPlayerCharacter() const
 	return CharactersRegistry->GetPlayerCharacter();
 }
 
-bool UNpcSuspicionComponent::IsPlayerPerformingIllegalAction(const AStealthPlayerCharacter* Player) const
+bool UNpcSuspicionComponent::IsPlayerPerformingIllegalAction() const
 {
-	if (!Player)
+	if (const ULegalitySubsystem* Legality = ULegalitySubsystem::Get(GetWorld()))
 	{
-		return false;
-	}
-
-	// 1. Check trespassing in restricted area
-	if (bIsPlayerInRestrictedArea)
-	{
-		return true;
-	}
-
-	// 2. Check GAS gameplay tags for illegal or suspicious states
-	if (const IAbilitySystemInterface* ASI = Cast<IAbilitySystemInterface>(Player))
-	{
-		if (const UAbilitySystemComponent* ASC = ASI->GetAbilitySystemComponent())
-		{
-			if (ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Illegal) ||
-				ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Trespassing))
-			{
-				return true;
-			}
-		}
+		return Legality->IsPlayerPerformingIllegalAction();
 	}
 
 	return false;
@@ -144,7 +117,7 @@ void UNpcSuspicionComponent::UpdateSuspicion(float DeltaTime)
 		LostPlayerSightDuration = 0.0f;
 
 		// Accumulate suspicion ONLY if player is doing something illegal
-		if (IsPlayerPerformingIllegalAction(Player))
+		if (IsPlayerPerformingIllegalAction())
 		{
 			float GainRate = Profile ? Profile->SuspicionGainPerSecond_Sight : 40.0f;
 			if (!IsLookingDirectlyAtPlayer(Player))
@@ -195,7 +168,7 @@ void UNpcSuspicionComponent::UpdateSuspicion(float DeltaTime)
 
 	// Update effective sight flag: direct line of sight AND (suspicion > 10, player illegal, or hostile state)
 	const bool bWasEffectivelySeeing = bEffectivelySeesPlayer;
-	const bool bIsIllegal = bHasPlayer && IsPlayerPerformingIllegalAction(Player);
+	const bool bIsIllegal = bHasPlayer && IsPlayerPerformingIllegalAction();
 	bEffectivelySeesPlayer = bHasPlayerLineOfSight && (CurrentSuspicion > 10.0f || bIsIllegal || AlertLevel == ENpcAlertLevel::Hostile);
 
 	if (bWasEffectivelySeeing != bEffectivelySeesPlayer)
@@ -218,7 +191,7 @@ void UNpcSuspicionComponent::EvaluateAlertState()
 	if (CurrentBehaviourState == ENpcBehaviourState::Combat)
 	{
 		const AStealthPlayerCharacter* Player = GetPlayerCharacter();
-		const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction(Player);
+		const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction();
 
 		if (bHasPlayerLineOfSight && (bEffectivelySeesPlayer || bIsIllegal || CurrentSuspicion >= AlertThreshold))
 		{
@@ -247,7 +220,7 @@ void UNpcSuspicionComponent::EvaluateAlertState()
 	else if (CurrentBehaviourState == ENpcBehaviourState::Search)
 	{
 		const AStealthPlayerCharacter* Player = GetPlayerCharacter();
-		const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction(Player);
+		const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction();
 
 		if (bHasPlayerLineOfSight && (bIsIllegal || CurrentSuspicion >= AlertThreshold))
 		{
@@ -278,7 +251,7 @@ void UNpcSuspicionComponent::EvaluateAlertState()
 	else
 	{
 		// Upward escalation
-		if (CurrentSuspicion >= 100.0f || (bIsPlayerInRestrictedArea && bEffectivelySeesPlayer))
+		if (CurrentSuspicion >= 100.0f || (IsPlayerPerformingIllegalAction() && bEffectivelySeesPlayer))
 		{
 			TargetStateTag = StealthAiTags::TAG_NPC_State_Combat;
 			TargetAlertLevel = ENpcAlertLevel::Hostile;
@@ -381,7 +354,7 @@ void UNpcSuspicionComponent::OnSightStimulus(const AActor* Actor, const FAIStimu
 			LastKnownPlayerPos = Actor->GetActorLocation();
 			TimeSinceLastStimulus = 0.0f;
 
-			if (IsPlayerPerformingIllegalAction(GetPlayerCharacter()) || CurrentSuspicion > 50.0f)
+			if (IsPlayerPerformingIllegalAction() || CurrentSuspicion > 50.0f)
 			{
 				if (UNpcFocusComponent* FocusComp = GetFocusComponent())
 				{
@@ -404,6 +377,7 @@ void UNpcSuspicionComponent::OnSightStimulus(const AActor* Actor, const FAIStimu
 	}
 	else if (Stimulus.WasSuccessfullySensed())
 	{
+		//TODO: define tags in a single place to avoid magic strings
 		// Only react to non-player actors if they represent actual disturbances (dead bodies, alarms, crimes)
 		const bool bIsDeadBody = Actor->ActorHasTag(FName("DeadBody"));
 		const bool bIsDisturbance = Actor->ActorHasTag(FName("Disturbance")) || Actor->ActorHasTag(FName("Suspicious"));
@@ -669,14 +643,4 @@ void UNpcSuspicionComponent::SetBehaviourState(ENpcBehaviourState NewState)
 	}
 
 	OnAlertLevelChanged.Broadcast(AlertLevel);
-}
-
-void UNpcSuspicionComponent::OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message)
-{
-	bIsPlayerInRestrictedArea = Message.bValue;
-
-	if (bIsPlayerInRestrictedArea && bEffectivelySeesPlayer)
-	{
-		AddSuspicion(50.0f);
-	}
 }

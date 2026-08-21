@@ -8,7 +8,10 @@
 
 void UHousingSubsystem::RegisterHouse(UHouseComponent* HouseComponent)
 {
-	if (!HouseComponent) return;
+	if (!HouseComponent)
+	{
+		return;
+	}
 
 	const FName HouseId = HouseComponent->GetHouseId();
 	if (HouseId.IsNone())
@@ -16,20 +19,25 @@ void UHousingSubsystem::RegisterHouse(UHouseComponent* HouseComponent)
 		UE_LOG(LogStealth, Warning, TEXT("RegisterHouse: HouseComponent on '%s' has an empty HouseId!"), *HouseComponent->GetOwner()->GetName());
 	}
 
-	if (HouseIdMap.Contains(HouseId))
+	if (HouseIdToIndexMap.Contains(HouseId))
 	{
 		UE_LOG(LogStealth, Error, TEXT("House with id '%s' is already registered!"), *HouseId.ToString());
 		return;
 	}
 
-	Houses.AddUnique(HouseComponent);
-	HouseIdMap.Add(HouseId, HouseComponent);
+	const int32 HouseIndex = Houses.AddUnique(HouseComponent);
+	HouseIdToIndexMap.Add(HouseId, HouseIndex);
+
+	if (HouseComponent->IsPlayerOwned())
+	{
+		PlayerHouseIndex = HouseIndex;
+	}
 
 	for (const FGuid& OwnerGuid : HouseComponent->GetOwnerGuids())
 	{
 		if (OwnerGuid.IsValid())
 		{
-			NpcOwnerToHouseMap.Add(OwnerGuid, HouseComponent);
+			NpcOwnerToHouseIndexMap.Add(OwnerGuid, HouseIndex);
 		}
 	}
 }
@@ -39,11 +47,11 @@ void UHousingSubsystem::UnregisterHouse(UHouseComponent* HouseComponent)
 	if (!HouseComponent) return;
 
 	Houses.Remove(HouseComponent);
-	HouseIdMap.Remove(HouseComponent->GetHouseId());
+	HouseIdToIndexMap.Remove(HouseComponent->GetHouseId());
 
 	for (const FGuid& OwnerGuid : HouseComponent->GetOwnerGuids())
 	{
-		NpcOwnerToHouseMap.Remove(OwnerGuid);
+		NpcOwnerToHouseIndexMap.Remove(OwnerGuid);
 	}
 
 	// Remove any occupancy references
@@ -58,36 +66,39 @@ void UHousingSubsystem::UnregisterHouse(UHouseComponent* HouseComponent)
 
 void UHousingSubsystem::RebuildOwnerIndexMap()
 {
-	NpcOwnerToHouseMap.Empty();
-	for (UHouseComponent* House : Houses)
+	NpcOwnerToHouseIndexMap.Empty();
+	for (int32 i = 0; i < Houses.Num(); ++i)
 	{
-		if (House)
+		if (const UHouseComponent* House = Houses[i])
 		{
 			for (const FGuid& OwnerGuid : House->GetOwnerGuids())
 			{
 				if (OwnerGuid.IsValid())
 				{
-					NpcOwnerToHouseMap.Add(OwnerGuid, House);
+					NpcOwnerToHouseIndexMap.Add(OwnerGuid, i);
 				}
 			}
 		}
 	}
 }
 
-UHouseComponent* UHousingSubsystem::GetHouseById(FName HouseId) const
+UHouseComponent* UHousingSubsystem::GetHouseById(const FName& HouseId) const
 {
-	if (const TObjectPtr<UHouseComponent>* Found = HouseIdMap.Find(HouseId))
+	const int32 FoundIndex = HouseIdToIndexMap.FindRef(HouseId);
+	if (FoundIndex >= 0 && FoundIndex < Houses.Num())
 	{
-		return Found->Get();
+		return Houses[FoundIndex];
 	}
 	return nullptr;
 }
 
 UHouseComponent* UHousingSubsystem::GetHouseForNpc(const FGuid& NpcGuid) const
 {
-	if (const TObjectPtr<UHouseComponent>* Found = NpcOwnerToHouseMap.Find(NpcGuid))
+	const int32 FoundIndex = NpcOwnerToHouseIndexMap.FindRef(NpcGuid);
+
+	if (FoundIndex >= 0 && FoundIndex < Houses.Num())
 	{
-		return Found->Get();
+		return Houses[FoundIndex];
 	}
 	return nullptr;
 }
@@ -103,7 +114,7 @@ UHouseComponent* UHousingSubsystem::GetCurrentHouseForActor(const AActor* Actor)
 	return nullptr;
 }
 
-bool UHousingSubsystem::IsActorAllowedInHouse(FName HouseId, AActor* Actor) const
+bool UHousingSubsystem::IsActorAllowedInHouse(const FName& HouseId, const AActor* Actor) const
 {
 	if (const UHouseComponent* House = GetHouseById(HouseId))
 	{
@@ -143,7 +154,7 @@ FVector UHousingSubsystem::GetNpcHomeLocation(const FGuid& NpcGuid) const
 	return FVector::ZeroVector;
 }
 
-void UHousingSubsystem::ReportCrime(const FHouseCrimeReport& CrimeReport)
+void UHousingSubsystem::ReportCrime(const FHouseCrimeReport& CrimeReport) const
 {
 	OnCrimeReported.Broadcast(CrimeReport);
 
@@ -218,7 +229,7 @@ void UHousingSubsystem::ReportCrime(const FHouseCrimeReport& CrimeReport)
 	}
 }
 
-void UHousingSubsystem::ReportIntrusion(FName HouseId, AActor* Intruder)
+void UHousingSubsystem::ReportIntrusion(const FName& HouseId, AActor* Intruder) const
 {
 	if (UHouseComponent* House = GetHouseById(HouseId))
 	{

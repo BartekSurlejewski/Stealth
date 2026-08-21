@@ -12,7 +12,7 @@ public class Stealth : ModuleRules
 		{
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "AIModule", "StateTreeModule",
 			"GameplayStateTreeModule", "GameplayAbilities", "GameplayMessageRuntime", "GameplayTags",
-			"DeveloperSettings", "StealthQuestSystem"
+			"DeveloperSettings", "StealthQuestSystem", "StealthChemistrySystem"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

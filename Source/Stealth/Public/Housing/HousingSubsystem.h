@@ -29,7 +29,7 @@ public:
 
 	/* Queries */
 	UFUNCTION(BlueprintPure, Category = "Housing")
-	UHouseComponent* GetHouseById(FName HouseId) const;
+	UHouseComponent* GetHouseById(const FName& HouseId) const;
 
 	UFUNCTION(BlueprintPure, Category = "Housing")
 	UHouseComponent* GetHouseForNpc(const FGuid& NpcGuid) const;
@@ -38,7 +38,7 @@ public:
 	UHouseComponent* GetCurrentHouseForActor(const AActor* Actor) const;
 
 	UFUNCTION(BlueprintPure, Category = "Housing")
-	bool IsActorAllowedInHouse(FName HouseId, AActor* Actor) const;
+	bool IsActorAllowedInHouse(const FName& HouseId, const AActor* Actor) const;
 
 	UFUNCTION(BlueprintPure, Category = "Housing")
 	bool IsActorTrespassing(const AActor* Actor) const;
@@ -52,10 +52,10 @@ public:
 
 	/* Crime & Reactions */
 	UFUNCTION(BlueprintCallable, Category = "Housing|Crime")
-	void ReportCrime(const FHouseCrimeReport& CrimeReport);
+	void ReportCrime(const FHouseCrimeReport& CrimeReport) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Housing|Crime")
-	void ReportIntrusion(FName HouseId, AActor* Intruder);
+	void ReportIntrusion(const FName& HouseId, AActor* Intruder) const;
 
 	/* Occupancy Tracking (called by HouseComponent) */
 	void OnActorEnteredHouse(UHouseComponent* House, AActor* Actor);
@@ -77,10 +77,13 @@ private:
 	TArray<TObjectPtr<UHouseComponent>> Houses;
 
 	UPROPERTY()
-	TMap<FName, TObjectPtr<UHouseComponent>> HouseIdMap;
+	int32 PlayerHouseIndex;
 
 	UPROPERTY()
-	TMap<FGuid, TObjectPtr<UHouseComponent>> NpcOwnerToHouseMap;
+	TMap<FName, int32> HouseIdToIndexMap;
+
+	UPROPERTY()
+	TMap<FGuid, int32> NpcOwnerToHouseIndexMap;
 
 	UPROPERTY()
 	TMap<TObjectPtr<const AActor>, TObjectPtr<UHouseComponent>> ActorOccupancyMap;

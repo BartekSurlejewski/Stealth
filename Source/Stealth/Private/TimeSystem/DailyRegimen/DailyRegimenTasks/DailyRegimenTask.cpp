@@ -35,9 +35,12 @@ bool UDailyRegimenTask::IsActiveAtTime(const int32& DayTimeInMinutes) const
 	}
 }
 
-void UDailyRegimenTask::PerformByNpc_Implementation(UNpcContextComponent* NpcContext)
+bool UDailyRegimenTask::IsPlayerPerformingTask_Implementation()
 {
+	return true;
 }
+
+void UDailyRegimenTask::PerformByNpc_Implementation(UNpcContextComponent* NpcContext) {}
 
 void UDailyRegimenTask::PerformByPrisoner_Implementation(UPrisonerNpcContextComponent* PrisonerContext)
 {

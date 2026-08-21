@@ -41,11 +41,17 @@ void UEnterAreaTask::PerformByPrisoner_Implementation(UPrisonerNpcContextCompone
 	});
 }
 
+bool UEnterAreaTask::IsPlayerPerformingTask_Implementation()
+{
+	return bHasPlayerEnteredArea;
+}
+
 
 void UEnterAreaTask::TargetArea_OnActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
 	if (AStealthPlayerCharacter* OverlappingStealthCharacter = Cast<AStealthPlayerCharacter>(OtherActor))
 	{
+		bHasPlayerEnteredArea = true;
 		OnTaskCompleted.Broadcast(this);
 	}
 }

@@ -16,7 +16,7 @@ namespace StealthMessageChannels
 {
 	// Player
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Player_LookedAtInteractable);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Player_IsInRestrictedAreaChanged);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Player_TrespassingChanged);
 
 	// Input
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Message_Input_ToggleWidget);
@@ -128,8 +128,6 @@ struct FDailyTaskEndedMessage
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, Category="Message")
 	UDailyRegimenTask* EndedTask;
-	UPROPERTY(BlueprintReadWrite, Category="Message")
-	bool bPlayerSucceeded;
 };
 
 USTRUCT(BlueprintType)

@@ -14,10 +14,15 @@ struct FBooleanMessage;
 struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcSuspicionChanged, float, NewSuspicion);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcPlayerInSightChanged, bool, IsPlayerInDirectSight);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcAlertStateEvaluated, const FGameplayTag&, TargetStateTag, ENpcAlertLevel, NewAlertLevel);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcNoiseHeard, ENpcNoiseType, NoiseType, const FVector&, NoiseLocation);
 
 /**
@@ -102,16 +107,13 @@ public:
 	const FVector& GetLastHeardSoundLocation() const { return LastHeardSoundLocation; }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
-	bool IsPlayerInRestrictedArea() const { return bIsPlayerInRestrictedArea; }
-
-	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
 	float GetTimeSinceLastStimulus() const { return TimeSinceLastStimulus; }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
 	AActor* GetLastPerceivedActor() const { return LastPerceivedActor.Get(); }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
-	virtual bool IsPlayerPerformingIllegalAction(const AStealthPlayerCharacter* Player) const;
+	virtual bool IsPlayerPerformingIllegalAction() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
 	UNpcProfile* GetProfile() const { return Profile; }
@@ -133,9 +135,6 @@ protected:
 	void EvaluateAlertState();
 	float CalculatePlayerExposureMultiplier() const;
 	bool IsLookingDirectlyAtPlayer(const AStealthPlayerCharacter* Player) const;
-
-private:
-	void OnPlayerInRestrictedAreaChanged(FGameplayTag Channel, const FBooleanMessage& Message);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC|Profile")
@@ -173,9 +172,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "NPC|Suspicion")
 	TWeakObjectPtr<AActor> LastPerceivedActor = nullptr;
-
-	UPROPERTY()
-	bool bIsPlayerInRestrictedArea = false;
 
 private:
 	FGameplayMessageListenerHandle PlayerInRestrictedAreaListenerHandle;

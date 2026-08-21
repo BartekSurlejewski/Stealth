@@ -8,6 +8,7 @@
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
+#include "Legality/LegalitySubsystem.h"
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"
 
@@ -128,21 +129,13 @@ void UNpcContextComponent::SetProfile(UNpcProfile* InProfile)
 	}
 }
 
-bool UNpcContextComponent::IsPlayerInRestrictedArea() const
+bool UNpcContextComponent::IsPlayerPerformingIllegalAction() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const ULegalitySubsystem* Legality = ULegalitySubsystem::Get(GetWorld()))
 	{
-		return SuspicionComp->IsPlayerInRestrictedArea();
+		return Legality->IsPlayerPerformingIllegalAction();
 	}
-	return false;
-}
 
-bool UNpcContextComponent::IsPlayerPerformingIllegalAction(const AStealthPlayerCharacter* Player) const
-{
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
-	{
-		return SuspicionComp->IsPlayerPerformingIllegalAction(Player);
-	}
 	return false;
 }
 
@@ -152,6 +145,7 @@ float UNpcContextComponent::GetAwareness() const
 	{
 		return SuspicionComp->GetSuspicion();
 	}
+
 	return 0.0f;
 }
 
@@ -437,7 +431,7 @@ void UNpcContextComponent::HandleSuspicionChanged(float NewSuspicion)
 void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
 {
 	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
-	const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction(Player);
+	const bool bIsIllegal = Player && IsPlayerPerformingIllegalAction();
 	const ENpcBehaviourState CurrentState = GetBehaviourState();
 	const ENpcAlertLevel CurrentAlert = GetAlertLevel();
 
@@ -446,9 +440,9 @@ void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
 		// Only fire PlayerSpotted if the NPC is in combat/search (reacquiring target),
 		// if the player is actively committing an illegal act, or if NPC is hostile
 		if (CurrentState == ENpcBehaviourState::Combat ||
-		    CurrentState == ENpcBehaviourState::Search ||
-		    CurrentAlert == ENpcAlertLevel::Hostile ||
-		    bIsIllegal)
+			CurrentState == ENpcBehaviourState::Search ||
+			CurrentAlert == ENpcAlertLevel::Hostile ||
+			bIsIllegal)
 		{
 			SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_PlayerSpotted);
 		}
@@ -457,8 +451,8 @@ void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
 	{
 		// Only fire PlayerLost if the NPC was actively in combat, search, or hostile
 		if (CurrentState == ENpcBehaviourState::Combat ||
-		    CurrentState == ENpcBehaviourState::Search ||
-		    CurrentAlert == ENpcAlertLevel::Hostile)
+			CurrentState == ENpcBehaviourState::Search ||
+			CurrentAlert == ENpcAlertLevel::Hostile)
 		{
 			SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_PlayerLost);
 		}

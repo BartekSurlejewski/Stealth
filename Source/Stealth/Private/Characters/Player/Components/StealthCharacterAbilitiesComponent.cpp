@@ -5,6 +5,8 @@
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayEffect.h"
+#include "Characters/NPCs/AI/StealthAiTypes.h"
+#include "Engine/World.h"
 #include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Items/ItemDefinition.h"
@@ -42,6 +44,9 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 	                                                                                                     &UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemRemoved);
 
 	AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded);
+
+	TrespassingStateChangedHandle = AbilitySystemComponent->RegisterGameplayTagEvent(StealthAiTags::TAG_Player_State_Trespassing, EGameplayTagEventType::NewOrRemoved).AddUObject(
+		this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnTrespassingStateChanged);
 }
 
 void UStealthCharacterAbilitiesComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -51,6 +56,7 @@ void UStealthCharacterAbilitiesComponent::EndPlay(const EEndPlayReason::Type End
 	MsgSubsystem.UnregisterListener(PlayerInventoryItemRemovedHandle);
 
 	AbilitySystemComponent->OnAbilityEnded.RemoveAll(this);
+	AbilitySystemComponent->UnregisterGameplayTagEvent(TrespassingStateChangedHandle, StealthAiTags::TAG_Player_State_Trespassing, EGameplayTagEventType::NewOrRemoved);
 
 	Super::EndPlay(EndPlayReason);
 }
@@ -292,4 +298,13 @@ void UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemRemoved(FGamepla
 void UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData)
 {
 	OnAbilityEnded.Broadcast(AbilityEndedData);
+}
+
+void UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnTrespassingStateChanged(const FGameplayTag GameplayTag, int NewCount)
+{
+	const bool bIsTrespassing = NewCount > 0;
+
+	UGameplayMessageSubsystem& MessageSubsystem = UGameplayMessageSubsystem::Get(GetWorld());
+	const FBooleanMessage Message(bIsTrespassing);
+	MessageSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Player_TrespassingChanged, Message);
 }

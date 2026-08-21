@@ -62,7 +62,7 @@ public:
 
 	/* Boundary & Crime */
 	UFUNCTION(BlueprintCallable, Category = "Housing|Crime")
-	void NotifyCrime(EHouseCrimeType CrimeType, AActor* Perpetrator, AActor* TargetObject);
+	void NotifyCrime(const EHouseCrimeType& CrimeType, AActor* Perpetrator, AActor* TargetObject);
 	UFUNCTION(BlueprintCallable, Category = "Housing")
 	void SetHouseVolumeTrigger(UPrimitiveComponent* InVolumeTrigger);
 

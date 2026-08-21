@@ -4,7 +4,7 @@ namespace StealthMessageChannels
 {
 	// Player
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Player_LookedAtInteractable, "Message.Player.LookedAtInteractable");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Player_IsInRestrictedAreaChanged, "Message.Player.IsInRestrictedAreaChanged");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Player_TrespassingChanged, "Message.Player.TrespassingChanged");
 
 	// Input
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Message_Input_ToggleWidget, "Message.Input.OpenWidget");

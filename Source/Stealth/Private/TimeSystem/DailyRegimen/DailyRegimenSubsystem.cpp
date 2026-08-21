@@ -44,6 +44,16 @@ void UDailyRegimenSubsystem::OnWorldEndPlay(UWorld& InWorld)
 	Super::OnWorldEndPlay(InWorld);
 }
 
+bool UDailyRegimenSubsystem::IsPlayerPerformingCurrentTask() const
+{
+	if (!CurrentTask)
+	{
+		return true;
+	}
+
+	return CurrentTask->IsPlayerPerformingTask();
+}
+
 void UDailyRegimenSubsystem::PrepareTask(UDailyRegimenTask* TaskToPrepare)
 {
 	if (!TaskToPrepare)
@@ -76,7 +86,6 @@ void UDailyRegimenSubsystem::InitializeTask(UDailyRegimenTask* TaskToInitialize)
 
 	CurrentTaskIndex = DailyRegimenTasks.Find(TaskToInitialize);
 
-	bCurrentTaskSucceeded = false;
 	CurrentTask = TaskToInitialize;
 	CurrentTask->InitializeTask();
 	CurrentTask->OnTaskCompleted.AddDynamic(this, &UDailyRegimenSubsystem::DailyRegimenTask_TaskCompleted);
@@ -152,7 +161,6 @@ void UDailyRegimenSubsystem::ResetTasksToSettings()
 	CurrentTaskIndex = -1;
 	CurrentTask = nullptr;
 	PendingTask = nullptr;
-	bCurrentTaskSucceeded = false;
 
 	// Old working copies are just dropped from the array; GC will collect them
 	// since nothing else should be holding references.
@@ -160,10 +168,9 @@ void UDailyRegimenSubsystem::ResetTasksToSettings()
 	SortTasksByStartTime();
 }
 
-void UDailyRegimenSubsystem::DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task)
+void UDailyRegimenSubsystem::DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task) const
 {
 	Task->OnTaskCompleted.RemoveAll(this);
-	bCurrentTaskSucceeded = true;
 }
 
 void UDailyRegimenSubsystem::OnTimeChanged(FGameplayTag Channel, const FTimeChangedMessage& Message)
@@ -173,7 +180,7 @@ void UDailyRegimenSubsystem::OnTimeChanged(FGameplayTag Channel, const FTimeChan
 	if (CurrentTask && !CurrentTask->IsActiveAtTime(CurrentDayTimeAsMinutes))
 	{
 		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-		FDailyTaskEndedMessage TaskEndedMessage(CurrentTask, bCurrentTaskSucceeded);
+		const FDailyTaskEndedMessage TaskEndedMessage(CurrentTask);
 		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskEnded, TaskEndedMessage);
 
 		CurrentTask->DisposeTask();

@@ -124,8 +124,11 @@ private:
 	UFUNCTION()
 	void AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData);
 
+	void AbilitySystemComponent_OnTrespassingStateChanged(const FGameplayTag GameplayTag, int NewCount);
+
 	// Properties
 private:
 	FGameplayMessageListenerHandle PlayerInventoryItemAddedHandle;
 	FGameplayMessageListenerHandle PlayerInventoryItemRemovedHandle;
+	FDelegateHandle TrespassingStateChangedHandle;
 };

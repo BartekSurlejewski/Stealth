@@ -64,7 +64,7 @@ void FStateTreePerceptionEvaluator::Tick(FStateTreeExecutionContext& Context, co
 	InstanceData.BehaviourState = InstanceData.NpcContext->GetBehaviourState();
 	InstanceData.bHasPlayerLineOfSight = InstanceData.NpcContext->HasPlayerLineOfSight();
 	InstanceData.bEffectivelySeesPlayer = InstanceData.NpcContext->EffectivelySeesPlayer();
-	InstanceData.bIsPlayerPerformingIllegalAction = InstanceData.NpcContext->IsPlayerPerformingIllegalAction(InstanceData.NpcContext->GetPlayerCharacter());
+	InstanceData.bIsPlayerPerformingIllegalAction = InstanceData.NpcContext->IsPlayerPerformingIllegalAction();
 	InstanceData.LastKnownPlayerPos = InstanceData.NpcContext->GetLastKnownPlayerPos();
 	InstanceData.LastHeardSoundLocation = InstanceData.NpcContext->GetLastHeardSoundLocation();
 	InstanceData.CurrentFocus = InstanceData.NpcContext->GetCurrentFocus();

@@ -119,7 +119,7 @@ void UHouseComponent::AssignBedToNpc(const FGuid& NpcGuid, AActor* BedActor)
 	}
 }
 
-void UHouseComponent::NotifyCrime(EHouseCrimeType CrimeType, AActor* Perpetrator, AActor* TargetObject)
+void UHouseComponent::NotifyCrime(const EHouseCrimeType& CrimeType, AActor* Perpetrator, AActor* TargetObject)
 {
 	FHouseCrimeReport Report;
 	Report.HouseId = HouseId;

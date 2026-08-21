@@ -22,6 +22,7 @@ void UStealthCharacterCollisionsComponent::OnBeginOverlap(AActor* OtherActor)
 {
 	if (OtherActor && OtherActor != GetOwner())
 	{
+		//TODO: define tags in a single place to avoid magic strings
 		if (OtherActor->ActorHasTag("IllegalArea") && PlayerState)
 		{
 			IllegalAreaCollidersOverlapCount++;

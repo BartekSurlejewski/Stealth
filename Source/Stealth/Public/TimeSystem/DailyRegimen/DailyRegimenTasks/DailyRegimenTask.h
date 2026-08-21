@@ -32,11 +32,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Time")
 	int32 GetStartTimeAsMinutes() const { return StartHour * 60 + StartMinute; }
 
-	UFUNCTION(BlueprintPure, Category = "Time")
+	UFUNCTION(BlueprintCallable, Category = "Time")
 	int32 GetEndTimeAsMinutes() const { return EndHour * 60 + EndMinute; }
 
-	UFUNCTION(BlueprintPure, Category = "Time")
+	UFUNCTION(BlueprintCallable, Category = "Time")
 	bool IsActiveAtTime(const int32& DayTimeInMinutes) const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="Daily Regimen | Task")
+	bool IsPlayerPerformingTask();
+	virtual bool IsPlayerPerformingTask_Implementation();
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "DailyTask")
 	void PerformByNpc(UNpcContextComponent* NpcContext);

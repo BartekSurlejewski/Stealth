@@ -28,6 +28,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	[[nodiscard]] UDailyRegimenTask* GetCurrentTask() const { return CurrentTask; }
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsPlayerPerformingCurrentTask() const;
 
 private:
 	UFUNCTION()
@@ -46,7 +49,7 @@ private:
 	void ResetTasksToSettings();
 
 	UFUNCTION()
-	void DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task);
+	void DailyRegimenTask_TaskCompleted(UDailyRegimenTask* Task) const;
 	UFUNCTION()
 	void OnTimeChanged(FGameplayTag Channel, const FTimeChangedMessage& Message);
 
@@ -61,8 +64,6 @@ private:
 	UDailyRegimenTask* CurrentTask = nullptr;
 	UPROPERTY()
 	UDailyRegimenTask* PendingTask = nullptr;
-	UPROPERTY()
-	bool bCurrentTaskSucceeded = false;
 
 	FGameplayMessageListenerHandle TimeChangedListenerHandle;
 };
