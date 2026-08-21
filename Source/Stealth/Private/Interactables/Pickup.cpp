@@ -107,6 +107,8 @@ void APickup::OnDrop_Implementation()
 	Mesh->SetUsingAbsoluteRotation(true);
 	Mesh->SetUsingAbsoluteScale(true);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	RootComponent = Mesh;
 }
 
 UItemDefinition* APickup::GetInventoryItem_Implementation() const

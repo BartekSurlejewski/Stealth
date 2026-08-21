@@ -7,27 +7,22 @@
 #include "Engine/OverlapResult.h"
 #include "CollisionQueryParams.h"
 
-void UChemistrySubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-	Super::Initialize(Collection);
-}
-
-void UChemistrySubsystem::Deinitialize()
-{
-	UnregisterMessageListener();
-	ActiveReactionRules.Empty();
-	InstantiatedEffectHandlers.Empty();
-	ActiveDataAsset = nullptr;
-
-	Super::Deinitialize();
-}
-
 void UChemistrySubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
 
 	LoadConfiguration();
 	RegisterMessageListener();
+}
+
+void UChemistrySubsystem::OnWorldEndPlay(UWorld& InWorld)
+{
+	UnregisterMessageListener();
+	ActiveReactionRules.Empty();
+	InstantiatedEffectHandlers.Empty();
+	ActiveDataAsset = nullptr;
+
+	Super::OnWorldEndPlay(InWorld);
 }
 
 void UChemistrySubsystem::LoadConfiguration()
@@ -189,6 +184,7 @@ void UChemistrySubsystem::EvaluateEmitterReactions(AActor* EmitterActor, const F
 		return;
 	}
 
+	//TODO: add considering target materials too
 	const FGameplayTagContainer EmitterMaterials = GetMaterialTagsForActor(EmitterActor);
 
 	for (const FChemistryReactionRule& Rule : ActiveReactionRules)
@@ -384,6 +380,7 @@ FGameplayTagContainer UChemistrySubsystem::GetMaterialTagsForActor(const AActor*
 		CombinedTags.AppendTags(IChemistryReceiverInterface::Execute_GetMaterialTags(Actor));
 	}
 
+	//TODO: avoid iterating through components
 	// Check component interface implementations
 	for (UActorComponent* Component : Actor->GetComponents())
 	{

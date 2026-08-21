@@ -179,6 +179,17 @@ void AStealthPlayerCharacter::DoSecondaryInteract()
 	InteractionComponent->Interact(false);
 }
 
+void AStealthPlayerCharacter::DoThrow()
+{
+	UE_LOG(LogStealth, Warning, TEXT("Throw Input"));
+	if (!InteractionComponent)
+	{
+		return;
+	}
+
+	InteractionComponent->ThrowPickedItem();
+}
+
 //~End Input
 
 void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -197,6 +208,9 @@ void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 		// Interaction
 		EnhancedInputComponent->BindAction(PrimaryInteractAction, ETriggerEvent::Started, this, &AStealthPlayerCharacter::DoPrimaryInteract);
 		EnhancedInputComponent->BindAction(SecondaryInteractAction, ETriggerEvent::Started, this, &AStealthPlayerCharacter::DoSecondaryInteract);
+
+		EnhancedInputComponent->BindAction(ThrowAction, ETriggerEvent::Started, this, &AStealthPlayerCharacter::DoThrow);
+
 		if (InteractionComponent)
 		{
 			InteractionComponent->InitializeInput(PrimaryInteractAction, SecondaryInteractAction);

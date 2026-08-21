@@ -53,6 +53,8 @@ protected:
 	virtual void DoPrimaryInteract();
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSecondaryInteract();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoThrow();
 
 	/*Properties*/
 protected:
@@ -89,6 +91,9 @@ protected:
 	TObjectPtr<UInputAction> SecondaryInteractAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
 	TObjectPtr<UInputAction> SprintAction;
+	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
+	TObjectPtr<UInputAction> ThrowAction;
+
 #pragma endregion
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Ability System")

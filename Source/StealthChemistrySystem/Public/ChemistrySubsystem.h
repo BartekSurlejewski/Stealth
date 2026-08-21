@@ -22,9 +22,8 @@ class STEALTHCHEMISTRYSYSTEM_API UChemistrySubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+	virtual void OnWorldEndPlay(UWorld& InWorld) override;
 
 	/**
 	 * Broadcasts an element application message over the GameplayMessageSubsystem.

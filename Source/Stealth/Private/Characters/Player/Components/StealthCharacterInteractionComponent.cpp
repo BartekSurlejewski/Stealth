@@ -10,6 +10,7 @@
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerState.h"
 #include "Environment/Interactables/Interactable.h"
+#include "Environment/Interactables/Throwable.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Pickable.h"
 #include "Messages/StealthMessages.h"
@@ -199,4 +200,21 @@ void UStealthCharacterInteractionComponent::DropPickedItem() const
 	}
 	PickedItem->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	PickedItem = nullptr;
+}
+
+void UStealthCharacterInteractionComponent::ThrowPickedItem() const
+{
+	if (!PickedItem)
+	{
+		return;
+	}
+
+	AActor* Item = PickedItem;
+
+	DropPickedItem();
+
+	if (Item->Implements<UThrowable>())
+	{
+		IThrowable::Execute_Throw(Item, GetOwner()->GetActorForwardVector());
+	}
 }

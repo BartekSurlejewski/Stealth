@@ -50,6 +50,8 @@ public:
 	bool TryPickupItem(AActor* NewPickedItem) const;
 	UFUNCTION(BlueprintCallable, Category = "Player|Interaction|Pickup")
 	void DropPickedItem() const;
+	UFUNCTION(BlueprintCallable, Category = "Player|Interaction|Pickup")
+	void ThrowPickedItem() const;
 	UFUNCTION()
 	AActor* GetPickedItem() const { return PickedItem; }
 
