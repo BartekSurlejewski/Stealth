@@ -12,11 +12,14 @@ public class StealthChemistrySystem : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"GameplayMessageRuntime",
+			"GameplayTags",
 			"DeveloperSettings"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
-			{ "GameplayAbilities", "GameplayTags" });
+		{
+			"GameplayAbilities"
+		});
 
 		PublicIncludePaths.AddRange(new string[]
 		{
