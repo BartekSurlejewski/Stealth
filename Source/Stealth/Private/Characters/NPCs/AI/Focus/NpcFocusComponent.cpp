@@ -40,8 +40,12 @@ ANpcAiController* UNpcFocusComponent::GetAiController() const
 bool UNpcFocusComponent::RequestFocus(const FNpcFocusTarget& NewFocusCandidate)
 {
 	// Rule: Higher numerical priority wins.
-	// If incoming priority is lower than active non-expired focus, reject.
-	if (NewFocusCandidate.Priority < CurrentFocus.Priority && CurrentFocus.RemainingTime > 0.0f)
+	// Active focus is protected if its priority is > None and it hasn't expired.
+	// An indefinite focus (Duration <= 0.0f) is protected indefinitely until explicitly cleared or preempted by equal-or-higher priority.
+	const bool bHasActiveProtectedFocus = (CurrentFocus.Priority > ENpcFocusPriority::None) &&
+		(CurrentFocus.Duration <= 0.0f || CurrentFocus.RemainingTime > 0.0f);
+
+	if (bHasActiveProtectedFocus && NewFocusCandidate.Priority < CurrentFocus.Priority)
 	{
 		return false;
 	}
@@ -57,13 +61,13 @@ bool UNpcFocusComponent::RequestFocus(const FNpcFocusTarget& NewFocusCandidate)
 
 void UNpcFocusComponent::ClearFocus(ENpcFocusPriority MinimumPriorityToClear)
 {
-	if (CurrentFocus.Priority <= MinimumPriorityToClear || MinimumPriorityToClear == ENpcFocusPriority::None)
+	if (CurrentFocus.Priority == ENpcFocusPriority::None && !CurrentFocus.FocusActor.IsValid() && CurrentFocus.FocusLocation.IsZero())
 	{
-		if (CurrentFocus.Priority == ENpcFocusPriority::None && !CurrentFocus.FocusActor.IsValid() && CurrentFocus.FocusLocation.IsZero())
-		{
-			return;
-		}
+		return;
+	}
 
+	if (MinimumPriorityToClear == ENpcFocusPriority::None || CurrentFocus.Priority <= MinimumPriorityToClear)
+	{
 		const FNpcFocusTarget PreviousFocus = CurrentFocus;
 		CurrentFocus = FNpcFocusTarget();
 

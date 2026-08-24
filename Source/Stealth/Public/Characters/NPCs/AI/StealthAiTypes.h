@@ -19,6 +19,7 @@ namespace StealthAiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Combat);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Search);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Dead);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Fleeing);
 
 	// NPC Event / Trigger Tags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Investigate);
@@ -108,17 +109,86 @@ enum class EPatrolMode : uint8
 
 /**
  * Focus priority hierarchy: Higher numerical values preempt lower ones.
+ * Ordering is behaviorally load-bearing: it gates whether an NPC notices or reacts to a player
+ * while engaged in other activities.
  */
 UENUM(BlueprintType)
 enum class ENpcFocusPriority : uint8
 {
 	None = 0,
-	Routine = 10, // Daily activity / idle facing
-	MinorDistraction = 20, // Soft noise, rock throw, whistling
-	MajorDisturbance = 30, // Open door in secure area, blood, missing item
-	CriticalDisturbance = 40, // Dead / incapacitated body
-	SuspiciousPlayer = 50, // Player spotted in restricted zone / sneaking
-	CombatTarget = 60 // Confirmed hostile player in combat
+	Routine = 10,              // Daily activity / idle facing
+	MinorDistraction = 20,     // Soft noise, rock throw, whistling
+	SuspiciousPlayer = 25,     // Player spotted / suspicious presence (sub-disturbance, ignored if busy with major tasks)
+	MajorDisturbance = 30,     // Open door in secure area, blood, missing item
+	CriticalDisturbance = 40,  // Dead / incapacitated body
+	CombatTarget = 60          // Confirmed hostile player in combat / illegal act seen (highest priority)
+};
+
+/**
+ * Immutable per-tick context passed to UNpcState virtual evaluation methods.
+ * Keeps state logic free of component-internal lookups and easy to unit test.
+ */
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcStateTickContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float DeltaTime = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float CurrentSuspicion = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	bool bHasLineOfSight = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	bool bEffectivelySeesPlayer = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	bool bIsPlayerPerformingIllegalAction = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	bool bIsFocusingOnPlayer = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float FocusAwarenessMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float PlayerDistance = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float PlayerExposureMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	bool bIsLookingDirectlyAtPlayer = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float LostSightDuration = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float SearchDuration = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float BaseGainRateSight = 40.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float BaseGainRatePeripheral = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float BaseDecayRate = 8.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float AlertThreshold = 75.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float SuspiciousThreshold = 25.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float SightLossGrace = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
+	float AlwaysSeeRange = 100.0f;
 };
 
 /**

@@ -1,4 +1,5 @@
 #include "Characters/NPCs/NpcContextComponent.h"
+#include "Characters/NPCs/AI/States/NpcState.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/NpcCharacter.h"
@@ -51,8 +52,8 @@ void UNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (SuspicionComponent)
 	{
+		SuspicionComponent->OnNpcStateChanged.RemoveDynamic(this, &UNpcContextComponent::HandleNpcStateChanged);
 		SuspicionComponent->OnSuspicionChanged.RemoveDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
-		SuspicionComponent->OnAlertStateEvaluated.RemoveDynamic(this, &UNpcContextComponent::HandleAlertStateEvaluated);
 		SuspicionComponent->OnPlayerInSightChanged.RemoveDynamic(this, &UNpcContextComponent::HandlePlayerInSightChanged);
 		SuspicionComponent->OnNoiseHeard.RemoveDynamic(this, &UNpcContextComponent::HandleNoiseHeard);
 	}
@@ -75,8 +76,8 @@ void UNpcContextComponent::BindToSubcomponents()
 			SuspicionComp->SetProfile(Profile);
 		}
 
+		SuspicionComp->OnNpcStateChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandleNpcStateChanged);
 		SuspicionComp->OnSuspicionChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
-		SuspicionComp->OnAlertStateEvaluated.AddUniqueDynamic(this, &UNpcContextComponent::HandleAlertStateEvaluated);
 		SuspicionComp->OnPlayerInSightChanged.AddUniqueDynamic(this, &UNpcContextComponent::HandlePlayerInSightChanged);
 		SuspicionComp->OnNoiseHeard.AddUniqueDynamic(this, &UNpcContextComponent::HandleNoiseHeard);
 	}
@@ -139,11 +140,29 @@ bool UNpcContextComponent::IsPlayerPerformingIllegalAction() const
 	return false;
 }
 
-float UNpcContextComponent::GetAwareness() const
+FGameplayTag UNpcContextComponent::GetCurrentStateTag() const
+{
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		return SuspicionComp->GetCurrentStateTag();
+	}
+	return StealthAiTags::TAG_NPC_State_Unaware;
+}
+
+float UNpcContextComponent::GetSuspicion() const
 {
 	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetSuspicion();
+	}
+	return 0.0f;
+}
+
+float UNpcContextComponent::GetAwareness() const
+{
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		return SuspicionComp->GetAwareness();
 	}
 
 	return 0.0f;
@@ -261,16 +280,6 @@ void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& Crime
 	{
 		SuspicionComp->HandleCrimeReported(CrimePayload);
 	}
-
-	if (CrimePayload.bIsPrimaryInvestigator)
-	{
-		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
-	}
-	else
-	{
-		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
-	}
-
 	SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_CrimeReported);
 }
 
@@ -282,28 +291,20 @@ void UNpcContextComponent::AddSuspicion(float Amount)
 	}
 }
 
+UNpcState* UNpcContextComponent::GetCurrentState() const
+{
+	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	{
+		return SuspicionComp->GetCurrentState();
+	}
+	return nullptr;
+}
+
 void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 {
 	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->SetAlertLevel(NewAlertLevel);
-	}
-
-	switch (NewAlertLevel)
-	{
-	case ENpcAlertLevel::Hostile:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
-		break;
-	case ENpcAlertLevel::Alerted:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
-		break;
-	case ENpcAlertLevel::Suspicious:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Suspicious);
-		break;
-	case ENpcAlertLevel::Unaware:
-	default:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
-		break;
 	}
 }
 
@@ -313,89 +314,13 @@ void UNpcContextComponent::SetBehaviourState(ENpcBehaviourState NewState)
 	{
 		SuspicionComp->SetBehaviourState(NewState);
 	}
-
-	switch (NewState)
-	{
-	case ENpcBehaviourState::Combat:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Combat);
-		break;
-	case ENpcBehaviourState::Search:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Search);
-		break;
-	case ENpcBehaviourState::Alerted:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Alerted);
-		break;
-	case ENpcBehaviourState::Suspicious:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Suspicious);
-		break;
-	case ENpcBehaviourState::Routine:
-	default:
-		SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
-		break;
-	}
 }
 
 void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
 {
-	if (CurrentStateTag == NewStateTag || !NewStateTag.IsValid())
-	{
-		return;
-	}
-
-	const FGameplayTag PreviousStateTag = CurrentStateTag;
-	CurrentStateTag = NewStateTag;
-
-	UE_LOG(LogStealth, Warning, TEXT("NpcContextComponent: New State Tag: %s"), *NewStateTag.GetTagName().ToString())
-
-	// Synchronize subcomponents
 	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
 	{
-		if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Combat) || NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Dead))
-		{
-			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Hostile);
-		}
-		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Alerted))
-		{
-			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Alerted);
-		}
-		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search))
-		{
-			SuspicionComp->SetBehaviourState(ENpcBehaviourState::Search);
-		}
-		else if (NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Suspicious))
-		{
-			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Suspicious);
-		}
-		else
-		{
-			SuspicionComp->SetAlertLevel(ENpcAlertLevel::Unaware);
-		}
-	}
-
-	// 1. Notify StateTree directly so behavior transitions immediately
-	SendStateTreeEvent(CurrentStateTag);
-
-	if (PreviousStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Search) && NewStateTag.MatchesTagExact(StealthAiTags::TAG_NPC_State_Unaware))
-	{
-		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_SearchExpired);
-		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_ResumeRoutine);
-	}
-
-	// 2. Broadcast internal delegates for local listeners (UI, AnimInstance, Character)
-	OnNpcStateChanged.Broadcast(CurrentStateTag, PreviousStateTag);
-	OnAlertLevelChanged.Broadcast(GetAlertLevel());
-	OnBehaviourStateChanged.Broadcast(GetBehaviourState());
-
-	// 3. Broadcast global message via GameplayMessageSubsystem for loose coupling across systems
-	if (UWorld* World = GetWorld())
-	{
-		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(World);
-		FNpcStateChangedMessage Msg;
-		Msg.NpcGUID = OwnerNpcGuid;
-		Msg.PreviousStateTag = PreviousStateTag;
-		Msg.NewStateTag = CurrentStateTag;
-		Msg.Suspicion = GetAwareness();
-		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_NPC_StateChanged, Msg);
+		SuspicionComp->TransitionToStateByTag(NewStateTag);
 	}
 }
 
@@ -418,9 +343,26 @@ AStealthPlayerCharacter* UNpcContextComponent::GetPlayerCharacter() const
 	return CharactersRegistry->GetPlayerCharacter();
 }
 
-void UNpcContextComponent::HandleAlertStateEvaluated(const FGameplayTag& TargetStateTag, ENpcAlertLevel NewAlertLevel)
+void UNpcContextComponent::HandleNpcStateChanged(const FGameplayTag& NewStateTag, const FGameplayTag& PreviousStateTag)
 {
-	SetNpcState(TargetStateTag);
+	CurrentStateTag = NewStateTag;
+
+	// Broadcast internal delegates for local listeners (UI, AnimInstance, Character)
+	OnNpcStateChanged.Broadcast(CurrentStateTag, PreviousStateTag);
+	OnAlertLevelChanged.Broadcast(GetAlertLevel());
+	OnBehaviourStateChanged.Broadcast(GetBehaviourState());
+
+	// Broadcast global message via GameplayMessageSubsystem
+	if (UWorld* World = GetWorld())
+	{
+		UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(World);
+		FNpcStateChangedMessage Msg;
+		Msg.NpcGUID = OwnerNpcGuid;
+		Msg.PreviousStateTag = PreviousStateTag;
+		Msg.NewStateTag = CurrentStateTag;
+		Msg.Suspicion = GetAwareness();
+		MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_NPC_StateChanged, Msg);
+	}
 }
 
 void UNpcContextComponent::HandleSuspicionChanged(float NewSuspicion)
@@ -437,8 +379,6 @@ void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
 
 	if (bInSight)
 	{
-		// Only fire PlayerSpotted if the NPC is in combat/search (reacquiring target),
-		// if the player is actively committing an illegal act, or if NPC is hostile
 		if (CurrentState == ENpcBehaviourState::Combat ||
 			CurrentState == ENpcBehaviourState::Search ||
 			CurrentAlert == ENpcAlertLevel::Hostile ||
@@ -449,7 +389,6 @@ void UNpcContextComponent::HandlePlayerInSightChanged(bool bInSight)
 	}
 	else
 	{
-		// Only fire PlayerLost if the NPC was actively in combat, search, or hostile
 		if (CurrentState == ENpcBehaviourState::Combat ||
 			CurrentState == ENpcBehaviourState::Search ||
 			CurrentAlert == ENpcAlertLevel::Hostile)

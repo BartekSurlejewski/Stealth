@@ -13,14 +13,9 @@ class ANpcAiController;
 class AStealthPlayerCharacter;
 struct FAIStimulus;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSuspicionChanged, float, NewSuspicion);
 
 /**
@@ -74,13 +69,19 @@ public:
 
 	// State & Data Accessors for StateTree and external systems
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	FGameplayTag GetCurrentStateTag() const { return CurrentStateTag; }
+	FGameplayTag GetCurrentStateTag() const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	UNpcState* GetCurrentState() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	const FGuid& GetNpcGuid() const { return OwnerNpcGuid; }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	virtual bool IsPlayerPerformingIllegalAction() const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	float GetSuspicion() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	float GetAwareness() const;
@@ -152,7 +153,7 @@ protected:
 	void BindToSubcomponents();
 
 	UFUNCTION()
-	void HandleAlertStateEvaluated(const FGameplayTag& TargetStateTag, ENpcAlertLevel NewAlertLevel);
+	void HandleNpcStateChanged(const FGameplayTag& NewStateTag, const FGameplayTag& PreviousStateTag);
 
 	UFUNCTION()
 	void HandleSuspicionChanged(float NewSuspicion);

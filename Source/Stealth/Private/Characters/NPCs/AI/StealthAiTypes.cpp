@@ -9,6 +9,7 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Combat, "NPC.State.Combat");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Search, "NPC.State.Search");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Dead, "NPC.State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Fleeing, "NPC.State.Fleeing");
 
 	// NPC Event / Trigger Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_Investigate, "NPC.Event.Investigate");
