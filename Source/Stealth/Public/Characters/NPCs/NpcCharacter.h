@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Environment/Interactables/Interactable.h"
+#include "Interactables/Interactable.h"
 #include "GameFramework/Character.h"
 #include "NpcCharacter.generated.h"
 

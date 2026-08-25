@@ -8,11 +8,11 @@
 #include "ChemistryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnChemistryEffectReceivedSignature, const FGameplayTag&, EffectTag, const FElementApplication&, Context);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnElementAppliedSignature, const FElementApplication&, Context);
 
 /**
  * Component that gives an Actor material properties and chemistry reaction capabilities.
- * Can be added to any Actor in Editor or Blueprints without writing C++ code.
  */
 UCLASS(ClassGroup = (Chemistry), meta = (BlueprintSpawnableComponent))
 class STEALTHCHEMISTRYSYSTEM_API UChemistryComponent : public UActorComponent, public IChemistryReceiverInterface
@@ -25,6 +25,14 @@ public:
 	/** Material tags assigned to this actor (e.g., Material.Wood, Material.Flammable, Material.Fragile) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
 	FGameplayTagContainer MaterialTags;
+
+	/**
+	 * Optional. If set, this component's material tags only apply when this exact primitive
+	 * was struck (e.g. the bulb static mesh). Leave unset for actor-wide tags — unchanged,
+	 * backward-compatible default behavior.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
+	TWeakObjectPtr<UPrimitiveComponent> AssociatedPrimitiveComponent = nullptr;
 
 	/** Delegate fired when a chemistry effect is received by this actor */
 	UPROPERTY(BlueprintAssignable, Category = "Chemistry")

@@ -42,7 +42,7 @@ public:
 	 * Helper function to retrieve all combined material tags from an Actor and its components.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Chemistry")
-	FGameplayTagContainer GetMaterialTagsForActor(const AActor* Actor) const;
+	FGameplayTagContainer GetMaterialTagsForActor(const AActor* Actor, const UPrimitiveComponent* HitComponent = nullptr) const;
 
 	/**
 	 * Sets or changes the active reaction data asset at runtime, refreshing rules and effect handlers.
@@ -81,7 +81,7 @@ private:
 	void EvaluateLocationReactions(const FElementApplication& Application);
 
 	bool MatchesRule(const FChemistryReactionRule& Rule, const FGameplayTag& ElementTag, const FGameplayTagContainer& MaterialTags) const;
-	void DispatchEffects(const FChemistryReactionRule& Rule, const FElementApplication& Application, AActor* TargetActor, AActor* EmitterActor);
+	void ApplyRuleEffects(const FChemistryReactionRule& Rule, const FElementApplication& Application, AActor* AffectedActor);
 	void ExecuteSingleEffect(const FGameplayTag& EffectTag, const FElementApplication& Context, AActor* AffectedActor);
 
 	UPROPERTY()

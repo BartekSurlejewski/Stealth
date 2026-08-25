@@ -18,6 +18,11 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	UFUNCTION(BlueprintCallable)
+	void AddToExposureSystem();
+	UFUNCTION(BlueprintCallable)
+	void RemoveFromExposureSystem();
+
 protected:
 	int32 LightHandle;
 	UPROPERTY()

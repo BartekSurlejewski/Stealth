@@ -40,7 +40,8 @@ void UChemistryBlueprintFunctionLibrary::ApplyElementToActor(const UObject* Worl
 	ApplyElement(WorldContextObject, App);
 }
 
-void UChemistryBlueprintFunctionLibrary::ApplyElementInRadius(const UObject* WorldContextObject, FGameplayTag ElementTag, FVector Location, float Radius, AActor* Instigator, float Magnitude)
+void UChemistryBlueprintFunctionLibrary::ApplyElementInRadius(const UObject* WorldContextObject, FGameplayTag ElementTag, FVector Location, float Radius, AActor* Instigator,
+                                                              float Magnitude)
 {
 	FElementApplication App;
 	App.ElementTag = ElementTag;
@@ -83,4 +84,20 @@ FGameplayTagContainer UChemistryBlueprintFunctionLibrary::GetActorMaterialTags(c
 	}
 
 	return CombinedTags;
+}
+
+void UChemistryBlueprintFunctionLibrary::ApplyElementFromHitResult(const UObject* WorldContextObject, FGameplayTag ElementTag, const FHitResult& Hit, AActor* Instigator,
+                                                                   float Magnitude)
+{
+	FElementApplication App;
+	App.ElementTag = ElementTag;
+	App.Instigator = Instigator;
+	App.Magnitude = Magnitude;
+	App.TargetActor = Hit.GetActor();
+	App.HitComponent = Hit.GetComponent();
+	// ImpactPoint is only meaningful for a genuine blocking hit; fall back to the sweep's
+	// query location otherwise (e.g. overlap-only queries).
+	App.Location = Hit.bBlockingHit ? Hit.ImpactPoint : Hit.Location;
+
+	ApplyElement(WorldContextObject, App);
 }

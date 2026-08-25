@@ -1,4 +1,4 @@
-#include "Environment/Interactables/Pickup.h"
+#include "Interactables/Pickup.h"
 
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Characters/Player/Components/StealthCharacterInteractionComponent.h"

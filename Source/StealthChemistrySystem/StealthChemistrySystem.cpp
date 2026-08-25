@@ -9,3 +9,4 @@ void FChemistryModule::ShutdownModule() {}
 
 IMPLEMENT_MODULE(FChemistryModule, StealthChemistrySystem)
 
+DEFINE_LOG_CATEGORY(LogStealthChemistry)

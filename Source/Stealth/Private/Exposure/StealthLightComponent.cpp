@@ -11,14 +11,24 @@ UStealthLightComponent::UStealthLightComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
-
-// Called when the game starts
 void UStealthLightComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	AddToExposureSystem();
+}
+
+void UStealthLightComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	RemoveFromExposureSystem();
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void UStealthLightComponent::AddToExposureSystem()
+{
 	UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this);
-	
+
 	if (!ExposureSubsystem)
 	{
 		return;
@@ -50,12 +60,10 @@ void UStealthLightComponent::BeginPlay()
 	LightHandle = ExposureSubsystem->RegisterLight(LightData);
 }
 
-void UStealthLightComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UStealthLightComponent::RemoveFromExposureSystem()
 {
 	if (UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this))
 	{
 		ExposureSubsystem->UnregisterLight(LightHandle);
 	}
-
-	Super::EndPlay(EndPlayReason);
 }

@@ -31,14 +31,6 @@ public:
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Data")
 	TSoftObjectPtr<UChemistryReactionDataAsset> DefaultReactionDataAsset;
 
-	/** Optional fallback default reaction data table */
-	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Data")
-	TSoftObjectPtr<UDataTable> DefaultReactionDataTable;
-
-	/** Global effect handlers registered project-wide */
-	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Effects")
-	TMap<FGameplayTag, TSubclassOf<UChemistryEffect>> GlobalEffectHandlers;
-
 	/** Collision object channels queried during area/radial element applications */
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Spatial")
 	TArray<TEnumAsByte<ECollisionChannel>> RadialQueryCollisionChannels;

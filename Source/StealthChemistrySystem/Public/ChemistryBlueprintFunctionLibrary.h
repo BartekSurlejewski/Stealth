@@ -34,7 +34,11 @@ public:
 	 * Convenience helper to create and broadcast a radial element application at a world location.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Chemistry", meta = (WorldContext = "WorldContextObject"))
-	static void ApplyElementInRadius(const UObject* WorldContextObject, FGameplayTag ElementTag, FVector Location, float Radius, AActor* Instigator = nullptr, float Magnitude = 1.0f);
+	static void ApplyElementInRadius(const UObject* WorldContextObject, FGameplayTag ElementTag, FVector Location, float Radius, AActor* Instigator = nullptr,
+	                                 float Magnitude = 1.0f);
+
+	UFUNCTION(BlueprintCallable, Category = "Chemistry", meta = (WorldContext = "WorldContextObject"))
+	static void ApplyElementFromHitResult(const UObject* WorldContextObject, FGameplayTag ElementTag, const FHitResult& Hit, AActor* Instigator, float Magnitude = 1.0f);
 
 	/**
 	 * Returns all combined material tags from an actor and its components.

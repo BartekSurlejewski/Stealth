@@ -1,4 +1,6 @@
 #include "ChemistrySubsystem.h"
+
+#include "ChemistryComponent.h"
 #include "ChemistrySettings.h"
 #include "ChemistryReactionDataAsset.h"
 #include "ChemistryEffect.h"
@@ -6,6 +8,7 @@
 #include "Engine/World.h"
 #include "Engine/OverlapResult.h"
 #include "CollisionQueryParams.h"
+#include "StealthChemistrySystem/StealthChemistrySystem.h"
 
 void UChemistrySubsystem::OnWorldBeginPlay(UWorld& InWorld)
 {
@@ -42,28 +45,6 @@ void UChemistrySubsystem::LoadConfiguration()
 		if (LoadedAsset)
 		{
 			SetReactionDataAsset(LoadedAsset);
-		}
-	}
-	else if (!Settings->DefaultReactionDataTable.IsNull())
-	{
-		UDataTable* LoadedTable = Settings->DefaultReactionDataTable.LoadSynchronous();
-		if (LoadedTable)
-		{
-			LoadedTable->ForeachRow<FChemistryReactionRule>(
-				TEXT("UChemistrySubsystem::LoadConfiguration"),
-				[this](const FName& RowName, const FChemistryReactionRule& Row)
-				{
-					ActiveReactionRules.Add(Row);
-				});
-		}
-	}
-
-	// Register global effect handlers
-	for (const auto& Kvp : Settings->GlobalEffectHandlers)
-	{
-		if (Kvp.Key.IsValid() && Kvp.Value)
-		{
-			RegisterEffectHandler(Kvp.Key, Kvp.Value);
 		}
 	}
 }
@@ -120,27 +101,24 @@ void UChemistrySubsystem::ProcessElementApplication(const FElementApplication& A
 	AActor* TargetActor = Application.TargetActor.Get();
 	AActor* EmitterActor = Application.Instigator.Get();
 
-	// 1. Direct Target Actor Reaction
 	if (IsValid(TargetActor))
 	{
-		EvaluateTargetReactions(TargetActor, Application);
+		EvaluateTargetReactions(TargetActor, Application); // TargetOnly + Both, matched on target materials
 	}
 
-	// 2. Radial / Area Reaction
 	if (Application.Radius > 0.0f)
 	{
 		EvaluateRadialReactions(Application);
 	}
 	else if (!IsValid(TargetActor))
 	{
-		// 3. Location / Ambient Reaction without specific target
 		EvaluateLocationReactions(Application);
+	}
 
-		// 4. Standalone Emitter Reaction
-		if (IsValid(EmitterActor))
-		{
-			EvaluateEmitterReactions(EmitterActor, Application);
-		}
+	// Runs regardless of target/radius, so EmitterOnly/Both rules fire on direct hits too.
+	if (IsValid(EmitterActor))
+	{
+		EvaluateEmitterReactions(EmitterActor, Application); // EmitterOnly + Both, matched on emitter materials
 	}
 }
 
@@ -165,14 +143,21 @@ void UChemistrySubsystem::EvaluateTargetReactions(AActor* TargetActor, const FEl
 		}
 	}
 
-	const FGameplayTagContainer TargetMaterials = GetMaterialTagsForActor(TargetActor);
-	AActor* EmitterActor = Application.Instigator.Get();
+	// HitComponent only applies to the actor that was actually struck directly —
+	// not to actors incidentally caught by a radial/AoE sweep.
+	const UPrimitiveComponent* RelevantHitComponent = (TargetActor == Application.TargetActor.Get()) ? Application.HitComponent.Get() : nullptr;
+	const FGameplayTagContainer TargetMaterials = GetMaterialTagsForActor(TargetActor, RelevantHitComponent);
 
 	for (const FChemistryReactionRule& Rule : ActiveReactionRules)
 	{
+		if (Rule.ReactionTarget != EChemistryReactionTarget::TargetOnly &&
+			Rule.ReactionTarget != EChemistryReactionTarget::BothTargetAndEmitter)
+		{
+			continue;
+		}
 		if (MatchesRule(Rule, Application.ElementTag, TargetMaterials))
 		{
-			DispatchEffects(Rule, Application, TargetActor, EmitterActor);
+			ApplyRuleEffects(Rule, Application, TargetActor); // applies only to TargetActor
 		}
 	}
 }
@@ -194,7 +179,7 @@ void UChemistrySubsystem::EvaluateEmitterReactions(AActor* EmitterActor, const F
 		{
 			if (MatchesRule(Rule, Application.ElementTag, EmitterMaterials))
 			{
-				DispatchEffects(Rule, Application, nullptr, EmitterActor);
+				ApplyRuleEffects(Rule, Application, EmitterActor);
 			}
 		}
 	}
@@ -250,15 +235,26 @@ void UChemistrySubsystem::EvaluateRadialReactions(const FElementApplication& App
 
 void UChemistrySubsystem::EvaluateLocationReactions(const FElementApplication& Application)
 {
-	AActor* EmitterActor = Application.Instigator.Get();
-	const FGameplayTagContainer EmptyMaterials;
+	static const FGameplayTagContainer EmptyMaterials;
 
 	for (const FChemistryReactionRule& Rule : ActiveReactionRules)
 	{
-		// Location/ambient rules have no required materials
-		if (Rule.RequiredMaterialTags.IsEmpty() && MatchesRule(Rule, Application.ElementTag, EmptyMaterials))
+		if (Rule.ReactionTarget != EChemistryReactionTarget::LocationOnly)
 		{
-			DispatchEffects(Rule, Application, nullptr, EmitterActor);
+			continue;
+		}
+
+		if (!Rule.RequiredMaterialTags.IsEmpty())
+		{
+			// Data-authoring mistake: a LocationOnly rule with required materials can never
+			// match (there's no actor here to check tags against), so it would silently never fire.
+			UE_LOG(LogStealthChemistry, Warning, TEXT("Chemistry: LocationOnly rule for %s has RequiredMaterialTags set and will never match."), *Rule.ElementTag.ToString());
+			continue;
+		}
+
+		if (MatchesRule(Rule, Application.ElementTag, EmptyMaterials))
+		{
+			ApplyRuleEffects(Rule, Application, nullptr);
 		}
 	}
 }
@@ -288,47 +284,16 @@ bool UChemistrySubsystem::MatchesRule(const FChemistryReactionRule& Rule, const 
 	return MaterialTags.HasAny(Rule.RequiredMaterialTags);
 }
 
-void UChemistrySubsystem::DispatchEffects(const FChemistryReactionRule& Rule, const FElementApplication& Application, AActor* TargetActor, AActor* EmitterActor)
+void UChemistrySubsystem::ApplyRuleEffects(const FChemistryReactionRule& Rule, const FElementApplication& Application, AActor* AffectedActor)
 {
 	FElementApplication AdjustedContext = Application;
 	AdjustedContext.Magnitude *= Rule.EffectMagnitudeMultiplier;
 
 	TArray<FGameplayTag> EffectsArray;
 	Rule.ResultingEffects.GetGameplayTagArray(EffectsArray);
-
-	switch (Rule.ReactionTarget)
+	for (const FGameplayTag& EffectTag : EffectsArray)
 	{
-	case EChemistryReactionTarget::TargetOnly:
-		for (const FGameplayTag& EffectTag : EffectsArray)
-		{
-			ExecuteSingleEffect(EffectTag, AdjustedContext, TargetActor);
-		}
-		break;
-
-	case EChemistryReactionTarget::EmitterOnly:
-		for (const FGameplayTag& EffectTag : EffectsArray)
-		{
-			ExecuteSingleEffect(EffectTag, AdjustedContext, EmitterActor);
-		}
-		break;
-
-	case EChemistryReactionTarget::BothTargetAndEmitter:
-		for (const FGameplayTag& EffectTag : EffectsArray)
-		{
-			ExecuteSingleEffect(EffectTag, AdjustedContext, TargetActor);
-			ExecuteSingleEffect(EffectTag, AdjustedContext, EmitterActor);
-		}
-		break;
-
-	case EChemistryReactionTarget::LocationOnly:
-		for (const FGameplayTag& EffectTag : EffectsArray)
-		{
-			ExecuteSingleEffect(EffectTag, AdjustedContext, nullptr);
-		}
-		break;
-
-	default:
-		break;
+		ExecuteSingleEffect(EffectTag, AdjustedContext, AffectedActor);
 	}
 }
 
@@ -340,33 +305,36 @@ void UChemistrySubsystem::ExecuteSingleEffect(const FGameplayTag& EffectTag, con
 	}
 
 	// 1. Give custom receiver logic on Actor and its components a chance to react
+	bool bHandled = false;
 	if (IsValid(AffectedActor))
 	{
 		if (AffectedActor->GetClass()->ImplementsInterface(UChemistryReceiverInterface::StaticClass()))
 		{
-			IChemistryReceiverInterface::Execute_OnReceiveChemistryEffect(AffectedActor, EffectTag, Context);
+			bHandled |= IChemistryReceiverInterface::Execute_OnReceiveChemistryEffect(AffectedActor, EffectTag, Context);
 		}
-
 		for (UActorComponent* Component : AffectedActor->GetComponents())
 		{
 			if (IsValid(Component) && Component->GetClass()->ImplementsInterface(UChemistryReceiverInterface::StaticClass()))
 			{
-				IChemistryReceiverInterface::Execute_OnReceiveChemistryEffect(Component, EffectTag, Context);
+				bHandled |= IChemistryReceiverInterface::Execute_OnReceiveChemistryEffect(Component, EffectTag, Context);
 			}
 		}
 	}
 
-	// 2. Execute registered UChemistryEffect handler object
-	if (TObjectPtr<UChemistryEffect>* FoundHandler = InstantiatedEffectHandlers.Find(EffectTag))
+	if (!bHandled)
 	{
-		if (IsValid(*FoundHandler))
+		// 2. Execute registered UChemistryEffect handler object
+		if (TObjectPtr<UChemistryEffect>* FoundHandler = InstantiatedEffectHandlers.Find(EffectTag))
 		{
-			(*FoundHandler)->ExecuteEffect(EffectTag, Context, AffectedActor);
+			if (IsValid(*FoundHandler))
+			{
+				(*FoundHandler)->ExecuteEffect(EffectTag, Context, AffectedActor);
+			}
 		}
 	}
 }
 
-FGameplayTagContainer UChemistrySubsystem::GetMaterialTagsForActor(const AActor* Actor) const
+FGameplayTagContainer UChemistrySubsystem::GetMaterialTagsForActor(const AActor* Actor, const UPrimitiveComponent* HitComponent) const
 {
 	FGameplayTagContainer CombinedTags;
 	if (!IsValid(Actor))
@@ -374,7 +342,6 @@ FGameplayTagContainer UChemistrySubsystem::GetMaterialTagsForActor(const AActor*
 		return CombinedTags;
 	}
 
-	// Check actor interface implementation
 	if (Actor->GetClass()->ImplementsInterface(UChemistryReceiverInterface::StaticClass()))
 	{
 		CombinedTags.AppendTags(IChemistryReceiverInterface::Execute_GetMaterialTags(Actor));
@@ -384,10 +351,23 @@ FGameplayTagContainer UChemistrySubsystem::GetMaterialTagsForActor(const AActor*
 	// Check component interface implementations
 	for (UActorComponent* Component : Actor->GetComponents())
 	{
-		if (IsValid(Component) && Component->GetClass()->ImplementsInterface(UChemistryReceiverInterface::StaticClass()))
+		if (!IsValid(Component) || !Component->GetClass()->ImplementsInterface(UChemistryReceiverInterface::StaticClass()))
 		{
-			CombinedTags.AppendTags(IChemistryReceiverInterface::Execute_GetMaterialTags(Component));
+			continue;
 		}
+
+		// Component-scoped receivers only contribute their tags when their specific
+		// primitive is the one that was actually hit.
+		if (const UChemistryComponent* ChemComponent = Cast<UChemistryComponent>(Component))
+		{
+			UPrimitiveComponent* Scope = ChemComponent->AssociatedPrimitiveComponent.Get();
+			if (Scope && Scope != HitComponent)
+			{
+				continue;
+			}
+		}
+
+		CombinedTags.AppendTags(IChemistryReceiverInterface::Execute_GetMaterialTags(Component));
 	}
 
 	return CombinedTags;

@@ -47,6 +47,10 @@ struct STEALTHCHEMISTRYSYSTEM_API FElementApplication
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
 	TWeakObjectPtr<AActor> TargetActor = nullptr;
 
+	/** The specific primitive struck, if this application came from a hit result (e.g. the bulb mesh, not the whole lantern). Empty for non-physical applications. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
+	TWeakObjectPtr<UPrimitiveComponent> HitComponent = nullptr;
+
 	/** World location where the element was applied */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
 	FVector Location = FVector::ZeroVector;

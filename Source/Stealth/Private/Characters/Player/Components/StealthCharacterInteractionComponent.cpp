@@ -9,8 +9,8 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "GameFramework/PlayerState.h"
-#include "Environment/Interactables/Interactable.h"
-#include "Environment/Interactables/Throwable.h"
+#include "Interactables/Interactable.h"
+#include "Interactables/Throwable.h"
 #include "Inventory/InventoryComponent.h"
 #include "Inventory/Pickable.h"
 #include "Messages/StealthMessages.h"
@@ -215,6 +215,6 @@ void UStealthCharacterInteractionComponent::ThrowPickedItem() const
 
 	if (Item->Implements<UThrowable>())
 	{
-		IThrowable::Execute_Throw(Item, GetOwner()->GetActorForwardVector());
+		IThrowable::Execute_Throw(Item, CachedCamera->GetForwardVector());
 	}
 }
