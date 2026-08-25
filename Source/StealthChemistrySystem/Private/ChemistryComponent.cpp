@@ -1,10 +1,19 @@
 #include "ChemistryComponent.h"
 
+#include "Components/PrimitiveComponent.h"
+
 UChemistryComponent::UChemistryComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 	PrimaryComponentTick.bStartWithTickEnabled = false;
 	bAutoActivate = true;
+}
+
+void UChemistryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AssociatedPrimitive = Cast<UPrimitiveComponent>(AssociatedPrimitiveRef.GetComponent(GetOwner()));
 }
 
 FGameplayTagContainer UChemistryComponent::GetMaterialTags_Implementation() const
@@ -42,4 +51,9 @@ void UChemistryComponent::RemoveMaterialTag(const FGameplayTag& Tag)
 bool UChemistryComponent::HasMaterialTag(const FGameplayTag& Tag) const
 {
 	return MaterialTags.HasTag(Tag);
+}
+
+UPrimitiveComponent* UChemistryComponent::GetAssociatedPrimitive() const
+{
+	return AssociatedPrimitive;
 }

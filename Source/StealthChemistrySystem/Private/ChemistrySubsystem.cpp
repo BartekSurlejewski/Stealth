@@ -360,7 +360,7 @@ FGameplayTagContainer UChemistrySubsystem::GetMaterialTagsForActor(const AActor*
 		// primitive is the one that was actually hit.
 		if (const UChemistryComponent* ChemComponent = Cast<UChemistryComponent>(Component))
 		{
-			UPrimitiveComponent* Scope = ChemComponent->AssociatedPrimitiveComponent.Get();
+			UPrimitiveComponent* Scope = ChemComponent->GetAssociatedPrimitive();
 			if (Scope && Scope != HitComponent)
 			{
 				continue;

@@ -21,18 +21,7 @@ class STEALTHCHEMISTRYSYSTEM_API UChemistryComponent : public UActorComponent, p
 
 public:
 	UChemistryComponent();
-
-	/** Material tags assigned to this actor (e.g., Material.Wood, Material.Flammable, Material.Fragile) */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
-	FGameplayTagContainer MaterialTags;
-
-	/**
-	 * Optional. If set, this component's material tags only apply when this exact primitive
-	 * was struck (e.g. the bulb static mesh). Leave unset for actor-wide tags — unchanged,
-	 * backward-compatible default behavior.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
-	TWeakObjectPtr<UPrimitiveComponent> AssociatedPrimitiveComponent = nullptr;
+	virtual void BeginPlay() override;
 
 	/** Delegate fired when a chemistry effect is received by this actor */
 	UPROPERTY(BlueprintAssignable, Category = "Chemistry")
@@ -58,4 +47,23 @@ public:
 	/** Checks if this component currently has a specific material tag */
 	UFUNCTION(BlueprintCallable, Category = "Chemistry")
 	bool HasMaterialTag(const FGameplayTag& Tag) const;
+
+	UFUNCTION(BlueprintCallable, Category = "Chemistry")
+	UPrimitiveComponent* GetAssociatedPrimitive() const;
+
+protected:
+	/** Material tags assigned to this actor (e.g., Material.Wood, Material.Flammable, Material.Fragile) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
+	FGameplayTagContainer MaterialTags;
+	/**
+	 * Optional. If set, this component's material tags only apply when this exact primitive
+	 * was struck (e.g. the bulb static mesh). Leave unset for actor-wide tags — unchanged,
+	 * backward-compatible default behavior.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chemistry")
+	FComponentReference AssociatedPrimitiveRef;
+
+private:
+	UPROPERTY()
+	TObjectPtr<UPrimitiveComponent> AssociatedPrimitive;
 };

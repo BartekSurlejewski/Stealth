@@ -71,7 +71,13 @@ float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 
 	ParallelFor(Lights.Num(), [&](int32 index)
 	{
+		PartialResultsBuffer[index] = 0.0f;
+
 		auto LightData = Lights[index];
+		if (!IsValid(LightData.OwnerActor))
+		{
+			return;
+		}
 		// Phase 1 — broad phase: pure math, no trace
 		float Dist = FVector::Dist(PlayerPosition, LightData.Position);
 		if (Dist >= LightData.Radius)
@@ -99,6 +105,41 @@ float UPlayerExposureSubsystem::CalculatePlayerLightExposure()
 
 		PartialResultsBuffer[index] = LightIntensity;
 	});
+
+	// for (int i = 0; i < Lights.Num(); ++i)
+	// {
+	// 	auto LightData = Lights[i];
+	// 	if (!IsValid(LightData.OwnerActor))
+	// 	{
+	// 		continue;
+	// 	}
+	// 	// Phase 1 — broad phase: pure math, no trace
+	// 	float Dist = FVector::Dist(PlayerPosition, LightData.Position);
+	// 	if (Dist >= LightData.Radius)
+	// 	{
+	// 		continue;
+	// 	}
+	//
+	// 	float LightIntensity = 1.f - (Dist / LightData.Radius); // linear; use squared for realism
+	// 	LightIntensity *= LightData.Intensity;
+	//
+	// 	// Phase 2 — occlusion: line trace only for lights that passed phase 1
+	// 	FHitResult Hit;
+	// 	FCollisionQueryParams Params;
+	// 	Params.AddIgnoredActor(PlayerCharacter);
+	// 	Params.AddIgnoredActor(LightData.OwnerActor);
+	//
+	// 	bool bBlocked = GetWorld()->LineTraceSingleByChannel(
+	// 		Hit, LightData.Position, PlayerPosition, ECC_Visibility, Params);
+	//
+	// 	if (bBlocked)
+	// 	{
+	// 		// not zero — let a tiny bleed through
+	// 		LightIntensity *= 0.005f;
+	// 	}
+	//
+	// 	PartialResultsBuffer[i] = LightIntensity;
+	// }
 
 	float Accumulated = 0.f;
 	for (const float PartialResult : PartialResultsBuffer)
