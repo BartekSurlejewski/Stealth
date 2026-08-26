@@ -7,6 +7,7 @@
 
 class UNpcStateProfile;
 
+//TODO: Remove?
 UCLASS(BlueprintType)
 class STEALTH_API UNpcProfile : public UDataAsset
 {

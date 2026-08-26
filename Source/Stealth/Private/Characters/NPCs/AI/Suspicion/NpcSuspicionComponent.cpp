@@ -376,10 +376,25 @@ void UNpcSuspicionComponent::OnSightStimulus(const AActor* Actor, const FAIStimu
 		return;
 	}
 
-	bHasPlayerLineOfSight = (Stimulus.WasSuccessfullySensed() && Stimulus.Strength >= 0.05f);
+	FVector SeenActorLocation = Actor->GetActorLocation();
+	float DistanceFromActor = FVector::Distance(SeenActorLocation, CachedController->GetPawn()->GetActorLocation());
+
+	if (DistanceFromActor <= CurrentState->GetStateProfile()->AlwaysSeePlayerRange)
+	{
+		bHasPlayerLineOfSight = true;
+	}
+	else
+	{
+		bHasPlayerLineOfSight = (Stimulus.WasSuccessfullySensed() && Stimulus.Strength * UPlayerExposureSubsystem::Get(this)->GetCurrentTotalExposure() >= 0.05f);
+	}
+
 	if (bHasPlayerLineOfSight)
 	{
-		LastKnownPlayerPos = Actor->GetActorLocation();
+		LastKnownPlayerPos = SeenActorLocation;
+	}
+	else
+	{
+		return;
 	}
 
 	// Route stimulus to active UNpcState instance

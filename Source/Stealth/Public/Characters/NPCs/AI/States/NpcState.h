@@ -41,6 +41,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Suspicion")
 	float SuspicionDecayMultiplier = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Perception")
+	float AlwaysSeePlayerRange = 100.0f;
+
 	/** Apply profile settings (e.g. movement speed) to the NPC */
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "NPC|StateProfile")
 	void ApplyToNpc(UNpcContextComponent* Context);
@@ -155,7 +158,8 @@ public:
 	virtual float GetSuspicionDelta_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag EvaluateTransition_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag HandleSightStimulus_Implementation(UNpcContextComponent* Context, AActor* SeenActor, const FAIStimulus& Stimulus) override;
-	virtual FGameplayTag HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
+	virtual FGameplayTag
+	HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
 	virtual FGameplayTag HandleCrimeReported_Implementation(UNpcContextComponent* Context, const FAiCrimeEventPayload& Payload) override;
 };
 
@@ -170,7 +174,8 @@ public:
 	virtual float GetSuspicionDelta_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag EvaluateTransition_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag HandleSightStimulus_Implementation(UNpcContextComponent* Context, AActor* SeenActor, const FAIStimulus& Stimulus) override;
-	virtual FGameplayTag HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
+	virtual FGameplayTag
+	HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
 	virtual FGameplayTag HandleCrimeReported_Implementation(UNpcContextComponent* Context, const FAiCrimeEventPayload& Payload) override;
 };
 
@@ -185,7 +190,8 @@ public:
 	virtual float GetSuspicionDelta_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag EvaluateTransition_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag HandleSightStimulus_Implementation(UNpcContextComponent* Context, AActor* SeenActor, const FAIStimulus& Stimulus) override;
-	virtual FGameplayTag HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
+	virtual FGameplayTag
+	HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
 	virtual FGameplayTag HandleCrimeReported_Implementation(UNpcContextComponent* Context, const FAiCrimeEventPayload& Payload) override;
 };
 
@@ -200,7 +206,8 @@ public:
 	virtual float GetSuspicionDelta_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag EvaluateTransition_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag HandleSightStimulus_Implementation(UNpcContextComponent* Context, AActor* SeenActor, const FAIStimulus& Stimulus) override;
-	virtual FGameplayTag HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
+	virtual FGameplayTag
+	HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
 	virtual FGameplayTag HandleCrimeReported_Implementation(UNpcContextComponent* Context, const FAiCrimeEventPayload& Payload) override;
 };
 
@@ -215,7 +222,8 @@ public:
 	virtual float GetSuspicionDelta_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag EvaluateTransition_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag HandleSightStimulus_Implementation(UNpcContextComponent* Context, AActor* SeenActor, const FAIStimulus& Stimulus) override;
-	virtual FGameplayTag HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
+	virtual FGameplayTag
+	HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
 	virtual FGameplayTag HandleCrimeReported_Implementation(UNpcContextComponent* Context, const FAiCrimeEventPayload& Payload) override;
 };
 
@@ -230,6 +238,7 @@ public:
 	virtual float GetSuspicionDelta_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag EvaluateTransition_Implementation(const FNpcStateTickContext& Ctx) const override;
 	virtual FGameplayTag HandleSightStimulus_Implementation(UNpcContextComponent* Context, AActor* SeenActor, const FAIStimulus& Stimulus) override;
-	virtual FGameplayTag HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
+	virtual FGameplayTag
+	HandleHearingStimulus_Implementation(UNpcContextComponent* Context, AActor* StimulusSourceActor, const FAIStimulus& Stimulus, ENpcNoiseType NoiseType) override;
 	virtual FGameplayTag HandleCrimeReported_Implementation(UNpcContextComponent* Context, const FAiCrimeEventPayload& Payload) override;
 };
