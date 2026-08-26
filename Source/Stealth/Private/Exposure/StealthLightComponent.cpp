@@ -25,45 +25,6 @@ void UStealthLightComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void UStealthLightComponent::AddToExposureSystem()
-{
-	UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this);
+void UStealthLightComponent::AddToExposureSystem() {}
 
-	if (!ExposureSubsystem)
-	{
-		return;
-	}
-
-	if (!LightComponent)
-	{
-		LightComponent = GetOwner()->FindComponentByClass<UPointLightComponent>();
-		if (!LightComponent)
-		{
-			UE_LOG(LogStealth, Warning, TEXT("StealthLightComponent: No UPointLightComponent on %s"), *GetOwner()->GetName());
-			return;
-		}
-	}
-
-	FLightData LightData;
-	if (LightComponent)
-	{
-		LightData.Position = LightComponent->GetComponentLocation();
-	}
-	else
-	{
-		LightData.Position = GetOwner()->GetActorLocation();
-	}
-	LightData.Radius = LightComponent->AttenuationRadius;
-	LightData.Intensity = LightComponent->Intensity;
-	LightData.OwnerActor = GetOwner();
-
-	LightHandle = ExposureSubsystem->RegisterLight(LightData);
-}
-
-void UStealthLightComponent::RemoveFromExposureSystem()
-{
-	if (UPlayerExposureSubsystem* ExposureSubsystem = UPlayerExposureSubsystem::Get(this))
-	{
-		ExposureSubsystem->UnregisterLight(LightHandle);
-	}
-}
+void UStealthLightComponent::RemoveFromExposureSystem() {}

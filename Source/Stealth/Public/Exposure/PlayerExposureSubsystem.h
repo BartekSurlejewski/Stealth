@@ -4,22 +4,13 @@
 #include "Core/StealthTickableWorldSubsystem.h"
 #include "PlayerExposureSubsystem.generated.h"
 
+class USpotLightComponent;
+class UPointLightComponent;
+struct FPointLightData;
 class UTimeSubsystem;
 class AStealthPlayerCharacter;
 class UActorLightExposureComponent;
 class UWorld;
-
-USTRUCT()
-struct FLightData
-{
-	GENERATED_BODY()
-
-	FVector Position;
-	float Radius;
-	float Intensity;
-	UPROPERTY()
-	TObjectPtr<AActor> OwnerActor;
-};
 
 UCLASS()
 class STEALTH_API UPlayerExposureSubsystem : public UStealthTickableWorldSubsystem
@@ -33,11 +24,14 @@ public:
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	UFUNCTION()
-	int32 RegisterLight(const FLightData& LightData);
+	int32 RegisterPointLight(UPointLightComponent* LightComponent);
 	UFUNCTION()
-	void UnregisterLight(int32 Handle);
+	void UnregisterPointLight(int32 Handle);
+
 	UFUNCTION()
-	void UpdateLight(int32 Handle, const FLightData& LightData);
+	int32 RegisterSpotLight(USpotLightComponent* LightComponent);
+	UFUNCTION()
+	void UnregisterSpotLight(int32 Handle);
 
 	UFUNCTION(BlueprintCallable)
 	[[nodiscard]] float GetCurrentTotalExposure() const { return CurrentTotalExposure; }
@@ -45,6 +39,10 @@ public:
 private:
 	UFUNCTION(BlueprintCallable)
 	float CalculatePlayerLightExposure();
+	UFUNCTION()
+	float CalculatePointLightsExposure(const FVector& PlayerLocation);
+	UFUNCTION()
+	float CalculateSpotLightsExposure(const FVector& PlayerLocation);
 	UFUNCTION(BlueprintCallable)
 	float CalculateTotalPlayerExposure();
 
@@ -52,12 +50,16 @@ private:
 	UPROPERTY()
 	TSoftObjectPtr<UTimeSubsystem> TimeSubsystem;
 	UPROPERTY()
-	TArray<FLightData> Lights;
+	TArray<TWeakObjectPtr<UPointLightComponent>> PointLights;
+	UPROPERTY()
+	TArray<TWeakObjectPtr<USpotLightComponent>> SpotLights;
 	UPROPERTY()
 	float CurrentTotalExposure = 1;
 	UPROPERTY()
 	TObjectPtr<AStealthPlayerCharacter> PlayerCharacter;
 
 	UPROPERTY(Transient)
-	TArray<float> PartialResultsBuffer; // Reused buffer for multithreaded calculactions
+	TArray<float> PointLightPartialResults;
+	UPROPERTY(Transient)
+	TArray<float> SpotLightPartialResults;
 };

@@ -6,7 +6,14 @@
 
 class UPointLightComponent;
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UENUM(BlueprintType)
+enum class EStealthLightType : uint8
+{
+	PointLight,
+	SpotLight
+};
+
+UCLASS(Abstract, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class STEALTH_API UStealthLightComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -19,12 +26,11 @@ public:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable)
-	void AddToExposureSystem();
+	virtual void AddToExposureSystem();
 	UFUNCTION(BlueprintCallable)
-	void RemoveFromExposureSystem();
+	virtual void RemoveFromExposureSystem();
 
 protected:
-	int32 LightHandle;
 	UPROPERTY()
-	TObjectPtr<UPointLightComponent> LightComponent;
+	int32 LightHandle;
 };
