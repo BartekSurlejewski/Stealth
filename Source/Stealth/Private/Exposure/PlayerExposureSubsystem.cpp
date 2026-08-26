@@ -122,7 +122,7 @@ float UPlayerExposureSubsystem::CalculatePointLightsExposure(const FVector& Play
 
 			if (bBlocked)
 			{
-				LightIntensity *= 0.005f;
+				LightIntensity *= 0.0;
 			}
 
 			PointLightPartialResults[index] = LightIntensity;
@@ -198,7 +198,7 @@ float UPlayerExposureSubsystem::CalculateSpotLightsExposure(const FVector& Playe
 
 			if (bBlocked)
 			{
-				LightIntensity *= 0.005f;
+				LightIntensity *= 0.0;
 			}
 
 			SpotLightPartialResults[index] = LightIntensity;
