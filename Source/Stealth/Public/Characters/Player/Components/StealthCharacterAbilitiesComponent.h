@@ -50,26 +50,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<UInventoryComponent> PlayerInventoryComponent;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag SprintAbilityTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag CrouchAbilityTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag JumpAbilityTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag IsMovingTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag StaminaRegenTag;
-	UPROPERTY(EditDefaultsOnly, Category = "Tags", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag IsFallingTag;
-
-	UPROPERTY()
-	FGameplayTagContainer SprintAbilityTagsContainer;
-	UPROPERTY()
-	FGameplayTagContainer CrouchAbilityTagsContainer;
-	UPROPERTY()
-	FGameplayTagContainer JumpAbilityTagsContainer;
-
 	UPROPERTY()
 	TMap<TObjectPtr<UItemDefinition>, FAbilityHandleList> OnAddItemsGrantedAbilities;
 
@@ -83,7 +63,6 @@ public:
 	UStealthCharacterAbilitiesComponent();
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, Category="Ability System")
 	TArray<FGameplayAbilitySpecHandle> GrantAbilities(TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant);
@@ -98,25 +77,7 @@ public:
 	// UFUNCTION(BlueprintCallable, Category="Ability System")
 	void HandleGameplayEvent(FGameplayTag EventTag, const FGameplayEventData* Payload) const;
 
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintInputToggle();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintInputEnd();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoCrouchInputStart();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoCrouchInputEnd();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpStart();
-	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoJumpEnd();
-
 private:
-	UFUNCTION()
-	void EndSprint() const;
-	UFUNCTION()
-	void UpdateTags() const;
-
 	UFUNCTION()
 	void PlayerInventory_OnItemAdded(FGameplayTag Channel, const FPlayerInventoryItemAddedMessage& Message);
 	UFUNCTION()
@@ -124,11 +85,8 @@ private:
 	UFUNCTION()
 	void AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData);
 
-	void AbilitySystemComponent_OnTrespassingStateChanged(const FGameplayTag GameplayTag, int NewCount);
-
 	// Properties
 private:
 	FGameplayMessageListenerHandle PlayerInventoryItemAddedHandle;
 	FGameplayMessageListenerHandle PlayerInventoryItemRemovedHandle;
-	FDelegateHandle TrespassingStateChangedHandle;
 };

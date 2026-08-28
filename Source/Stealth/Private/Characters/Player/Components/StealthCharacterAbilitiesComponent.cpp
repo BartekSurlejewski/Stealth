@@ -1,11 +1,8 @@
-﻿#include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
+#include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 
 #include "AbilitySystemComponent.h"
-#include "Characters/AttributeSets/StealthCharacterAttibuteSet.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameplayEffect.h"
-#include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerState.h"
 #include "Inventory/InventoryComponent.h"
@@ -15,7 +12,7 @@
 
 UStealthCharacterAbilitiesComponent::UStealthCharacterAbilitiesComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void UStealthCharacterAbilitiesComponent::BeginPlay()
@@ -30,10 +27,6 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 		PlayerInventoryComponent = OwningCharacter->GetPlayerState()->FindComponentByClass<UInventoryComponent>();
 	}
 
-	SprintAbilityTagsContainer.AddTag(SprintAbilityTag);
-	CrouchAbilityTagsContainer.AddTag(CrouchAbilityTag);
-	JumpAbilityTagsContainer.AddTag(JumpAbilityTag);
-
 	GrantAbilities(StartingAbilities);
 	ApplyGameplayEffectsToSelf(StartingEffects);
 
@@ -43,10 +36,10 @@ void UStealthCharacterAbilitiesComponent::BeginPlay()
 	PlayerInventoryItemRemovedHandle = MsgSubsystem.RegisterListener<FPlayerInventoryItemRemovedMessage>(StealthMessageChannels::TAG_Message_Inventory_ItemRemoved, this,
 	                                                                                                     &UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemRemoved);
 
-	AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded);
-
-	TrespassingStateChangedHandle = AbilitySystemComponent->RegisterGameplayTagEvent(StealthAiTags::TAG_Player_State_Trespassing, EGameplayTagEventType::NewOrRemoved).AddUObject(
-		this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnTrespassingStateChanged);
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->OnAbilityEnded.AddUObject(this, &UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded);
+	}
 }
 
 void UStealthCharacterAbilitiesComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -55,21 +48,12 @@ void UStealthCharacterAbilitiesComponent::EndPlay(const EEndPlayReason::Type End
 	MsgSubsystem.UnregisterListener(PlayerInventoryItemAddedHandle);
 	MsgSubsystem.UnregisterListener(PlayerInventoryItemRemovedHandle);
 
-	AbilitySystemComponent->OnAbilityEnded.RemoveAll(this);
-	AbilitySystemComponent->UnregisterGameplayTagEvent(TrespassingStateChangedHandle, StealthAiTags::TAG_Player_State_Trespassing, EGameplayTagEventType::NewOrRemoved);
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->OnAbilityEnded.RemoveAll(this);
+	}
 
 	Super::EndPlay(EndPlayReason);
-}
-
-void UStealthCharacterAbilitiesComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	UpdateTags();
-	if (AttributeSet && AttributeSet->GetStamina() <= 0)
-	{
-		EndSprint();
-	}
 }
 
 TArray<FGameplayAbilitySpecHandle> UStealthCharacterAbilitiesComponent::GrantAbilities(TArray<TSubclassOf<UGameplayAbility>> AbilitiesToGrant)
@@ -155,122 +139,19 @@ void UStealthCharacterAbilitiesComponent::RemoveGameplayEffects(TArray<FActiveGa
 
 bool UStealthCharacterAbilitiesComponent::TryActivateAbilitiesWithTag(const FGameplayTagContainer& TagContainer) const
 {
+	if (!AbilitySystemComponent)
+	{
+		return false;
+	}
+
 	return AbilitySystemComponent->TryActivateAbilitiesByTag(TagContainer);
 }
 
 void UStealthCharacterAbilitiesComponent::HandleGameplayEvent(FGameplayTag EventTag, const FGameplayEventData* Payload) const
 {
-	AbilitySystemComponent->HandleGameplayEvent(EventTag, Payload);
-}
-
-void UStealthCharacterAbilitiesComponent::DoSprintInputToggle()
-{
-	if (!AbilitySystemComponent)
+	if (AbilitySystemComponent)
 	{
-		return;
-	}
-
-	AbilitySystemComponent->TryActivateAbilitiesByTag(SprintAbilityTagsContainer);
-}
-
-void UStealthCharacterAbilitiesComponent::DoSprintInputEnd()
-{
-	EndSprint();
-}
-
-void UStealthCharacterAbilitiesComponent::DoCrouchInputStart()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-	
-	AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchAbilityTagsContainer);
-}
-
-void UStealthCharacterAbilitiesComponent::DoCrouchInputEnd()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->CancelAbilities(&CrouchAbilityTagsContainer);
-}
-
-void UStealthCharacterAbilitiesComponent::DoJumpStart()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->TryActivateAbilitiesByTag(JumpAbilityTagsContainer);
-}
-
-void UStealthCharacterAbilitiesComponent::DoJumpEnd()
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->CancelAbilities(&JumpAbilityTagsContainer);
-}
-
-void UStealthCharacterAbilitiesComponent::EndSprint() const
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	AbilitySystemComponent->CancelAbilities(&SprintAbilityTagsContainer);
-	AbilitySystemComponent->RemoveActiveEffectsWithGrantedTags(SprintAbilityTagsContainer);
-}
-
-void UStealthCharacterAbilitiesComponent::UpdateTags() const
-{
-	if (!AbilitySystemComponent)
-	{
-		return;
-	}
-
-	bool isFalling = OwningCharacter->GetCharacterMovement()->IsFalling();
-	bool bIsMoving = OwningCharacter->GetVelocity().SizeSquared() > 100.f;
-	bool bIsSprinting = AbilitySystemComponent->HasMatchingGameplayTag(SprintAbilityTag);
-
-	bool bHasMovingTag = AbilitySystemComponent->HasMatchingGameplayTag(IsMovingTag);
-	bool bHasRegenStaminaTag = AbilitySystemComponent->HasMatchingGameplayTag(StaminaRegenTag);
-	bool bHasFallingStaminaTag = AbilitySystemComponent->HasMatchingGameplayTag(IsFallingTag);
-
-	// Only update when state changes — avoid spamming ASC every frame
-	if (isFalling && !bHasFallingStaminaTag)
-	{
-		AbilitySystemComponent->AddLooseGameplayTag(IsFallingTag);
-	}
-	else if (!isFalling && bHasFallingStaminaTag)
-	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(IsFallingTag);
-	}
-
-	if (bIsMoving && !bHasMovingTag)
-	{
-		AbilitySystemComponent->AddLooseGameplayTag(IsMovingTag);
-	}
-	else if (!bIsMoving && bHasMovingTag)
-	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(IsMovingTag);
-	}
-
-	bool bShouldRegenStamina = !bIsSprinting || !bIsMoving;
-	if (bShouldRegenStamina && !bHasRegenStaminaTag)
-	{
-		AbilitySystemComponent->AddLooseGameplayTag(StaminaRegenTag);
-	}
-	else if (!bShouldRegenStamina && bHasRegenStaminaTag)
-	{
-		AbilitySystemComponent->RemoveLooseGameplayTag(StaminaRegenTag);
+		AbilitySystemComponent->HandleGameplayEvent(EventTag, Payload);
 	}
 }
 
@@ -298,13 +179,4 @@ void UStealthCharacterAbilitiesComponent::PlayerInventory_OnItemRemoved(FGamepla
 void UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnAbilityEnded(const FAbilityEndedData& AbilityEndedData)
 {
 	OnAbilityEnded.Broadcast(AbilityEndedData);
-}
-
-void UStealthCharacterAbilitiesComponent::AbilitySystemComponent_OnTrespassingStateChanged(const FGameplayTag GameplayTag, int NewCount)
-{
-	const bool bIsTrespassing = NewCount > 0;
-
-	UGameplayMessageSubsystem& MessageSubsystem = UGameplayMessageSubsystem::Get(GetWorld());
-	const FBooleanMessage Message(bIsTrespassing);
-	MessageSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Player_TrespassingChanged, Message);
 }

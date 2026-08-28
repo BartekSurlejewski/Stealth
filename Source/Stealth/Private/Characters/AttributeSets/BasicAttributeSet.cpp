@@ -1,8 +1,6 @@
-﻿#include "Characters/AttributeSets/BasicAttributeSet.h"
+#include "Characters/AttributeSets/BasicAttributeSet.h"
 
 #include "GameplayEffectExtension.h"
-#include "GameFramework/Character.h"
-#include "GameFramework/CharacterMovementComponent.h"
 
 UBasicAttributeSet::UBasicAttributeSet()
 {
@@ -24,12 +22,6 @@ void UBasicAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 	}
 	else if (Data.EvaluatedData.Attribute == GetSpeedCoefficientAttribute())
 	{
-		ACharacter* Character = Cast<ACharacter>(Data.Target.GetAvatarActor());
-		if (!Character || !Character->GetCharacterMovement())
-		{
-			return;
-		}
-
-		Character->GetCharacterMovement()->MaxWalkSpeed = GetSpeedCoefficient() * GetBaseCharacterSpeed();
+		SetSpeedCoefficient(FMath::Max(0.f, GetSpeedCoefficient()));
 	}
 }

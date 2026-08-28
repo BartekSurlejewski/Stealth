@@ -3,6 +3,7 @@
 #include "AbilitySystemComponent.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
+#include "Characters/Player/StealthPlayerTags.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "TimeSystem/DailyRegimen/DailyRegimenSubsystem.h"
 
@@ -29,8 +30,8 @@ void ULegalitySubsystem::Tick(float DeltaTime)
 	// 1. Check GAS gameplay tags for illegal or suspicious states
 	if (const UAbilitySystemComponent* ASC = Player->GetAbilitySystemComponent())
 	{
-		if (ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Illegal) ||
-			ASC->HasMatchingGameplayTag(StealthAiTags::TAG_Player_State_Trespassing))
+		if (ASC->HasMatchingGameplayTag(StealthPlayerTags::TAG_Player_State_Illegal) ||
+			ASC->HasMatchingGameplayTag(StealthPlayerTags::TAG_Player_State_Trespassing))
 		{
 			bIsPlayerPerformingIllegalAction = true;
 			return;

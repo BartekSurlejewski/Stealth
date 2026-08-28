@@ -2,7 +2,7 @@
 
 #include "AbilitySystemComponent.h"
 #include "QuestManagerSubsystem.h"
-#include "Characters/NPCs/AI/StealthAiTypes.h"
+#include "Characters/Player/StealthPlayerTags.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Inventory/InventoryComponent.h"
@@ -21,17 +21,24 @@ void AStealthPlayerState::SetIsInRestrictedArea(bool newIsInRestrictedArea)
 {
 	bIsInRestrictedArea = newIsInRestrictedArea;
 
-	if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
+	if (PlayerCharacter)
 	{
-		if (newIsInRestrictedArea)
+		if (UAbilitySystemComponent* ASC = PlayerCharacter->GetAbilitySystemComponent())
 		{
-			ASC->AddLooseGameplayTag(StealthAiTags::TAG_Player_State_Trespassing);
-		}
-		else
-		{
-			ASC->RemoveLooseGameplayTag(StealthAiTags::TAG_Player_State_Trespassing);
+			if (newIsInRestrictedArea)
+			{
+				ASC->AddLooseGameplayTag(StealthPlayerTags::TAG_Player_State_Trespassing);
+			}
+			else
+			{
+				ASC->RemoveLooseGameplayTag(StealthPlayerTags::TAG_Player_State_Trespassing);
+			}
 		}
 	}
+
+	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
+	const FBooleanMessage Message(bIsInRestrictedArea);
+	MsgSubsystem.BroadcastMessage(StealthMessageChannels::TAG_Message_Player_TrespassingChanged, Message);
 }
 
 void AStealthPlayerState::BeginPlay()

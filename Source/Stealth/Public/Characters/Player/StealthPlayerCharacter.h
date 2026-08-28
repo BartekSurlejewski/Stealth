@@ -10,6 +10,7 @@
 class UStealthCharacterCollisionsComponent;
 class UInventoryComponent;
 class UStealthCharacterAbilitiesComponent;
+class UPlayerMovementAbilityComponent;
 class UStealthCharacterAttributeSet;
 class UStealthCharacterData;
 class UAIPerceptionStimuliSourceComponent;
@@ -73,24 +74,20 @@ protected:
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Ability System", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Ability System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPlayerMovementAbilityComponent> MovementAbilityComponent;
 #pragma endregion
 
 #pragma region Input
 	// TODO: Rework input binding to assign actions in a single place
 	UPROPERTY(EditAnywhere, Category ="Player|Input")
-	TObjectPtr<UInputAction> JumpAction;
-	UPROPERTY(EditAnywhere, Category ="Player|Input")
 	TObjectPtr<UInputAction> MoveAction;
 	UPROPERTY(EditAnywhere, Category ="Player|Input")
 	TObjectPtr<UInputAction> LookAction;
-	UPROPERTY(EditAnywhere, Category ="Player|Input")
-	TObjectPtr<UInputAction> CrouchAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
 	TObjectPtr<UInputAction> PrimaryInteractAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
 	TObjectPtr<UInputAction> SecondaryInteractAction;
-	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
-	TObjectPtr<UInputAction> SprintAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
 	TObjectPtr<UInputAction> ThrowAction;
 

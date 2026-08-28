@@ -22,9 +22,6 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_SearchExpired, "NPC.Event.SearchExpired");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_ResumeRoutine, "NPC.Event.ResumeRoutine");
 
-	// Player Status Tags
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Illegal, "Player.State.Illegal");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Trespassing, "Player.State.Trespassing");
 
 	// NPC Activity Tags (Schedule & Routines)
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Patrol, "NPC.Activity.Patrol");
