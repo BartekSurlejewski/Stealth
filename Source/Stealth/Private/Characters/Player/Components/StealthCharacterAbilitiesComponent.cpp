@@ -163,7 +163,7 @@ void UStealthCharacterAbilitiesComponent::HandleGameplayEvent(FGameplayTag Event
 	AbilitySystemComponent->HandleGameplayEvent(EventTag, Payload);
 }
 
-void UStealthCharacterAbilitiesComponent::DoSprintInputStart()
+void UStealthCharacterAbilitiesComponent::DoSprintInputToggle()
 {
 	if (!AbilitySystemComponent)
 	{

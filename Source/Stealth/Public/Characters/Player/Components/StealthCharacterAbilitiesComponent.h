@@ -99,7 +99,7 @@ public:
 	void HandleGameplayEvent(FGameplayTag EventTag, const FGameplayEventData* Payload) const;
 
 	UFUNCTION(BlueprintCallable, Category="Input")
-	virtual void DoSprintInputStart();
+	virtual void DoSprintInputToggle();
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoSprintInputEnd();
 	UFUNCTION(BlueprintCallable, Category="Input")

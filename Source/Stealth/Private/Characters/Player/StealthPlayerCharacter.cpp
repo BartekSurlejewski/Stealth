@@ -50,7 +50,7 @@ AStealthPlayerCharacter::AStealthPlayerCharacter()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
-
+CharacterMovement
 	InteractionComponent = CreateDefaultSubobject<UStealthCharacterInteractionComponent>(TEXT("Interaction Component"));
 	CollisionsComponent = CreateDefaultSubobject<UStealthCharacterCollisionsComponent>(TEXT("Collisions Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
@@ -218,7 +218,7 @@ void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 
 		// // Sprint
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, StealthCharacterAbilitiesComponent.Get(),
-		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputStart);
+		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputToggle);
 		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, StealthCharacterAbilitiesComponent.Get(),
 		                                   &UStealthCharacterAbilitiesComponent::DoSprintInputEnd);
 

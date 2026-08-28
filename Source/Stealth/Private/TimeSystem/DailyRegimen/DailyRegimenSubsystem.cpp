@@ -103,6 +103,11 @@ UDailyRegimenTask* UDailyRegimenSubsystem::GetNextTaskByIndex()
 		NextTaskIndex = 0;
 	}
 
+	if (!DailyRegimenTasks.IsValidIndex(NextTaskIndex))
+	{
+		return nullptr;
+	}
+
 	return DailyRegimenTasks[NextTaskIndex];
 }
 
