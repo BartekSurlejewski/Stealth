@@ -184,7 +184,7 @@ void UStealthCharacterAbilitiesComponent::DoCrouchInputStart()
 	{
 		return;
 	}
-
+	
 	AbilitySystemComponent->TryActivateAbilitiesByTag(CrouchAbilityTagsContainer);
 }
 
