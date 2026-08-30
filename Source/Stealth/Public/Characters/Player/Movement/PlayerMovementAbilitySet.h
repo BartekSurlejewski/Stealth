@@ -12,9 +12,10 @@ class UInputAction;
 UENUM(BlueprintType)
 enum class EMovementAbilityInputMode : uint8
 {
-	Hold,        // single InputAction, Started activates, Completed ends
-	Toggle,      // single InputAction, each press flips active/inactive
-	TwoActions   // separate enable/disable InputActions
+	OneTime,
+	Hold, // single InputAction, Started activates, Completed ends
+	Toggle, // single InputAction, each press flips active/inactive
+	TwoActions // separate enable/disable InputActions
 };
 
 USTRUCT(BlueprintType)
@@ -34,7 +35,8 @@ struct STEALTH_API FMovementAbilityBinding
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement Ability")
 	EMovementAbilityInputMode ActivationType = EMovementAbilityInputMode::Hold;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement Ability", meta = (EditCondition = "ActivationType == EMovementAbilityInputMode::TwoActions", EditConditionHides))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement Ability",
+		meta = (EditCondition = "ActivationType == EMovementAbilityInputMode::TwoActions", EditConditionHides))
 	TObjectPtr<UInputAction> InputActionDisable = nullptr;
 };
 

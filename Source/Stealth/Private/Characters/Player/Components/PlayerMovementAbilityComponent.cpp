@@ -119,10 +119,17 @@ void UPlayerMovementAbilityComponent::BindInput(UEnhancedInputComponent* EIC)
 
 		switch (Binding.ActivationType)
 		{
+		case EMovementAbilityInputMode::OneTime:
+			if (Binding.InputAction)
+			{
+				EIC->BindAction(Binding.InputAction, ETriggerEvent::Triggered, this, &UPlayerMovementAbilityComponent::HandleAbilityPressed, Binding.AbilityTag);
+			}
+			break;
+
 		case EMovementAbilityInputMode::Hold:
 			if (Binding.InputAction)
 			{
-				EIC->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &UPlayerMovementAbilityComponent::HandleAbilityPressed, Binding.AbilityTag);
+				EIC->BindAction(Binding.InputAction, ETriggerEvent::Triggered, this, &UPlayerMovementAbilityComponent::HandleAbilityPressed, Binding.AbilityTag);
 				EIC->BindAction(Binding.InputAction, ETriggerEvent::Completed, this, &UPlayerMovementAbilityComponent::HandleAbilityReleased, Binding.AbilityTag);
 			}
 			break;
@@ -137,11 +144,11 @@ void UPlayerMovementAbilityComponent::BindInput(UEnhancedInputComponent* EIC)
 		case EMovementAbilityInputMode::TwoActions:
 			if (Binding.InputAction)
 			{
-				EIC->BindAction(Binding.InputAction, ETriggerEvent::Started, this, &UPlayerMovementAbilityComponent::HandleAbilityPressed, Binding.AbilityTag);
+				EIC->BindAction(Binding.InputAction, ETriggerEvent::Triggered, this, &UPlayerMovementAbilityComponent::HandleAbilityPressed, Binding.AbilityTag);
 			}
 			if (Binding.InputActionDisable)
 			{
-				EIC->BindAction(Binding.InputActionDisable, ETriggerEvent::Started, this, &UPlayerMovementAbilityComponent::HandleAbilityReleased, Binding.AbilityTag);
+				EIC->BindAction(Binding.InputActionDisable, ETriggerEvent::Triggered, this, &UPlayerMovementAbilityComponent::HandleAbilityReleased, Binding.AbilityTag);
 			}
 			break;
 		}
