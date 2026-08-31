@@ -37,6 +37,7 @@ public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
+	virtual float PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1, FName StartSectionName = NAME_None) override;
 	UFUNCTION(BlueprintCallable)
 	AActor* TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const;
 

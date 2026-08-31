@@ -49,8 +49,10 @@ protected:
 
 private:
 	void OnSpeedAttributeChanged(const FOnAttributeChangeData& Data);
+	void OnJumpVelocityAttributeChanged(const FOnAttributeChangeData& Data);
 
 	FDelegateHandle SpeedAttributeChangedDelegateHandle;
+	FDelegateHandle JumpVelocityAttributeChangedDelegateHandle;
 
 	bool bWasFalling = false;
 	bool bWasMoving = false;

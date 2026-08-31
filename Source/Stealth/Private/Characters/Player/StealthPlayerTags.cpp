@@ -8,5 +8,6 @@ namespace StealthPlayerTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Movement_Falling, "Player.State.Movement.Falling");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Movement_Moving, "Player.State.Movement.Moving");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Movement_Crouching, "Player.State.Movement.Crouching");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Movement_Sliding, "Player.State.Movement.Sliding");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_Player_State_Stamina_Regenerating, "Player.State.Stamina.Regenerating");
 }

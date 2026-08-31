@@ -110,6 +110,32 @@ void AStealthPlayerCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
+float AStealthPlayerCharacter::PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
+{
+	UAnimInstance* ThirdPersonMeshAnimInstance = (GetMesh()) ? GetMesh()->GetAnimInstance() : nullptr;
+	UAnimInstance* FirstPersonMeshAnimInstance = FirstPersonMesh ? FirstPersonMesh->GetAnimInstance() : nullptr;
+
+	if (AnimMontage && ThirdPersonMeshAnimInstance && FirstPersonMeshAnimInstance)
+	{
+		float const Duration = ThirdPersonMeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
+		FirstPersonMeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
+
+		if (Duration > 0.f)
+		{
+			// Start at a given Section.
+			if (StartSectionName != NAME_None)
+			{
+				ThirdPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
+				FirstPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
+			}
+
+			return Duration;
+		}
+	}
+
+	return 0.f;
+}
+
 AActor* AStealthPlayerCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const
 {
 	FActorSpawnParameters SpawnParams;

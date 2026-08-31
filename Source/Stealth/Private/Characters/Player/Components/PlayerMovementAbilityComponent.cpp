@@ -42,12 +42,15 @@ void UPlayerMovementAbilityComponent::BeginPlay()
 
 		SpeedAttributeChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UBasicAttributeSet::GetSpeedCoefficientAttribute()).AddUObject(this, &UPlayerMovementAbilityComponent::OnSpeedAttributeChanged);
+		JumpVelocityAttributeChangedDelegateHandle = AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			UBasicAttributeSet::GetJumpVelocityCoefficientAttribute()).AddUObject(this, &UPlayerMovementAbilityComponent::OnJumpVelocityAttributeChanged);
 
 		if (const UBasicAttributeSet* AttributeSet = AbilitySystemComponent->GetSet<UBasicAttributeSet>())
 		{
 			if (CharacterMovementComponent)
 			{
 				CharacterMovementComponent->MaxWalkSpeed = AttributeSet->GetSpeedCoefficient() * AttributeSet->GetBaseCharacterSpeed();
+				CharacterMovementComponent->JumpZVelocity = AttributeSet->GetJumpVelocityCoefficient() * AttributeSet->GetBaseJumpVelocity();
 			}
 		}
 	}
@@ -60,6 +63,10 @@ void UPlayerMovementAbilityComponent::EndPlay(const EEndPlayReason::Type EndPlay
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
 			UBasicAttributeSet::GetSpeedCoefficientAttribute()).Remove(SpeedAttributeChangedDelegateHandle);
 		SpeedAttributeChangedDelegateHandle.Reset();
+
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			UBasicAttributeSet::GetJumpVelocityCoefficientAttribute()).Remove(JumpVelocityAttributeChangedDelegateHandle);
+		JumpVelocityAttributeChangedDelegateHandle.Reset();
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -209,6 +216,17 @@ void UPlayerMovementAbilityComponent::OnSpeedAttributeChanged(const FOnAttribute
 		if (const UBasicAttributeSet* AttributeSet = AbilitySystemComponent->GetSet<UBasicAttributeSet>())
 		{
 			CharacterMovementComponent->MaxWalkSpeed = Data.NewValue * AttributeSet->GetBaseCharacterSpeed();
+		}
+	}
+}
+
+void UPlayerMovementAbilityComponent::OnJumpVelocityAttributeChanged(const FOnAttributeChangeData& Data)
+{
+	if (CharacterMovementComponent && AbilitySystemComponent)
+	{
+		if (const UBasicAttributeSet* AttributeSet = AbilitySystemComponent->GetSet<UBasicAttributeSet>())
+		{
+			CharacterMovementComponent->JumpZVelocity = Data.NewValue * AttributeSet->GetBaseJumpVelocity();
 		}
 	}
 }

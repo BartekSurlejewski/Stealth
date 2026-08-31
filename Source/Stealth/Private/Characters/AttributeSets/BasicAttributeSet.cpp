@@ -10,6 +10,8 @@ UBasicAttributeSet::UBasicAttributeSet()
 	MaxStamina = 100;
 	SpeedCoefficient = 1.0f;
 	BaseCharacterSpeed = 800.0f;
+	JumpVelocityCoefficient = 1.0f;
+	BaseJumpVelocity = 420.0f;
 }
 
 void UBasicAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
@@ -23,5 +25,9 @@ void UBasicAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 	else if (Data.EvaluatedData.Attribute == GetSpeedCoefficientAttribute())
 	{
 		SetSpeedCoefficient(FMath::Max(0.f, GetSpeedCoefficient()));
+	}
+	else if (Data.EvaluatedData.Attribute == GetJumpVelocityCoefficientAttribute())
+	{
+		SetSpeedCoefficient(FMath::Max(0.f, GetJumpVelocityCoefficient()));
 	}
 }

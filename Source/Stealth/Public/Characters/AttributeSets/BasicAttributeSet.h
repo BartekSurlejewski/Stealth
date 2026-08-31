@@ -32,6 +32,13 @@ public:
 	FGameplayAttributeData BaseCharacterSpeed;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, BaseCharacterSpeed);
 
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData JumpVelocityCoefficient;
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, JumpVelocityCoefficient);
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData BaseJumpVelocity;
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, BaseJumpVelocity);
+
 public:
 	UBasicAttributeSet();
 
