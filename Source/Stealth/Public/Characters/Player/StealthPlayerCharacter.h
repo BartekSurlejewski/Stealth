@@ -3,10 +3,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "AbilitySystemInterface.h"
-#include "GameplayTagContainer.h"
-#include "Inventory/Pickable.h"
 #include "StealthPlayerCharacter.generated.h"
 
+class UStealthCharacterMovementComponent;
 class UStealthCharacterCollisionsComponent;
 class UInventoryComponent;
 class UStealthCharacterAbilitiesComponent;
@@ -27,7 +26,7 @@ class STEALTH_API AStealthPlayerCharacter : public ACharacter, public IAbilitySy
 
 	/*Methods*/
 public:
-	AStealthPlayerCharacter();
+	AStealthPlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -40,6 +39,8 @@ public:
 	virtual float PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1, FName StartSectionName = NAME_None) override;
 	UFUNCTION(BlueprintCallable)
 	AActor* TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const;
+	// UFUNCTION(BlueprintCallable)
+	FCollisionQueryParams GetIgnoreCharacterParams() const;
 
 public:
 	[[nodiscard]] const TObjectPtr<UStealthCharacterAttributeSet>& GetAttributeSet() const { return AttributeSet; }
@@ -77,6 +78,8 @@ protected:
 	TObjectPtr<UStealthCharacterAbilitiesComponent> StealthCharacterAbilitiesComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Ability System", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UPlayerMovementAbilityComponent> MovementAbilityComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components|Ability System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UStealthCharacterMovementComponent> StealthCharacterMovementComponent;
 #pragma endregion
 
 #pragma region Input

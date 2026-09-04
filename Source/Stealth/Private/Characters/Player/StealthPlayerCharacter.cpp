@@ -9,13 +9,15 @@
 #include "Characters/Player/Components/StealthCharacterAbilitiesComponent.h"
 #include "Characters/Player/Components/PlayerMovementAbilityComponent.h"
 #include "Characters/Player/Components/StealthCharacterCollisionsComponent.h"
+#include "Characters/Player/Movement/StealthCharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
 #include "Stealth/Stealth.h"
 
-AStealthPlayerCharacter::AStealthPlayerCharacter()
+AStealthPlayerCharacter::AStealthPlayerCharacter(const FObjectInitializer& ObjectInitializer) : Super(
+	ObjectInitializer.SetDefaultSubobjectClass<UStealthCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) // Set custom CMC
 {
 	PrimaryActorTick.bCanEverTick = false;
 
@@ -49,8 +51,10 @@ AStealthPlayerCharacter::AStealthPlayerCharacter()
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
 
 	// Configure character movement
-	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
-	GetCharacterMovement()->AirControl = 0.5f;
+	StealthCharacterMovementComponent = Cast<UStealthCharacterMovementComponent>(GetCharacterMovement());
+	StealthCharacterMovementComponent->BrakingDecelerationFalling = 1500.0f;
+	StealthCharacterMovementComponent->AirControl = 0.5f;
+
 	InteractionComponent = CreateDefaultSubobject<UStealthCharacterInteractionComponent>(TEXT("Interaction Component"));
 	CollisionsComponent = CreateDefaultSubobject<UStealthCharacterCollisionsComponent>(TEXT("Collisions Component"));
 	StimuliSourceComponent = CreateDefaultSubobject<UAIPerceptionStimuliSourceComponent>(TEXT("Stimuli Source Component"));
@@ -144,6 +148,18 @@ AActor* AStealthPlayerCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDro
 	const FRotator PickableSpawnRotation = FRotator::ZeroRotator;
 
 	return GetWorld()->SpawnActor<AActor>(ItemToDropClass, PickableSpawnLocation, PickableSpawnRotation, SpawnParams);
+}
+
+FCollisionQueryParams AStealthPlayerCharacter::GetIgnoreCharacterParams() const
+{
+	FCollisionQueryParams Params;
+
+	TArray<AActor*> CharacterChildren;
+	GetAllChildActors(CharacterChildren);
+	Params.AddIgnoredActors(CharacterChildren);
+	Params.AddIgnoredActor(this);
+
+	return Params;
 }
 
 //~Begin Input
