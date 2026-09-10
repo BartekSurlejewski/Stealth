@@ -288,8 +288,8 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 	{
 		Iterations++;
 		bJustTeleported = false;
-		const float timeTick = GetSimulationTimeStep(remainingTime, Iterations);
-		remainingTime -= timeTick;
+		const float TimeTick = GetSimulationTimeStep(remainingTime, Iterations);
+		remainingTime -= TimeTick;
 
 		// Save current values
 		UPrimitiveComponent* const OldBase = Cast<UPrimitiveComponent>(GetMovementBaseObject());
@@ -303,23 +303,27 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 
 		FVector SlopeForce = CurrentFloor.HitResult.Normal;
 		SlopeForce.Z = 0.f;
-		Velocity += SlopeForce * SlideMoveParams.GravityForce * DeltaTime;
+		Velocity += SlopeForce * SlideMoveParams.GravityForce * TimeTick;
 
-		if (FMath::Abs(FVector::DotProduct(Acceleration.GetSafeNormal(), UpdatedComponent->GetRightVector())) > 0.5f)
+		// If you want steering, adjust velocity direction rather than adding driving acceleration:
+		if (!Acceleration.IsNearlyZero())
 		{
-			Acceleration = Acceleration.ProjectOnTo(UpdatedComponent->GetRightVector());
-		}
-		else
-		{
-			Acceleration = FVector::ZeroVector;
+			const float SteeringDot = FVector::DotProduct(Acceleration.GetSafeNormal(), UpdatedComponent->GetRightVector());
+			if (FMath::Abs(SteeringDot) > 0.1f)
+			{
+				const float TurnAngle = SteeringDot * 45.0f * TimeTick; // Adjust turn sensitivity as desired
+				Velocity = FRotator(0.f, TurnAngle, 0.f).RotateVector(Velocity);
+			}
 		}
 
-		// Apply acceleration
-		CalcVelocity(timeTick, SlideMoveParams.Friction, true, GetMaxBrakingDeceleration());
+		Acceleration = FVector::ZeroVector;
+
+		// Apply friction and braking deceleration
+		CalcVelocity(TimeTick, SlideMoveParams.Friction, true, GetMaxBrakingDeceleration());
 
 		// Compute move parameters
 		const FVector MoveVelocity = Velocity;
-		const FVector Delta = timeTick * MoveVelocity;
+		const FVector Delta = TimeTick * MoveVelocity;
 		const bool bZeroDelta = Delta.IsNearlyZero();
 		FStepDownResult StepDownResult;
 		bool bFloorWalkable = CurrentFloor.IsWalkableFloor();
@@ -331,7 +335,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 		else
 		{
 			// try to move forward
-			MoveAlongFloor(MoveVelocity, timeTick, &StepDownResult);
+			MoveAlongFloor(MoveVelocity, TimeTick, &StepDownResult);
 
 			if (IsFalling())
 			{
@@ -340,14 +344,14 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 				if (DesiredDist > KINDA_SMALL_NUMBER)
 				{
 					const float ActualDist = (UpdatedComponent->GetComponentLocation() - OldLocation).Size2D();
-					remainingTime += timeTick * (1.f - FMath::Min(1.f, ActualDist / DesiredDist));
+					remainingTime += TimeTick * (1.f - FMath::Min(1.f, ActualDist / DesiredDist));
 				}
 				StartNewPhysics(remainingTime, Iterations);
 				return;
 			}
 			else if (IsSwimming()) //just entered water
 			{
-				StartSwimming(OldLocation, OldVelocity, timeTick, remainingTime, Iterations);
+				StartSwimming(OldLocation, OldVelocity, TimeTick, remainingTime, Iterations);
 				return;
 			}
 		}
@@ -381,8 +385,8 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 				bTriedLedgeMove = true;
 
 				// Try new movement direction
-				Velocity = NewDelta / timeTick;
-				remainingTime += timeTick;
+				Velocity = NewDelta / TimeTick;
+				remainingTime += TimeTick;
 				continue;
 			}
 			else
@@ -393,7 +397,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 				bool bMustJump = bZeroDelta || (OldBase == nullptr || (!OldBase->IsQueryCollisionEnabled() && MovementBaseUtility::IsDynamicBase(OldBase)));
 				PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
-				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, timeTick, Iterations, bMustJump))
+				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, TimeTick, Iterations, bMustJump))
 				{
 					return;
 				}
@@ -415,11 +419,11 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 			{
 				if (ShouldCatchAir(OldFloor, CurrentFloor))
 				{
-					HandleWalkingOffLedge(OldFloor.HitResult.ImpactNormal, OldFloor.HitResult.Normal, OldLocation, timeTick);
+					HandleWalkingOffLedge(OldFloor.HitResult.ImpactNormal, OldFloor.HitResult.Normal, OldLocation, TimeTick);
 					if (IsMovingOnGround())
 					{
 						// If still walking, then fall. If not, assume the user set a different mode they want to keep.
-						StartFalling(Iterations, remainingTime, timeTick, Delta, OldLocation);
+						StartFalling(Iterations, remainingTime, TimeTick, Delta, OldLocation);
 					}
 					return;
 				}
@@ -443,7 +447,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 			// check if just entered water
 			if (IsSwimming())
 			{
-				StartSwimming(OldLocation, Velocity, timeTick, remainingTime, Iterations);
+				StartSwimming(OldLocation, Velocity, TimeTick, remainingTime, Iterations);
 				return;
 			}
 
@@ -455,7 +459,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 					MovementBaseUtility::IsDynamicBase(OldBase)));
 				PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
-				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, timeTick, Iterations, bMustJump))
+				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, TimeTick, Iterations, bMustJump))
 				{
 					return;
 				}
@@ -467,10 +471,10 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 		if (IsMovingOnGround() && bFloorWalkable)
 		{
 			// Make velocity reflect actual move
-			if (!bJustTeleported && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && timeTick >= MIN_TICK_TIME)
+			if (!bJustTeleported && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && TimeTick >= MIN_TICK_TIME)
 			{
 				// TODO-RootMotionSource: Allow this to happen during partial override Velocity, but only set allowed axes?
-				Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / timeTick;
+				Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / TimeTick;
 				MaintainHorizontalGroundVelocity();
 			}
 		}
