@@ -20,13 +20,17 @@ struct FSlideMoveParams
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly)
-	float MinSpeed = 350;
+	float MinSpeed = 150;
 	UPROPERTY(EditDefaultsOnly)
 	float EnterImpulse = 500;
 	UPROPERTY(EditDefaultsOnly)
 	float GravityForce = 5000;
 	UPROPERTY(EditDefaultsOnly)
 	float Friction = 1.3f;
+	UPROPERTY(EditDefaultsOnly)
+	float BrakingDeceleration = 1000.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float CapsuleHalfHeight = 32.0f;
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCustomMovementModeEntered, ECustomMovementMode, EnteredMovementMode);
@@ -58,11 +62,20 @@ protected:
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
+	virtual bool IsMovingOnGround() const override;
+	virtual bool CanAttemptJump() const override;
+	virtual float GetMaxBrakingDeceleration() const override;
 
 	UFUNCTION(BlueprintCallable)
 	bool IsInCustomMovementMode(ECustomMovementMode InCustomMovementMode) const;
 
 private:
+	// CAPSULE RESIZING
+	UFUNCTION()
+	bool ResizeCapsuleSize(float NewHalfHeight);
+	UFUNCTION()
+	bool RestoreDefaultCapsuleSize();
+
 	//SLIDE
 	void EnterSlide();
 	void ExitSlide();

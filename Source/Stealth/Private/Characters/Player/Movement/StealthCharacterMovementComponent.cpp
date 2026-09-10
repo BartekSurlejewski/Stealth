@@ -1,5 +1,6 @@
 ﻿#include "Characters/Player/Movement/StealthCharacterMovementComponent.h"
 
+#include "Components/CapsuleComponent.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Stealth/Stealth.h"
 
@@ -7,6 +8,7 @@
 UStealthCharacterMovementComponent::UStealthCharacterMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	NavAgentProps.bCanCrouch = true;
 }
 
 
@@ -53,6 +55,7 @@ void UStealthCharacterMovementComponent::OnMovementModeChanged(EMovementMode Pre
 
 	if (IsInCustomMovementMode(CMOVE_Slide))
 	{
+		bCrouchMaintainsBaseLocation = true;
 		EnterSlide();
 	}
 	else if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_Slide)
@@ -75,16 +78,175 @@ void UStealthCharacterMovementComponent::PhysCustom(float DeltaTime, int32 Itera
 	}
 }
 
+bool UStealthCharacterMovementComponent::IsMovingOnGround() const
+{
+	return Super::IsMovingOnGround() || IsInCustomMovementMode(CMOVE_Slide);
+}
+
+bool UStealthCharacterMovementComponent::CanAttemptJump() const
+{
+	// Allow jumping while crouching
+	return IsJumpAllowed() && (IsMovingOnGround() || IsFalling());
+}
+
+float UStealthCharacterMovementComponent::GetMaxBrakingDeceleration() const
+{
+	if (MovementMode != MOVE_Custom)
+	{
+		return Super::GetMaxBrakingDeceleration();
+	}
+
+	switch (CustomMovementMode)
+	{
+	case CMOVE_Slide:
+		return SlideMoveParams.BrakingDeceleration;
+	default:
+		UE_LOG(LogStealth, Fatal, TEXT("Invalid Custom Movement Mode"))
+		return -1.0f;
+	}
+}
+
 bool UStealthCharacterMovementComponent::IsInCustomMovementMode(ECustomMovementMode InCustomMovementMode) const
 {
 	return MovementMode == MOVE_Custom && CustomMovementMode == InCustomMovementMode;
+}
+
+bool UStealthCharacterMovementComponent::ResizeCapsuleSize(float NewHalfHeight)
+{
+	if (!HasValidData() || !CharacterOwner || !CharacterOwner->GetCapsuleComponent())
+	{
+		return false;
+	}
+
+	UCapsuleComponent* CapsuleComp = CharacterOwner->GetCapsuleComponent();
+	const float OldUnscaledHalfHeight = CapsuleComp->GetUnscaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CapsuleComp->GetUnscaledCapsuleRadius();
+	const float ClampedHalfHeight = FMath::Max(OldUnscaledRadius, NewHalfHeight);
+
+	// If already at desired size, nothing to do
+	if (FMath::IsNearlyEqual(OldUnscaledHalfHeight, ClampedHalfHeight) && FMath::IsNearlyEqual(OldUnscaledRadius, OldUnscaledRadius))
+	{
+		return true;
+	}
+
+	const float ComponentScale = CapsuleComp->GetShapeScale();
+	const float HalfHeightAdjust = OldUnscaledHalfHeight - ClampedHalfHeight;
+	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
+
+	// If resizing to a larger height, verify we don't penetrate blocking geometry
+	if (ClampedHalfHeight > OldUnscaledHalfHeight)
+	{
+		FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CapsuleResizeTrace), false, CharacterOwner);
+		FCollisionResponseParams ResponseParam;
+		InitCollisionParams(CapsuleParams, ResponseParam);
+
+		const bool bEncroached = GetWorld()->OverlapBlockingTestByChannel(
+			UpdatedComponent->GetComponentLocation() + ScaledHalfHeightAdjust * GetGravityDirection(),
+			GetWorldToGravityTransform(),
+			UpdatedComponent->GetCollisionObjectType(),
+			GetPawnCapsuleCollisionShape(SHRINK_None),
+			CapsuleParams,
+			ResponseParam
+		);
+
+		if (bEncroached)
+		{
+			return false;
+		}
+	}
+
+	CapsuleComp->SetCapsuleSize(OldUnscaledRadius, ClampedHalfHeight);
+
+	if (bCrouchMaintainsBaseLocation)
+	{
+		UpdatedComponent->MoveComponent(ScaledHalfHeightAdjust * GetGravityDirection(), UpdatedComponent->GetComponentQuat(), true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags,
+		                                ETeleportType::TeleportPhysics);
+	}
+
+	bForceNextFloorCheck = true;
+	return true;
+}
+
+bool UStealthCharacterMovementComponent::RestoreDefaultCapsuleSize()
+{
+	if (!HasValidData() || !CharacterOwner || !CharacterOwner->GetCapsuleComponent())
+	{
+		return false;
+	}
+
+	const ACharacter* DefaultCharacter = CharacterOwner->GetClass()->GetDefaultObject<ACharacter>();
+	const UCapsuleComponent* DefaultCapsule = DefaultCharacter->GetCapsuleComponent();
+	const float DefaultUnscaledHalfHeight = DefaultCapsule->GetUnscaledCapsuleHalfHeight();
+	const float DefaultUnscaledRadius = DefaultCapsule->GetUnscaledCapsuleRadius();
+
+	UCapsuleComponent* CapsuleComp = CharacterOwner->GetCapsuleComponent();
+	const float OldUnscaledHalfHeight = CapsuleComp->GetUnscaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CapsuleComp->GetUnscaledCapsuleRadius();
+
+	if (FMath::IsNearlyEqual(OldUnscaledHalfHeight, DefaultUnscaledHalfHeight) && FMath::IsNearlyEqual(OldUnscaledRadius, DefaultUnscaledRadius))
+	{
+		return true;
+	}
+
+	const float CurrentScaledHalfHeight = CapsuleComp->GetScaledCapsuleHalfHeight();
+	const float ComponentScale = CapsuleComp->GetShapeScale();
+	const float HalfHeightAdjust = DefaultUnscaledHalfHeight - OldUnscaledHalfHeight;
+	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
+	const FVector PawnLocation = UpdatedComponent->GetComponentLocation();
+
+	// Encroachment check when growing back
+	const UWorld* MyWorld = GetWorld();
+	const float SweepInflation = UE_KINDA_SMALL_NUMBER * 10.f;
+	FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CapsuleResizeTrace), false, CharacterOwner);
+	FCollisionResponseParams ResponseParam;
+	InitCollisionParams(CapsuleParams, ResponseParam);
+
+	const FCollisionShape StandingCapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -SweepInflation - ScaledHalfHeightAdjust);
+	const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+	bool bEncroached = true;
+
+	if (!bCrouchMaintainsBaseLocation)
+	{
+		bEncroached = MyWorld->OverlapBlockingTestByChannel(PawnLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
+	}
+	else
+	{
+		FVector StandingLocation = PawnLocation + (StandingCapsuleShape.GetCapsuleHalfHeight() - CurrentScaledHalfHeight) * -GetGravityDirection();
+		bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
+
+		if (bEncroached && IsMovingOnGround())
+		{
+			const float MinFloorDist = UE_KINDA_SMALL_NUMBER * 10.f;
+			if (CurrentFloor.bBlockingHit && CurrentFloor.FloorDist > MinFloorDist)
+			{
+				StandingLocation -= (CurrentFloor.FloorDist - MinFloorDist) * -GetGravityDirection();
+				bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams,
+				                                                    ResponseParam);
+			}
+		}
+
+		if (!bEncroached)
+		{
+			UpdatedComponent->MoveComponent(StandingLocation - PawnLocation, UpdatedComponent->GetComponentQuat(), false, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags,
+			                                ETeleportType::TeleportPhysics);
+			bForceNextFloorCheck = true;
+		}
+	}
+
+	if (bEncroached)
+	{
+		return false;
+	}
+
+	CapsuleComp->SetCapsuleSize(DefaultUnscaledRadius, DefaultUnscaledHalfHeight, true);
+
+	return true;
 }
 
 void UStealthCharacterMovementComponent::EnterSlide()
 {
 	bWantsToCrouch = true;
 	Velocity += Velocity.GetSafeNormal2D() * SlideMoveParams.EnterImpulse;
-
 	FindFloor(UpdatedComponent->GetComponentLocation(), CurrentFloor, true, nullptr);
 }
 
@@ -95,7 +257,7 @@ void UStealthCharacterMovementComponent::ExitSlide()
 
 bool UStealthCharacterMovementComponent::CanSlide() const
 {
-	bool bValidSurface = CurrentFloor.IsWalkableFloor();
+	bool bValidSurface = CurrentFloor.bWalkableFloor;
 	bool bEnoughSpeed = Velocity.SizeSquared() > FMath::Square(SlideMoveParams.MinSpeed);
 
 	return bValidSurface && bEnoughSpeed;
@@ -289,7 +451,8 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 			if (!CurrentFloor.IsWalkableFloor() && !CurrentFloor.HitResult.bStartPenetrating)
 			{
 				PRAGMA_DISABLE_DEPRECATION_WARNINGS
-				const bool bMustJump = bJustTeleported || bZeroDelta || (OldBase == NULL || (!OldBase->IsQueryCollisionEnabled() && MovementBaseUtility::IsDynamicBase(OldBase)));
+				const bool bMustJump = bJustTeleported || bZeroDelta || (OldBase == nullptr || (!OldBase->IsQueryCollisionEnabled() &&
+					MovementBaseUtility::IsDynamicBase(OldBase)));
 				PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
 				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, timeTick, Iterations, bMustJump))

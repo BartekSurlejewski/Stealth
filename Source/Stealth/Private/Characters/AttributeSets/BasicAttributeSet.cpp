@@ -28,6 +28,6 @@ void UBasicAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 	}
 	else if (Data.EvaluatedData.Attribute == GetJumpVelocityCoefficientAttribute())
 	{
-		SetSpeedCoefficient(FMath::Max(0.f, GetJumpVelocityCoefficient()));
+		SetJumpVelocityCoefficient(FMath::Max(0.f, GetJumpVelocityCoefficient()));
 	}
 }
