@@ -4,7 +4,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
-#include "Inventory/InventoryComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Messages/StealthMessages.h"
 #include "Stealth/Stealth.h"

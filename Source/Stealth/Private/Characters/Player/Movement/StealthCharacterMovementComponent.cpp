@@ -1,5 +1,6 @@
 ﻿#include "Characters/Player/Movement/StealthCharacterMovementComponent.h"
 
+#include "Components/CapsuleComponent.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Stealth/Stealth.h"
 
@@ -7,6 +8,7 @@
 UStealthCharacterMovementComponent::UStealthCharacterMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	NavAgentProps.bCanCrouch = true;
 }
 
 
@@ -53,6 +55,7 @@ void UStealthCharacterMovementComponent::OnMovementModeChanged(EMovementMode Pre
 
 	if (IsInCustomMovementMode(CMOVE_Slide))
 	{
+		bCrouchMaintainsBaseLocation = true;
 		EnterSlide();
 	}
 	else if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_Slide)
@@ -75,16 +78,175 @@ void UStealthCharacterMovementComponent::PhysCustom(float DeltaTime, int32 Itera
 	}
 }
 
+bool UStealthCharacterMovementComponent::IsMovingOnGround() const
+{
+	return Super::IsMovingOnGround() || IsInCustomMovementMode(CMOVE_Slide);
+}
+
+bool UStealthCharacterMovementComponent::CanAttemptJump() const
+{
+	// Allow jumping while crouching
+	return IsJumpAllowed() && (IsMovingOnGround() || IsFalling());
+}
+
+float UStealthCharacterMovementComponent::GetMaxBrakingDeceleration() const
+{
+	if (MovementMode != MOVE_Custom)
+	{
+		return Super::GetMaxBrakingDeceleration();
+	}
+
+	switch (CustomMovementMode)
+	{
+	case CMOVE_Slide:
+		return SlideMoveParams.BrakingDeceleration;
+	default:
+		UE_LOG(LogStealth, Fatal, TEXT("Invalid Custom Movement Mode"))
+		return -1.0f;
+	}
+}
+
 bool UStealthCharacterMovementComponent::IsInCustomMovementMode(ECustomMovementMode InCustomMovementMode) const
 {
 	return MovementMode == MOVE_Custom && CustomMovementMode == InCustomMovementMode;
+}
+
+bool UStealthCharacterMovementComponent::ResizeCapsuleSize(float NewHalfHeight)
+{
+	if (!HasValidData() || !CharacterOwner || !CharacterOwner->GetCapsuleComponent())
+	{
+		return false;
+	}
+
+	UCapsuleComponent* CapsuleComp = CharacterOwner->GetCapsuleComponent();
+	const float OldUnscaledHalfHeight = CapsuleComp->GetUnscaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CapsuleComp->GetUnscaledCapsuleRadius();
+	const float ClampedHalfHeight = FMath::Max(OldUnscaledRadius, NewHalfHeight);
+
+	// If already at desired size, nothing to do
+	if (FMath::IsNearlyEqual(OldUnscaledHalfHeight, ClampedHalfHeight) && FMath::IsNearlyEqual(OldUnscaledRadius, OldUnscaledRadius))
+	{
+		return true;
+	}
+
+	const float ComponentScale = CapsuleComp->GetShapeScale();
+	const float HalfHeightAdjust = OldUnscaledHalfHeight - ClampedHalfHeight;
+	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
+
+	// If resizing to a larger height, verify we don't penetrate blocking geometry
+	if (ClampedHalfHeight > OldUnscaledHalfHeight)
+	{
+		FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CapsuleResizeTrace), false, CharacterOwner);
+		FCollisionResponseParams ResponseParam;
+		InitCollisionParams(CapsuleParams, ResponseParam);
+
+		const bool bEncroached = GetWorld()->OverlapBlockingTestByChannel(
+			UpdatedComponent->GetComponentLocation() + ScaledHalfHeightAdjust * GetGravityDirection(),
+			GetWorldToGravityTransform(),
+			UpdatedComponent->GetCollisionObjectType(),
+			GetPawnCapsuleCollisionShape(SHRINK_None),
+			CapsuleParams,
+			ResponseParam
+		);
+
+		if (bEncroached)
+		{
+			return false;
+		}
+	}
+
+	CapsuleComp->SetCapsuleSize(OldUnscaledRadius, ClampedHalfHeight);
+
+	if (bCrouchMaintainsBaseLocation)
+	{
+		UpdatedComponent->MoveComponent(ScaledHalfHeightAdjust * GetGravityDirection(), UpdatedComponent->GetComponentQuat(), true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags,
+		                                ETeleportType::TeleportPhysics);
+	}
+
+	bForceNextFloorCheck = true;
+	return true;
+}
+
+bool UStealthCharacterMovementComponent::RestoreDefaultCapsuleSize()
+{
+	if (!HasValidData() || !CharacterOwner || !CharacterOwner->GetCapsuleComponent())
+	{
+		return false;
+	}
+
+	const ACharacter* DefaultCharacter = CharacterOwner->GetClass()->GetDefaultObject<ACharacter>();
+	const UCapsuleComponent* DefaultCapsule = DefaultCharacter->GetCapsuleComponent();
+	const float DefaultUnscaledHalfHeight = DefaultCapsule->GetUnscaledCapsuleHalfHeight();
+	const float DefaultUnscaledRadius = DefaultCapsule->GetUnscaledCapsuleRadius();
+
+	UCapsuleComponent* CapsuleComp = CharacterOwner->GetCapsuleComponent();
+	const float OldUnscaledHalfHeight = CapsuleComp->GetUnscaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CapsuleComp->GetUnscaledCapsuleRadius();
+
+	if (FMath::IsNearlyEqual(OldUnscaledHalfHeight, DefaultUnscaledHalfHeight) && FMath::IsNearlyEqual(OldUnscaledRadius, DefaultUnscaledRadius))
+	{
+		return true;
+	}
+
+	const float CurrentScaledHalfHeight = CapsuleComp->GetScaledCapsuleHalfHeight();
+	const float ComponentScale = CapsuleComp->GetShapeScale();
+	const float HalfHeightAdjust = DefaultUnscaledHalfHeight - OldUnscaledHalfHeight;
+	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
+	const FVector PawnLocation = UpdatedComponent->GetComponentLocation();
+
+	// Encroachment check when growing back
+	const UWorld* MyWorld = GetWorld();
+	const float SweepInflation = UE_KINDA_SMALL_NUMBER * 10.f;
+	FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CapsuleResizeTrace), false, CharacterOwner);
+	FCollisionResponseParams ResponseParam;
+	InitCollisionParams(CapsuleParams, ResponseParam);
+
+	const FCollisionShape StandingCapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -SweepInflation - ScaledHalfHeightAdjust);
+	const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+	bool bEncroached = true;
+
+	if (!bCrouchMaintainsBaseLocation)
+	{
+		bEncroached = MyWorld->OverlapBlockingTestByChannel(PawnLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
+	}
+	else
+	{
+		FVector StandingLocation = PawnLocation + (StandingCapsuleShape.GetCapsuleHalfHeight() - CurrentScaledHalfHeight) * -GetGravityDirection();
+		bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
+
+		if (bEncroached && IsMovingOnGround())
+		{
+			const float MinFloorDist = UE_KINDA_SMALL_NUMBER * 10.f;
+			if (CurrentFloor.bBlockingHit && CurrentFloor.FloorDist > MinFloorDist)
+			{
+				StandingLocation -= (CurrentFloor.FloorDist - MinFloorDist) * -GetGravityDirection();
+				bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams,
+				                                                    ResponseParam);
+			}
+		}
+
+		if (!bEncroached)
+		{
+			UpdatedComponent->MoveComponent(StandingLocation - PawnLocation, UpdatedComponent->GetComponentQuat(), false, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags,
+			                                ETeleportType::TeleportPhysics);
+			bForceNextFloorCheck = true;
+		}
+	}
+
+	if (bEncroached)
+	{
+		return false;
+	}
+
+	CapsuleComp->SetCapsuleSize(DefaultUnscaledRadius, DefaultUnscaledHalfHeight, true);
+
+	return true;
 }
 
 void UStealthCharacterMovementComponent::EnterSlide()
 {
 	bWantsToCrouch = true;
 	Velocity += Velocity.GetSafeNormal2D() * SlideMoveParams.EnterImpulse;
-
 	FindFloor(UpdatedComponent->GetComponentLocation(), CurrentFloor, true, nullptr);
 }
 
@@ -95,7 +257,7 @@ void UStealthCharacterMovementComponent::ExitSlide()
 
 bool UStealthCharacterMovementComponent::CanSlide() const
 {
-	bool bValidSurface = CurrentFloor.IsWalkableFloor();
+	bool bValidSurface = CurrentFloor.bWalkableFloor;
 	bool bEnoughSpeed = Velocity.SizeSquared() > FMath::Square(SlideMoveParams.MinSpeed);
 
 	return bValidSurface && bEnoughSpeed;
@@ -126,8 +288,8 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 	{
 		Iterations++;
 		bJustTeleported = false;
-		const float timeTick = GetSimulationTimeStep(remainingTime, Iterations);
-		remainingTime -= timeTick;
+		const float TimeTick = GetSimulationTimeStep(remainingTime, Iterations);
+		remainingTime -= TimeTick;
 
 		// Save current values
 		UPrimitiveComponent* const OldBase = Cast<UPrimitiveComponent>(GetMovementBaseObject());
@@ -141,23 +303,27 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 
 		FVector SlopeForce = CurrentFloor.HitResult.Normal;
 		SlopeForce.Z = 0.f;
-		Velocity += SlopeForce * SlideMoveParams.GravityForce * DeltaTime;
+		Velocity += SlopeForce * SlideMoveParams.GravityForce * TimeTick;
 
-		if (FMath::Abs(FVector::DotProduct(Acceleration.GetSafeNormal(), UpdatedComponent->GetRightVector())) > 0.5f)
+		// If you want steering, adjust velocity direction rather than adding driving acceleration:
+		if (!Acceleration.IsNearlyZero())
 		{
-			Acceleration = Acceleration.ProjectOnTo(UpdatedComponent->GetRightVector());
-		}
-		else
-		{
-			Acceleration = FVector::ZeroVector;
+			const float SteeringDot = FVector::DotProduct(Acceleration.GetSafeNormal(), UpdatedComponent->GetRightVector());
+			if (FMath::Abs(SteeringDot) > 0.1f)
+			{
+				const float TurnAngle = SteeringDot * 45.0f * TimeTick; // Adjust turn sensitivity as desired
+				Velocity = FRotator(0.f, TurnAngle, 0.f).RotateVector(Velocity);
+			}
 		}
 
-		// Apply acceleration
-		CalcVelocity(timeTick, SlideMoveParams.Friction, true, GetMaxBrakingDeceleration());
+		Acceleration = FVector::ZeroVector;
+
+		// Apply friction and braking deceleration
+		CalcVelocity(TimeTick, SlideMoveParams.Friction, true, GetMaxBrakingDeceleration());
 
 		// Compute move parameters
 		const FVector MoveVelocity = Velocity;
-		const FVector Delta = timeTick * MoveVelocity;
+		const FVector Delta = TimeTick * MoveVelocity;
 		const bool bZeroDelta = Delta.IsNearlyZero();
 		FStepDownResult StepDownResult;
 		bool bFloorWalkable = CurrentFloor.IsWalkableFloor();
@@ -169,7 +335,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 		else
 		{
 			// try to move forward
-			MoveAlongFloor(MoveVelocity, timeTick, &StepDownResult);
+			MoveAlongFloor(MoveVelocity, TimeTick, &StepDownResult);
 
 			if (IsFalling())
 			{
@@ -178,14 +344,14 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 				if (DesiredDist > KINDA_SMALL_NUMBER)
 				{
 					const float ActualDist = (UpdatedComponent->GetComponentLocation() - OldLocation).Size2D();
-					remainingTime += timeTick * (1.f - FMath::Min(1.f, ActualDist / DesiredDist));
+					remainingTime += TimeTick * (1.f - FMath::Min(1.f, ActualDist / DesiredDist));
 				}
 				StartNewPhysics(remainingTime, Iterations);
 				return;
 			}
 			else if (IsSwimming()) //just entered water
 			{
-				StartSwimming(OldLocation, OldVelocity, timeTick, remainingTime, Iterations);
+				StartSwimming(OldLocation, OldVelocity, TimeTick, remainingTime, Iterations);
 				return;
 			}
 		}
@@ -219,8 +385,8 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 				bTriedLedgeMove = true;
 
 				// Try new movement direction
-				Velocity = NewDelta / timeTick;
-				remainingTime += timeTick;
+				Velocity = NewDelta / TimeTick;
+				remainingTime += TimeTick;
 				continue;
 			}
 			else
@@ -231,7 +397,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 				bool bMustJump = bZeroDelta || (OldBase == nullptr || (!OldBase->IsQueryCollisionEnabled() && MovementBaseUtility::IsDynamicBase(OldBase)));
 				PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
-				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, timeTick, Iterations, bMustJump))
+				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, TimeTick, Iterations, bMustJump))
 				{
 					return;
 				}
@@ -253,11 +419,11 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 			{
 				if (ShouldCatchAir(OldFloor, CurrentFloor))
 				{
-					HandleWalkingOffLedge(OldFloor.HitResult.ImpactNormal, OldFloor.HitResult.Normal, OldLocation, timeTick);
+					HandleWalkingOffLedge(OldFloor.HitResult.ImpactNormal, OldFloor.HitResult.Normal, OldLocation, TimeTick);
 					if (IsMovingOnGround())
 					{
 						// If still walking, then fall. If not, assume the user set a different mode they want to keep.
-						StartFalling(Iterations, remainingTime, timeTick, Delta, OldLocation);
+						StartFalling(Iterations, remainingTime, TimeTick, Delta, OldLocation);
 					}
 					return;
 				}
@@ -281,7 +447,7 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 			// check if just entered water
 			if (IsSwimming())
 			{
-				StartSwimming(OldLocation, Velocity, timeTick, remainingTime, Iterations);
+				StartSwimming(OldLocation, Velocity, TimeTick, remainingTime, Iterations);
 				return;
 			}
 
@@ -289,10 +455,11 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 			if (!CurrentFloor.IsWalkableFloor() && !CurrentFloor.HitResult.bStartPenetrating)
 			{
 				PRAGMA_DISABLE_DEPRECATION_WARNINGS
-				const bool bMustJump = bJustTeleported || bZeroDelta || (OldBase == NULL || (!OldBase->IsQueryCollisionEnabled() && MovementBaseUtility::IsDynamicBase(OldBase)));
+				const bool bMustJump = bJustTeleported || bZeroDelta || (OldBase == nullptr || (!OldBase->IsQueryCollisionEnabled() &&
+					MovementBaseUtility::IsDynamicBase(OldBase)));
 				PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
-				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, timeTick, Iterations, bMustJump))
+				if ((bMustJump || !bCheckedFall) && CheckFall(OldFloor, CurrentFloor.HitResult, Delta, OldLocation, remainingTime, TimeTick, Iterations, bMustJump))
 				{
 					return;
 				}
@@ -304,10 +471,10 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 		if (IsMovingOnGround() && bFloorWalkable)
 		{
 			// Make velocity reflect actual move
-			if (!bJustTeleported && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && timeTick >= MIN_TICK_TIME)
+			if (!bJustTeleported && !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() && TimeTick >= MIN_TICK_TIME)
 			{
 				// TODO-RootMotionSource: Allow this to happen during partial override Velocity, but only set allowed axes?
-				Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / timeTick;
+				Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / TimeTick;
 				MaintainHorizontalGroundVelocity();
 			}
 		}
