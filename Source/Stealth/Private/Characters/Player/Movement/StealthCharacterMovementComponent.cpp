@@ -80,6 +80,12 @@ bool UStealthCharacterMovementComponent::IsInCustomMovementMode(ECustomMovementM
 	return MovementMode == MOVE_Custom && CustomMovementMode == InCustomMovementMode;
 }
 
+#pragma region Slide
+void UStealthCharacterMovementComponent::SetSlide(bool bNewWantsToSlide)
+{
+	bWantsToSlide = bNewWantsToSlide;
+}
+
 void UStealthCharacterMovementComponent::EnterSlide()
 {
 	bWantsToCrouch = true;
@@ -326,7 +332,22 @@ void UStealthCharacterMovementComponent::PhysSlide(float DeltaTime, int32 Iterat
 	SafeMoveUpdatedComponent(FVector::ZeroVector, NewRotation, false, Hit);
 }
 
-void UStealthCharacterMovementComponent::SetSlide(bool bNewWantsToSlide)
+#pragma endregion
+
+#pragma region Vault
+void UStealthCharacterMovementComponent::SetJumpInputActive(bool bNewIsActive)
 {
-	bWantsToSlide = bNewWantsToSlide;
+	bIsJumpInputActive = bNewIsActive;
 }
+
+bool UStealthCharacterMovementComponent::TryVault()
+{
+	return false;
+}
+
+FVector UStealthCharacterMovementComponent::GetVaultStartLocation(FHitResult FrontHit, FHitResult SurfaceHit, bool bTallVault) const
+{
+	return FVector::ZeroVector;
+}
+
+#pragma endregion

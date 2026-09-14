@@ -11,6 +11,7 @@ enum ECustomMovementMode
 {
 	CMOVE_None UMETA(Hidden),
 	CMOVE_Slide UMETA(DisplayName = "Slide"),
+	CMOVE_Vault UMETA(DisplayName = "Vault"),
 	CMOVE_MAX UMETA(Hidden)
 };
 
@@ -29,6 +30,22 @@ struct FSlideMoveParams
 	float Friction = 1.3f;
 };
 
+USTRUCT(BlueprintType)
+struct FVaultMoveParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	float MinSpeed = 350;
+	UPROPERTY(EditDefaultsOnly)
+	float EnterImpulse = 500;
+	UPROPERTY(EditDefaultsOnly)
+	float GravityForce = 5000;
+	UPROPERTY(EditDefaultsOnly)
+	float Friction = 1.3f;
+};
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCustomMovementModeEntered, ECustomMovementMode, EnteredMovementMode);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCustomMovementModeExit, ECustomMovementMode, ExitMovementMode);
@@ -45,12 +62,8 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FCustomMovementModeExit OnCustomMovementModeExit;
 
-	/*Methods*/
 public:
 	UStealthCharacterMovementComponent();
-
-	UFUNCTION(BlueprintCallable)
-	void SetSlide(bool bNewWantsToSlide);
 
 protected:
 	virtual void BeginPlay() override;
@@ -63,22 +76,52 @@ protected:
 	bool IsInCustomMovementMode(ECustomMovementMode InCustomMovementMode) const;
 
 private:
-	//SLIDE
-	void EnterSlide();
-	void ExitSlide();
-	bool CanSlide() const;
-	void PhysSlide(float DeltaTime, int32 Iterations);
+	UPROPERTY(Transient)
+	TWeakObjectPtr<AStealthPlayerCharacter> PlayerCharacterOwner;
 
-	/*Properties*/
+#pragma region Slide
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Slide|Parameters")
+	UPROPERTY(EditDefaultsOnly, Category="Custom Movement|Slide")
 	FSlideMoveParams SlideMoveParams;
 
 private:
 	UPROPERTY()
 	bool bWantsToSlide = false;
 
-	UPROPERTY(Transient)
-	TWeakObjectPtr<AStealthPlayerCharacter> PlayerCharacterOwner;
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetSlide(bool bNewWantsToSlide);
+
+private:
+	UFUNCTION()
+	void EnterSlide();
+	UFUNCTION()
+	void ExitSlide();
+	UFUNCTION()
+	bool CanSlide() const;
+	UFUNCTION()
+	void PhysSlide(float DeltaTime, int32 Iterations);
+#pragma endregion
+
+#pragma region Vault
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category="Custom Movement|Vault")
+	FVaultMoveParams VaultMoveParams;
+
+private:
+	UPROPERTY()
+	bool bIsJumpInputActive = false;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void SetJumpInputActive(bool bNewIsActive);
+
+private:
+	UFUNCTION()
+	bool TryVault();
+	UFUNCTION()
+	FVector GetVaultStartLocation(FHitResult FrontHit, FHitResult SurfaceHit, bool bTallVault) const;
+#pragma endregion
 };
