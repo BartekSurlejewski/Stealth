@@ -2,11 +2,28 @@
 
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Stealth/Stealth.h"
+#include "DrawDebugHelpers.h"
+#include "Components/CapsuleComponent.h"
+
+// Helper Macros
+#if 1
+float MacroDuration = 2.f;
+#define SLOG(x) GEngine->AddOnScreenDebugMessage(-1, MacroDuration ? MacroDuration : -1.f, FColor::Yellow, x);
+#define POINT(x, c) DrawDebugPoint(GetWorld(), x, 10, c, !MacroDuration, MacroDuration);
+#define LINE(x1, x2, c) DrawDebugLine(GetWorld(), x1, x2, c, !MacroDuration, MacroDuration);
+#define CAPSULE(x, c) DrawDebugCapsule(GetWorld(), x, CapHH(), CapR(), FQuat::Identity, c, !MacroDuration, MacroDuration);
+#else
+#define SLOG(x)
+#define POINT(x, c)
+#define LINE(x1, x2, c)
+#define CAPSULE(x, c)
+#endif
 
 
 UStealthCharacterMovementComponent::UStealthCharacterMovementComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	NavAgentProps.bCanCrouch = true;
 }
 
 
@@ -34,7 +51,24 @@ void UStealthCharacterMovementComponent::UpdateCharacterStateBeforeMovement(floa
 		SetMovementMode(MOVE_Walking);
 	}
 
+	if (bIsJumpInputActive)
+	{
+		if (TryVault())
+		{
+			PlayerCharacterOwner->StopJumping();
+		}
+		else
+		{
+			CharacterOwner->CheckJumpInput(DeltaSeconds);
+		}
+	}
+
 	Super::UpdateCharacterStateBeforeMovement(DeltaSeconds);
+}
+
+void UStealthCharacterMovementComponent::UpdateCharacterStateAfterMovement(float DeltaSeconds)
+{
+	Super::UpdateCharacterStateAfterMovement(DeltaSeconds);
 }
 
 void UStealthCharacterMovementComponent::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -53,6 +87,7 @@ void UStealthCharacterMovementComponent::OnMovementModeChanged(EMovementMode Pre
 
 	if (IsInCustomMovementMode(CMOVE_Slide))
 	{
+		bCrouchMaintainsBaseLocation = true;
 		EnterSlide();
 	}
 	else if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_Slide)
@@ -79,6 +114,167 @@ bool UStealthCharacterMovementComponent::IsInCustomMovementMode(ECustomMovementM
 {
 	return MovementMode == MOVE_Custom && CustomMovementMode == InCustomMovementMode;
 }
+
+bool UStealthCharacterMovementComponent::IsMovingOnGround() const
+{
+	return Super::IsMovingOnGround() || IsInCustomMovementMode(CMOVE_Slide);
+}
+
+bool UStealthCharacterMovementComponent::CanAttemptJump() const
+{
+	// Allow jumping while crouching
+	return IsJumpAllowed() && (IsMovingOnGround() || IsFalling());
+}
+
+float UStealthCharacterMovementComponent::GetMaxBrakingDeceleration() const
+{
+	if (MovementMode != MOVE_Custom)
+	{
+		return Super::GetMaxBrakingDeceleration();
+	}
+
+	switch (CustomMovementMode)
+	{
+	case CMOVE_Slide:
+		return SlideMoveParams.BrakingDeceleration;
+	default:
+		UE_LOG(LogStealth, Fatal, TEXT("Invalid Custom Movement Mode"))
+		return -1.0f;
+	}
+}
+
+bool UStealthCharacterMovementComponent::ResizeCapsuleSize(float NewHalfHeight)
+{
+	if (!HasValidData() || !CharacterOwner || !CharacterOwner->GetCapsuleComponent())
+	{
+		return false;
+	}
+
+	UCapsuleComponent* CapsuleComp = CharacterOwner->GetCapsuleComponent();
+	const float OldUnscaledHalfHeight = CapsuleComp->GetUnscaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CapsuleComp->GetUnscaledCapsuleRadius();
+	const float ClampedHalfHeight = FMath::Max(OldUnscaledRadius, NewHalfHeight);
+
+	// If already at desired size, nothing to do
+	if (FMath::IsNearlyEqual(OldUnscaledHalfHeight, ClampedHalfHeight) && FMath::IsNearlyEqual(OldUnscaledRadius, OldUnscaledRadius))
+	{
+		return true;
+	}
+
+	const float ComponentScale = CapsuleComp->GetShapeScale();
+	const float HalfHeightAdjust = OldUnscaledHalfHeight - ClampedHalfHeight;
+	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
+
+	// If resizing to a larger height, verify we don't penetrate blocking geometry
+	if (ClampedHalfHeight > OldUnscaledHalfHeight)
+	{
+		FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CapsuleResizeTrace), false, CharacterOwner);
+		FCollisionResponseParams ResponseParam;
+		InitCollisionParams(CapsuleParams, ResponseParam);
+
+		const bool bEncroached = GetWorld()->OverlapBlockingTestByChannel(
+			UpdatedComponent->GetComponentLocation() + ScaledHalfHeightAdjust * GetGravityDirection(),
+			GetWorldToGravityTransform(),
+			UpdatedComponent->GetCollisionObjectType(),
+			GetPawnCapsuleCollisionShape(SHRINK_None),
+			CapsuleParams,
+			ResponseParam
+		);
+
+		if (bEncroached)
+		{
+			return false;
+		}
+	}
+
+	CapsuleComp->SetCapsuleSize(OldUnscaledRadius, ClampedHalfHeight);
+
+	if (bCrouchMaintainsBaseLocation)
+	{
+		UpdatedComponent->MoveComponent(ScaledHalfHeightAdjust * GetGravityDirection(), UpdatedComponent->GetComponentQuat(), true, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags,
+		                                ETeleportType::TeleportPhysics);
+	}
+
+	bForceNextFloorCheck = true;
+	return true;
+}
+
+bool UStealthCharacterMovementComponent::RestoreDefaultCapsuleSize()
+{
+	if (!HasValidData() || !CharacterOwner || !CharacterOwner->GetCapsuleComponent())
+	{
+		return false;
+	}
+
+	const ACharacter* DefaultCharacter = CharacterOwner->GetClass()->GetDefaultObject<ACharacter>();
+	const UCapsuleComponent* DefaultCapsule = DefaultCharacter->GetCapsuleComponent();
+	const float DefaultUnscaledHalfHeight = DefaultCapsule->GetUnscaledCapsuleHalfHeight();
+	const float DefaultUnscaledRadius = DefaultCapsule->GetUnscaledCapsuleRadius();
+
+	UCapsuleComponent* CapsuleComp = CharacterOwner->GetCapsuleComponent();
+	const float OldUnscaledHalfHeight = CapsuleComp->GetUnscaledCapsuleHalfHeight();
+	const float OldUnscaledRadius = CapsuleComp->GetUnscaledCapsuleRadius();
+
+	if (FMath::IsNearlyEqual(OldUnscaledHalfHeight, DefaultUnscaledHalfHeight) && FMath::IsNearlyEqual(OldUnscaledRadius, DefaultUnscaledRadius))
+	{
+		return true;
+	}
+
+	const float CurrentScaledHalfHeight = CapsuleComp->GetScaledCapsuleHalfHeight();
+	const float ComponentScale = CapsuleComp->GetShapeScale();
+	const float HalfHeightAdjust = DefaultUnscaledHalfHeight - OldUnscaledHalfHeight;
+	const float ScaledHalfHeightAdjust = HalfHeightAdjust * ComponentScale;
+	const FVector PawnLocation = UpdatedComponent->GetComponentLocation();
+
+	// Encroachment check when growing back
+	const UWorld* MyWorld = GetWorld();
+	const float SweepInflation = UE_KINDA_SMALL_NUMBER * 10.f;
+	FCollisionQueryParams CapsuleParams(SCENE_QUERY_STAT(CapsuleResizeTrace), false, CharacterOwner);
+	FCollisionResponseParams ResponseParam;
+	InitCollisionParams(CapsuleParams, ResponseParam);
+
+	const FCollisionShape StandingCapsuleShape = GetPawnCapsuleCollisionShape(SHRINK_HeightCustom, -SweepInflation - ScaledHalfHeightAdjust);
+	const ECollisionChannel CollisionChannel = UpdatedComponent->GetCollisionObjectType();
+	bool bEncroached = true;
+
+	if (!bCrouchMaintainsBaseLocation)
+	{
+		bEncroached = MyWorld->OverlapBlockingTestByChannel(PawnLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
+	}
+	else
+	{
+		FVector StandingLocation = PawnLocation + (StandingCapsuleShape.GetCapsuleHalfHeight() - CurrentScaledHalfHeight) * -GetGravityDirection();
+		bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams, ResponseParam);
+
+		if (bEncroached && IsMovingOnGround())
+		{
+			const float MinFloorDist = UE_KINDA_SMALL_NUMBER * 10.f;
+			if (CurrentFloor.bBlockingHit && CurrentFloor.FloorDist > MinFloorDist)
+			{
+				StandingLocation -= (CurrentFloor.FloorDist - MinFloorDist) * -GetGravityDirection();
+				bEncroached = MyWorld->OverlapBlockingTestByChannel(StandingLocation, GetWorldToGravityTransform(), CollisionChannel, StandingCapsuleShape, CapsuleParams,
+				                                                    ResponseParam);
+			}
+		}
+
+		if (!bEncroached)
+		{
+			UpdatedComponent->MoveComponent(StandingLocation - PawnLocation, UpdatedComponent->GetComponentQuat(), false, nullptr, EMoveComponentFlags::MOVECOMP_NoFlags,
+			                                ETeleportType::TeleportPhysics);
+			bForceNextFloorCheck = true;
+		}
+	}
+
+	if (bEncroached)
+	{
+		return false;
+	}
+
+	CapsuleComp->SetCapsuleSize(DefaultUnscaledRadius, DefaultUnscaledHalfHeight, true);
+
+	return true;
+}
+
 
 #pragma region Slide
 void UStealthCharacterMovementComponent::SetSlide(bool bNewWantsToSlide)
@@ -342,6 +538,9 @@ void UStealthCharacterMovementComponent::SetJumpInputActive(bool bNewIsActive)
 
 bool UStealthCharacterMovementComponent::TryVault()
 {
+	SLOG(TEXT("Tried Vault"));
+
+
 	return false;
 }
 
