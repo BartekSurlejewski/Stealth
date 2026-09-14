@@ -11,14 +11,24 @@ A personal, independent immersive-sim prototype built to learn Unreal Engine 5.7
 
 ## Controls
 Mouse + W,S,A,D - Movement
+
 Space - Jump
+
 Ctrl - Crouch
+
+Ctrl double tap - slide (when sprinting)
+
 Shift - Sprint
+
 E/R - Primary/secondary interaction
+
 TAB/I/J - Toggle menus
 
 ## Implemented Features Include:
-- Player movement & abilities: sprint, crouch and stamina managed via Gameplay Ability System (GAS).
+- Custom player character movement component
+- Sprint, crouch, slide and stamina managed via Gameplay Ability System (GAS).
+- Chemistry system - cause and effect chains can be set up within editor. (e.g. throwing a bottle at the ground will make it break and catch nearby guards' attention, throwing an item at the lamp will destroy it, affecting the lighting and exposure system).
+- Player exposure system - calculating how much the character is exposed to the light, affecting their visibility for NPCs.
 - Interactables: IInteractable-based interaction system and pickup items (see Source/Stealth/Private/Interactables).
 - Inventory: InventoryComponent and InventoryManagerSubsystem — modular C++ inventory manager and item handling (Source/Stealth/Private/Inventory).
 - NPC AI: StateTree-driven AI with perception (sight & hearing) and reactive behaviours (see Source/Stealth/Private/Characters and StateTree setup).
