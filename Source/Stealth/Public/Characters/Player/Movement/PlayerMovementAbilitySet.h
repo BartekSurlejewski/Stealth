@@ -46,6 +46,9 @@ class STEALTH_API UPlayerMovementAbilitySet : public UPrimaryDataAsset
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement Abilities|Jump")
+	TObjectPtr<UInputAction> JumpInputAction = nullptr;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement Abilities")
 	TArray<FMovementAbilityBinding> AbilityBindings;
 };

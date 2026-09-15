@@ -181,6 +181,21 @@ void AStealthPlayerCharacter::LookInput(const FInputActionValue& Value)
 	DoAim(LookAxisVector.X, LookAxisVector.Y);
 }
 
+void AStealthPlayerCharacter::Jump()
+{
+	bPressedJump_Stealth = true;
+
+	Super::Jump();
+
+	bPressedJump = false;
+}
+
+void AStealthPlayerCharacter::StopJumping()
+{
+	bPressedJump_Stealth = false;
+	Super::StopJumping();
+}
+
 void AStealthPlayerCharacter::DoAim(float Yaw, float Pitch)
 {
 	if (GetController())
@@ -244,6 +259,10 @@ void AStealthPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerI
 	{
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AStealthPlayerCharacter::MoveInput);
+
+		// Jumping
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AStealthPlayerCharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AStealthPlayerCharacter::StopJumping);
 
 		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AStealthPlayerCharacter::LookInput);

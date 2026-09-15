@@ -5,20 +5,6 @@
 #include "DrawDebugHelpers.h"
 #include "Components/CapsuleComponent.h"
 
-// Helper Macros
-#if 1
-float MacroDuration = 2.f;
-#define SLOG(x) GEngine->AddOnScreenDebugMessage(-1, MacroDuration ? MacroDuration : -1.f, FColor::Yellow, x);
-#define POINT(x, c) DrawDebugPoint(GetWorld(), x, 10, c, !MacroDuration, MacroDuration);
-#define LINE(x1, x2, c) DrawDebugLine(GetWorld(), x1, x2, c, !MacroDuration, MacroDuration);
-#define CAPSULE(x, c) DrawDebugCapsule(GetWorld(), x, CapHH(), CapR(), FQuat::Identity, c, !MacroDuration, MacroDuration);
-#else
-#define SLOG(x)
-#define POINT(x, c)
-#define LINE(x1, x2, c)
-#define CAPSULE(x, c)
-#endif
-
 
 UStealthCharacterMovementComponent::UStealthCharacterMovementComponent()
 {
@@ -33,6 +19,13 @@ void UStealthCharacterMovementComponent::BeginPlay()
 	SetComponentTickEnabled(true);
 }
 
+void UStealthCharacterMovementComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	TransitionRMS.Reset();
+
+	Super::EndPlay(EndPlayReason);
+}
+
 void UStealthCharacterMovementComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
@@ -40,9 +33,23 @@ void UStealthCharacterMovementComponent::InitializeComponent()
 	PlayerCharacterOwner = Cast<AStealthPlayerCharacter>(GetOwner());
 }
 
+void UStealthCharacterMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (TransitionRMS_ID != 0)
+	{
+		if (!TransitionRMS.IsValid() || TransitionRMS->Status.HasFlag(ERootMotionSourceStatusFlags::Finished))
+		{
+			CharacterOwner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			TransitionRMS_ID = (uint16)0;
+		}
+	}
+}
+
 void UStealthCharacterMovementComponent::UpdateCharacterStateBeforeMovement(float DeltaSeconds)
 {
-	if (MovementMode == MOVE_Walking && bWantsToSlide && CanSlide())
+	if (IsInMovementMode(MOVE_Walking) && bWantsToSlide && CanSlide())
 	{
 		SetMovementMode(MOVE_Custom, CMOVE_Slide);
 	}
@@ -51,7 +58,7 @@ void UStealthCharacterMovementComponent::UpdateCharacterStateBeforeMovement(floa
 		SetMovementMode(MOVE_Walking);
 	}
 
-	if (bIsJumpInputActive)
+	if (PlayerCharacterOwner->bPressedJump_Stealth)
 	{
 		if (TryVault())
 		{
@@ -59,7 +66,12 @@ void UStealthCharacterMovementComponent::UpdateCharacterStateBeforeMovement(floa
 		}
 		else
 		{
+			SCREEN_LOG("Failed Vault, Reverting to jump")
+			PlayerCharacterOwner->bPressedJump_Stealth = false;
+			PlayerCharacterOwner->bPressedJump = true;
+			UnCrouch();
 			CharacterOwner->CheckJumpInput(DeltaSeconds);
+			bOrientRotationToMovement = true;
 		}
 	}
 
@@ -115,6 +127,11 @@ bool UStealthCharacterMovementComponent::IsInCustomMovementMode(ECustomMovementM
 	return MovementMode == MOVE_Custom && CustomMovementMode == InCustomMovementMode;
 }
 
+bool UStealthCharacterMovementComponent::IsInMovementMode(EMovementMode InMovementMode) const
+{
+	return MovementMode == InMovementMode;
+}
+
 bool UStealthCharacterMovementComponent::IsMovingOnGround() const
 {
 	return Super::IsMovingOnGround() || IsInCustomMovementMode(CMOVE_Slide);
@@ -122,8 +139,13 @@ bool UStealthCharacterMovementComponent::IsMovingOnGround() const
 
 bool UStealthCharacterMovementComponent::CanAttemptJump() const
 {
-	// Allow jumping while crouching
-	return IsJumpAllowed() && (IsMovingOnGround() || IsFalling());
+	// Allow jumping while sliding
+	if (IsInCustomMovementMode(CMOVE_Slide))
+	{
+		return CanEverJump();
+	}
+
+	return Super::CanAttemptJump();
 }
 
 float UStealthCharacterMovementComponent::GetMaxBrakingDeceleration() const
@@ -536,17 +558,175 @@ void UStealthCharacterMovementComponent::SetJumpInputActive(bool bNewIsActive)
 	bIsJumpInputActive = bNewIsActive;
 }
 
+constexpr int VAULT_TRACES_COUNT = 6;
+
 bool UStealthCharacterMovementComponent::TryVault()
 {
-	SLOG(TEXT("Tried Vault"));
+	if (!(IsInMovementMode(MOVE_Walking) && !IsCrouching()) && !IsInMovementMode(MOVE_Falling))
+	{
+		return false;
+	}
 
+	const float CapsuleHalfHeight = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const float CapsuleRadius = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius();
 
-	return false;
+	// Helper Variables
+	FVector BaseLoc = UpdatedComponent->GetComponentLocation() + FVector::DownVector * CapsuleHalfHeight;
+	FVector Fwd = UpdatedComponent->GetForwardVector().GetSafeNormal2D();
+	auto Params = PlayerCharacterOwner->GetIgnoreCharacterParams();
+	float MaxHeight = CapsuleHalfHeight * 2 + VaultMoveParams.ReachHeight;
+	float CosMWSA = FMath::Cos(FMath::DegreesToRadians(VaultMoveParams.MinWallSteepnessAngle));
+	float CosMSA = FMath::Cos(FMath::DegreesToRadians(VaultMoveParams.MaxSurfaceAngle));
+	float CosMAA = FMath::Cos(FMath::DegreesToRadians(VaultMoveParams.MaxAlignmentAngle));
+
+	SCREEN_LOG(TEXT("Starting vault attempt"));
+
+	// Check Front Face
+	FHitResult FrontHit;
+	float CheckDistance = FMath::Clamp(Velocity | Fwd, CapsuleRadius + 30, VaultMoveParams.MaxDistance);
+	FVector FrontStart = BaseLoc + FVector::UpVector * (MaxStepHeight - 1);
+	for (int i = 0; i < VAULT_TRACES_COUNT; i++)
+	{
+		LINE(FrontStart, FrontStart + Fwd * CheckDistance, FColor::Red)
+		if (GetWorld()->LineTraceSingleByProfile(FrontHit, FrontStart, FrontStart + Fwd * CheckDistance, "BlockAll", Params)) break;
+		FrontStart += FVector::UpVector * (2.f * CapsuleHalfHeight - (MaxStepHeight - 1)) / VAULT_TRACES_COUNT - 1;
+	}
+	if (!FrontHit.IsValidBlockingHit()) return false;
+	float CosWallSteepnessAngle = FrontHit.Normal | FVector::UpVector;
+	if (FMath::Abs(CosWallSteepnessAngle) > CosMWSA || (Fwd | -FrontHit.Normal) < CosMAA) return false;
+
+	POINT(FrontHit.Location, FColor::Red);
+
+	// Check Height
+	TArray<FHitResult> HeightHits;
+	FHitResult SurfaceHit;
+	FVector WallUp = FVector::VectorPlaneProject(FVector::UpVector, FrontHit.Normal).GetSafeNormal();
+	float WallCos = FVector::UpVector | FrontHit.Normal;
+	float WallSin = FMath::Sqrt(1 - WallCos * WallCos);
+	FVector TraceStart = FrontHit.Location + Fwd + WallUp * (MaxHeight - (MaxStepHeight - 1)) / WallSin;
+	LINE(TraceStart, FrontHit.Location + Fwd, FColor::Orange)
+	if (!GetWorld()->LineTraceMultiByProfile(HeightHits, TraceStart, FrontHit.Location + Fwd, "BlockAll", Params))
+	{
+		return false;
+	}
+	for (const FHitResult& Hit : HeightHits)
+	{
+		if (Hit.IsValidBlockingHit())
+		{
+			SurfaceHit = Hit;
+			break;
+		}
+	}
+	if (!SurfaceHit.IsValidBlockingHit() || (SurfaceHit.Normal | FVector::UpVector) < CosMSA)
+	{
+		return false;
+	}
+	float Height = (SurfaceHit.Location - BaseLoc) | FVector::UpVector;
+
+	SCREEN_LOG(FString::Printf(TEXT("Height: %f"), Height))
+	POINT(SurfaceHit.Location, FColor::Blue);
+
+	if (Height > MaxHeight)
+	{
+		return false;
+	}
+
+	// Check Clearance
+	float SurfaceCos = FVector::UpVector | SurfaceHit.Normal;
+	float SurfaceSin = FMath::Sqrt(1 - SurfaceCos * SurfaceCos);
+	FVector ClearCapLoc = SurfaceHit.Location + Fwd * CapsuleRadius + FVector::UpVector * (CapsuleHalfHeight + 1 + CapsuleRadius * 2 * SurfaceSin);
+	FCollisionShape CapShape = FCollisionShape::MakeCapsule(CapsuleRadius, CapsuleHalfHeight);
+	if (GetWorld()->OverlapAnyTestByProfile(ClearCapLoc, FQuat::Identity, "BlockAll", CapShape, Params))
+	{
+		CAPSULE(ClearCapLoc, FColor::Red, CapsuleHalfHeight, CapsuleRadius)
+		return false;
+	}
+	else
+	{
+		CAPSULE(ClearCapLoc, FColor::Green, CapsuleHalfHeight, CapsuleRadius)
+	}
+	SCREEN_LOG("Can Vault")
+
+	// Vault Selection
+	FVector ShortVaultTarget = GetVaultStartLocation(FrontHit, SurfaceHit, false);
+	FVector TallVaultTarget = GetVaultStartLocation(FrontHit, SurfaceHit, true);
+
+	bool bTallVault = false;
+	if (IsInMovementMode(MOVE_Walking) && Height > CapsuleHalfHeight * 2)
+	{
+		bTallVault = true;
+	}
+	else if (IsInMovementMode(MOVE_Falling) && (Velocity | FVector::UpVector) < 0)
+	{
+		if (!GetWorld()->OverlapAnyTestByProfile(TallVaultTarget, FQuat::Identity, "BlockAll", CapShape, Params))
+		{
+			bTallVault = true;
+		}
+	}
+	FVector TransitionTarget = bTallVault ? TallVaultTarget : ShortVaultTarget;
+	CAPSULE(TransitionTarget, FColor::Yellow, CapsuleHalfHeight, CapsuleRadius)
+
+	// Perform Transition to Vault
+	CAPSULE(UpdatedComponent->GetComponentLocation(), FColor::Red, CapsuleHalfHeight, CapsuleRadius)
+
+	float UpSpeed = Velocity | FVector::UpVector;
+	float TransDistance = FVector::Dist(TransitionTarget, UpdatedComponent->GetComponentLocation());
+
+	TransitionQueuedMontageSpeed = FMath::GetMappedRangeValueClamped(FVector2D(-500, 750), FVector2D(.9f, 1.2f), UpSpeed);
+	TransitionRMS.Reset();
+	TransitionRMS = MakeShared<FRootMotionSource_MoveToForce>();
+	TransitionRMS->AccumulateMode = ERootMotionAccumulateMode::Override;
+
+	TransitionRMS->Duration = FMath::Clamp(TransDistance / 500.f, .1f, .25f);
+	SCREEN_LOG(FString::Printf(TEXT("Duration: %f"), TransitionRMS->Duration))
+	TransitionRMS->StartLocation = UpdatedComponent->GetComponentLocation();
+	// TransitionRMS->TargetLocation = TransitionTarget;
+	TransitionRMS->TargetLocation = ClearCapLoc;
+	TransitionRMS->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
+	TransitionRMS->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
+
+	// Apply Transition Root Motion Source
+	Velocity = FVector::ZeroVector;
+	SetMovementMode(MOVE_Walking);
+	TransitionRMS_ID = ApplyRootMotionSource(TransitionRMS);
+	TransitionName = "Vault";
+
+	// Disable collision for the duration of the move
+	CharacterOwner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndProbe);
+
+	//TODO: Add vault animations
+	// Animations
+	// if (bTallVault)
+	// {
+	// 	TransitionQueuedMontage = VaultMoveParams.TallVaultMontage;
+	// 	PlayerCharacterOwner->PlayAnimMontage(VaultMoveParams.TransitionTallVaultMontage, 1 / TransitionRMS->Duration);
+	// }
+	// else
+	// {
+	// 	TransitionQueuedMontage = VaultMoveParams.ShortVaultMontage;
+	// 	PlayerCharacterOwner->PlayAnimMontage(VaultMoveParams.TransitionShortVaultMontage, 1 / TransitionRMS->Duration);
+	// }
+
+	return true;
 }
 
 FVector UStealthCharacterMovementComponent::GetVaultStartLocation(FHitResult FrontHit, FHitResult SurfaceHit, bool bTallVault) const
 {
-	return FVector::ZeroVector;
+	const float CapsuleHalfHeight = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const float CapsuleRadius = CharacterOwner->GetCapsuleComponent()->GetScaledCapsuleRadius();
+
+	float CosWallSteepnessAngle = FrontHit.Normal | FVector::UpVector;
+	float DownDistance = bTallVault ? CapsuleHalfHeight * 2.f : MaxStepHeight - 1;
+	FVector EdgeTangent = FVector::CrossProduct(SurfaceHit.Normal, FrontHit.Normal).GetSafeNormal();
+
+	FVector VaultStart = SurfaceHit.Location;
+	VaultStart += FrontHit.Normal.GetSafeNormal2D() * (2.f + CapsuleRadius);
+	VaultStart += UpdatedComponent->GetForwardVector().GetSafeNormal2D().ProjectOnTo(EdgeTangent) * CapsuleRadius * .3f;
+	VaultStart += FVector::UpVector * CapsuleHalfHeight;
+	VaultStart += FVector::DownVector * DownDistance;
+	VaultStart += FrontHit.Normal.GetSafeNormal2D() * CosWallSteepnessAngle * DownDistance;
+
+	return VaultStart;
 }
 
 #pragma endregion

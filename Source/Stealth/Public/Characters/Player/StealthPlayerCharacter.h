@@ -45,6 +45,9 @@ public:
 public:
 	[[nodiscard]] const TObjectPtr<UStealthCharacterAttributeSet>& GetAttributeSet() const { return AttributeSet; }
 
+	virtual void Jump() override;
+	virtual void StopJumping() override;
+
 protected:
 	void MoveInput(const FInputActionValue& Value);
 	void LookInput(const FInputActionValue& Value);
@@ -87,6 +90,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Player|Input")
 	TObjectPtr<UInputAction> MoveAction;
 	UPROPERTY(EditAnywhere, Category ="Player|Input")
+	TObjectPtr<UInputAction> JumpAction;
+	UPROPERTY(EditAnywhere, Category ="Player|Input")
 	TObjectPtr<UInputAction> LookAction;
 	UPROPERTY(EditDefaultsOnly, Category ="Player|Input")
 	TObjectPtr<UInputAction> PrimaryInteractAction;
@@ -99,4 +104,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Player|Ability System")
 	TObjectPtr<UStealthCharacterAttributeSet> AttributeSet;
+
+public:
+	UPROPERTY(BlueprintReadOnly, Category="Stealth Character")
+	bool bPressedJump_Stealth;
 };

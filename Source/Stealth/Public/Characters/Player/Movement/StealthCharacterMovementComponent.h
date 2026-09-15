@@ -11,7 +11,6 @@ enum ECustomMovementMode
 {
 	CMOVE_None UMETA(Hidden),
 	CMOVE_Slide UMETA(DisplayName = "Slide"),
-	CMOVE_Vault UMETA(DisplayName = "Vault"),
 	CMOVE_MAX UMETA(Hidden)
 };
 
@@ -40,13 +39,29 @@ struct FVaultMoveParams
 	GENERATED_BODY()
 
 	UPROPERTY(EditDefaultsOnly)
-	float MinSpeed = 350;
+	float MaxDistance = 200;
 	UPROPERTY(EditDefaultsOnly)
-	float EnterImpulse = 500;
+	float ReachHeight = 50;
 	UPROPERTY(EditDefaultsOnly)
-	float GravityForce = 5000;
+	float MinDepth = 30;
 	UPROPERTY(EditDefaultsOnly)
-	float Friction = 1.3f;
+	float MinWallSteepnessAngle = 75;
+	UPROPERTY(EditDefaultsOnly)
+	float MaxSurfaceAngle = 40;
+	UPROPERTY(EditDefaultsOnly)
+	float MaxAlignmentAngle = 45;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* TallVaultMontage;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* TransitionTallVaultMontage;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* ProxyTallVaultMontage;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* ShortVaultMontage;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* TransitionShortVaultMontage;
+	UPROPERTY(EditDefaultsOnly)
+	UAnimMontage* ProxyShortVaultMontage;
 };
 
 
@@ -71,11 +86,18 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void InitializeComponent() override;
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+#pragma region  Movement Flow
 	virtual void UpdateCharacterStateBeforeMovement(float DeltaSeconds) override;
 	virtual void UpdateCharacterStateAfterMovement(float DeltaSeconds) override;
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
 	virtual void PhysCustom(float DeltaTime, int32 Iterations) override;
+#pragma endregion
+
+#pragma region  Movement Helpers
 	virtual bool IsMovingOnGround() const override;
 	virtual bool CanAttemptJump() const override;
 	virtual float GetMaxBrakingDeceleration() const override;
@@ -88,6 +110,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsInCustomMovementMode(ECustomMovementMode InCustomMovementMode) const;
+	UFUNCTION(BlueprintCallable)
+	bool IsInMovementMode(EMovementMode InMovementMode) const;
+#pragma endregion
 
 private:
 	UPROPERTY(Transient)
@@ -102,6 +127,17 @@ protected:
 private:
 	UPROPERTY()
 	bool bWantsToSlide = false;
+
+	//Transient
+	TSharedPtr<FRootMotionSource_MoveToForce> TransitionRMS;
+	UPROPERTY(Transient)
+	FString TransitionName;
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> TransitionQueuedMontage;
+	UPROPERTY(Transient)
+	float TransitionQueuedMontageSpeed;
+	UPROPERTY(Transient)
+	int TransitionRMS_ID;
 
 public:
 	UFUNCTION(BlueprintCallable)
