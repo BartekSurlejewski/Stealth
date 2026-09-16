@@ -70,8 +70,6 @@ protected:
 	/*Properties*/
 protected:
 #pragma region Components
-	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
-	// TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
