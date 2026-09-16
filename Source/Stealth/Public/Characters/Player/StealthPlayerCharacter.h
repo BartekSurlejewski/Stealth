@@ -37,9 +37,12 @@ public:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 	virtual float PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1, FName StartSectionName = NAME_None) override;
+
+	UFUNCTION(BlueprintCallable)
+	void SetCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 	UFUNCTION(BlueprintCallable)
 	AActor* TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const;
-	// UFUNCTION(BlueprintCallable)
+
 	FCollisionQueryParams GetIgnoreCharacterParams() const;
 
 public:
@@ -65,8 +68,8 @@ protected:
 	/*Properties*/
 protected:
 #pragma region Components
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
+	// TObjectPtr<USkeletalMeshComponent> FirstPersonMesh;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Player|Components", meta = (AllowPrivateAccess = "true"))

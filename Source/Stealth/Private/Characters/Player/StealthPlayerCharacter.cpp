@@ -24,16 +24,17 @@ AStealthPlayerCharacter::AStealthPlayerCharacter(const FObjectInitializer& Objec
 	GetCapsuleComponent()->InitCapsuleSize(55.0f, 96.0f);
 	RootComponent = GetCapsuleComponent();
 
-	FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
-	FirstPersonMesh->SetupAttachment(GetMesh());
-	FirstPersonMesh->SetOnlyOwnerSee(false);
-	FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
-	FirstPersonMesh->SetCollisionProfileName(FName("BlockAll"));
-	FirstPersonMesh->SetCollisionObjectType(ECC_Pawn);
+	// FirstPersonMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("First Person Mesh"));
+	// FirstPersonMesh->SetupAttachment(GetMesh());
+	// FirstPersonMesh->SetOnlyOwnerSee(false);
+	// FirstPersonMesh->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::FirstPerson;
+	// FirstPersonMesh->SetCollisionProfileName(FName("BlockAll"));
+	// FirstPersonMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// FirstPersonMesh->SetCollisionObjectType(ECC_Pawn);
 
 	// Create the Camera Component	
 	FirstPersonCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
-	FirstPersonCamera->SetupAttachment(FirstPersonMesh, FName("head"));
+	FirstPersonCamera->SetupAttachment(GetMesh(), FName("head"));
 	FirstPersonCamera->SetRelativeLocationAndRotation(FVector(-2.8f, 5.89f, 0.0f), FRotator(0.0f, 90.0f, -90.0f));
 	FirstPersonCamera->bUsePawnControlRotation = true;
 	FirstPersonCamera->bEnableFirstPersonFieldOfView = true;
@@ -42,13 +43,17 @@ AStealthPlayerCharacter::AStealthPlayerCharacter(const FObjectInitializer& Objec
 	FirstPersonCamera->FirstPersonScale = 0.6f;
 
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::None;
-	GetMesh()->SetOwnerNoSee(true);
+	GetMesh()->SetOwnerNoSee(false);
+	GetMesh()->SetOnlyOwnerSee(false);
 	GetMesh()->SetCastShadow(true);
 	GetMesh()->SetCastHiddenShadow(true);
 	GetMesh()->bCastDynamicShadow = true;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionObjectType(ECC_Pawn);
 
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
+	GetCapsuleComponent()->SetCollisionProfileName(FName("BlockAll"));
+	GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
 
 	// Configure character movement
 	StealthCharacterMovementComponent = Cast<UStealthCharacterMovementComponent>(GetCharacterMovement());
@@ -116,21 +121,40 @@ void AStealthPlayerCharacter::NotifyActorEndOverlap(AActor* OtherActor)
 
 float AStealthPlayerCharacter::PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate, FName StartSectionName)
 {
-	UAnimInstance* ThirdPersonMeshAnimInstance = (GetMesh()) ? GetMesh()->GetAnimInstance() : nullptr;
-	UAnimInstance* FirstPersonMeshAnimInstance = FirstPersonMesh ? FirstPersonMesh->GetAnimInstance() : nullptr;
+	// UAnimInstance* ThirdPersonMeshAnimInstance = (GetMesh()) ? GetMesh()->GetAnimInstance() : nullptr;
+	// UAnimInstance* FirstPersonMeshAnimInstance = FirstPersonMesh ? FirstPersonMesh->GetAnimInstance() : nullptr;
+	UAnimInstance* MeshAnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr;
 
-	if (AnimMontage && ThirdPersonMeshAnimInstance && FirstPersonMeshAnimInstance)
+	// if (AnimMontage && ThirdPersonMeshAnimInstance && FirstPersonMeshAnimInstance)
+	// {
+	// 	float const Duration = ThirdPersonMeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
+	// 	FirstPersonMeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
+	//
+	// 	if (Duration > 0.f)
+	// 	{
+	// 		// Start at a given Section.
+	// 		if (StartSectionName != NAME_None)
+	// 		{
+	// 			ThirdPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
+	// 			FirstPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
+	// 		}
+	//
+	// 		return Duration;
+	// 	}
+	// }
+
+	if (AnimMontage && GetMesh())
 	{
-		float const Duration = ThirdPersonMeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
-		FirstPersonMeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
+		float const Duration = MeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
+		// MeshAnimInstance->Montage_Play(AnimMontage, InPlayRate);
 
 		if (Duration > 0.f)
 		{
 			// Start at a given Section.
 			if (StartSectionName != NAME_None)
 			{
-				ThirdPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
-				FirstPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
+				MeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
+				// FirstPersonMeshAnimInstance->Montage_JumpToSection(StartSectionName, AnimMontage);
 			}
 
 			return Duration;
@@ -138,6 +162,12 @@ float AStealthPlayerCharacter::PlayAnimMontage(class UAnimMontage* AnimMontage, 
 	}
 
 	return 0.f;
+}
+
+void AStealthPlayerCharacter::SetCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	// FirstPersonMesh->SetCollisionEnabled(CollisionEnabled);
+	GetCapsuleComponent()->SetCollisionEnabled(CollisionEnabled);
 }
 
 AActor* AStealthPlayerCharacter::TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const

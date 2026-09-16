@@ -38,32 +38,63 @@ struct FVaultMoveParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly)
-	float MaxDistance = 200;
-	UPROPERTY(EditDefaultsOnly)
-	float ReachHeight = 50;
-	UPROPERTY(EditDefaultsOnly)
-	float MinDepth = 30;
-	UPROPERTY(EditDefaultsOnly)
-	float MinWallSteepnessAngle = 75;
-	UPROPERTY(EditDefaultsOnly)
-	float MaxSurfaceAngle = 40;
-	UPROPERTY(EditDefaultsOnly)
-	float MaxAlignmentAngle = 45;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* TallVaultMontage;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* TransitionTallVaultMontage;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* ProxyTallVaultMontage;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* ShortVaultMontage;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* TransitionShortVaultMontage;
-	UPROPERTY(EditDefaultsOnly)
-	UAnimMontage* ProxyShortVaultMontage;
-};
+	/**Determines how many traces will be fired to find vaultable obstacle.
+	 * Keep this value as low as possible for performance reasons.
+	 */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "1"))
+	int VaultTracesCount = 9;
 
+	/** Max forward trace distance (cm) used to detect a vaultable obstacle ahead.
+	 *  Scales with forward speed (clamped between CapsuleRadius+30 and this value).
+	 *  Also used as the divisor when computing transition duration, so it indirectly
+	 *  controls how "snappy" long vaults feel. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", Units = "cm"))
+	float MaxDistance = 200;
+
+	/** Extra height (cm) above the character's full standing height that counts as
+  *  "reachable". Effectively sets the tallest obstacle the character can vault:
+  *  MaxVaultHeight = CapsuleFullHeight + ReachHeight. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", Units = "cm"))
+	float ReachHeight = 50;
+
+	/**  The threshold of how much taller (or lower) than the character's capsule a wall needs to be to be treated as tall */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0"))
+	float TallVaultHeightThresholdMultiplier = 1.2f;
+
+	/** Minimum steepness (degrees from horizontal) a hit surface must have to count
+	*  as a vaultable "wall" rather than a ramp/floor. Lower = also accepts shallower
+	*  sloped surfaces as vault walls; higher = requires a near-vertical wall. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "15", ClampMax = "90", Units = "deg"))
+	float MinWallSteepnessAngle = 75;
+
+	/** Maximum steepness (degrees from horizontal) allowed for the TOP surface the
+	*  character will land on. Surfaces tilted more than this are rejected as unsafe
+	*  landing spots (e.g. a sloped rooftop). */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", ClampMax = "90", Units = "deg"))
+	float MaxSurfaceAngle = 40;
+
+	/** Maximum angle (degrees) between the character's facing direction and the
+   *  wall's surface normal for a vault to trigger. Lower values require a more
+   *  direct, head-on approach. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", ClampMax = "90", Units = "deg"))
+	float MaxAlignmentAngle = 45;
+
+	/** For low/short obstacles only: how far (cm) past the obstacle's front face to
+  *  probe for a walkable floor. If found and clear, the character jumps straight
+  *  through/over the obstacle instead of mounting on top of it. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", Units = "cm"))
+	float JumpThroughDistance = 100;
+
+	/** Minimum duration (seconds) of the root-motion vault transition, even for very
+   *  short vaults. Prevents the move from feeling instant/teleport-y. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", Units = "s"))
+	float MinTransitionTime = 0.1f;
+
+	/** Maximum duration (seconds) of the vault transition, even for very long vaults.
+	*  Prevents the move from feeling sluggish over long distances. */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0", Units = "s"))
+	float MaxTransitionTime = 0.25f;
+};
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCustomMovementModeEntered, ECustomMovementMode, EnteredMovementMode);
 
@@ -121,7 +152,7 @@ private:
 #pragma region Slide
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Custom Movement|Slide")
+	UPROPERTY(EditDefaultsOnly, Category="Stealth Movement|Slide")
 	FSlideMoveParams SlideMoveParams;
 
 private:
@@ -157,7 +188,7 @@ private:
 #pragma region Vault
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Custom Movement|Vault")
+	UPROPERTY(EditDefaultsOnly, Category="Stealth Movement|Vault")
 	FVaultMoveParams VaultMoveParams;
 
 private:

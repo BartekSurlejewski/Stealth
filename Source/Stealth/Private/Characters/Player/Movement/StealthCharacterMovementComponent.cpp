@@ -41,7 +41,10 @@ void UStealthCharacterMovementComponent::TickComponent(float DeltaTime, ELevelTi
 	{
 		if (!TransitionRMS.IsValid() || TransitionRMS->Status.HasFlag(ERootMotionSourceStatusFlags::Finished))
 		{
-			CharacterOwner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			PlayerCharacterOwner->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+			// CharacterOwner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			SetMovementMode(MOVE_Walking);
 			TransitionRMS_ID = (uint16)0;
 		}
 	}
@@ -558,11 +561,10 @@ void UStealthCharacterMovementComponent::SetJumpInputActive(bool bNewIsActive)
 	bIsJumpInputActive = bNewIsActive;
 }
 
-constexpr int VAULT_TRACES_COUNT = 6;
-
 bool UStealthCharacterMovementComponent::TryVault()
 {
-	if (!(IsInMovementMode(MOVE_Walking) && !IsCrouching()) && !IsInMovementMode(MOVE_Falling))
+	const bool bCanVault = (IsInMovementMode(MOVE_Walking) && !IsCrouching()) || IsInMovementMode(MOVE_Falling);
+	if (!bCanVault)
 	{
 		return false;
 	}
@@ -583,13 +585,14 @@ bool UStealthCharacterMovementComponent::TryVault()
 
 	// Check Front Face
 	FHitResult FrontHit;
-	float CheckDistance = FMath::Clamp(Velocity | Fwd, CapsuleRadius + 30, VaultMoveParams.MaxDistance);
+	// float CheckDistance = FMath::Clamp(Velocity | Fwd, CapsuleRadius + 30, VaultMoveParams.MaxDistance);
+	float CheckDistance = FMath::Clamp(Velocity | Fwd, CapsuleRadius, VaultMoveParams.MaxDistance);
 	FVector FrontStart = BaseLoc + FVector::UpVector * (MaxStepHeight - 1);
-	for (int i = 0; i < VAULT_TRACES_COUNT; i++)
+	for (int i = 0; i < VaultMoveParams.VaultTracesCount; i++)
 	{
 		LINE(FrontStart, FrontStart + Fwd * CheckDistance, FColor::Red)
 		if (GetWorld()->LineTraceSingleByProfile(FrontHit, FrontStart, FrontStart + Fwd * CheckDistance, "BlockAll", Params)) break;
-		FrontStart += FVector::UpVector * (2.f * CapsuleHalfHeight - (MaxStepHeight - 1)) / VAULT_TRACES_COUNT - 1;
+		FrontStart += FVector::UpVector * ((2.f * CapsuleHalfHeight - (MaxStepHeight - 1)) / (VaultMoveParams.VaultTracesCount - 1));
 	}
 	if (!FrontHit.IsValidBlockingHit()) return false;
 	float CosWallSteepnessAngle = FrontHit.Normal | FVector::UpVector;
@@ -626,7 +629,7 @@ bool UStealthCharacterMovementComponent::TryVault()
 	SCREEN_LOG(FString::Printf(TEXT("Height: %f"), Height))
 	POINT(SurfaceHit.Location, FColor::Blue);
 
-	if (Height > MaxHeight)
+	if (Height < 0 || Height > MaxHeight)
 	{
 		return false;
 	}
@@ -648,11 +651,10 @@ bool UStealthCharacterMovementComponent::TryVault()
 	SCREEN_LOG("Can Vault")
 
 	// Vault Selection
-	FVector ShortVaultTarget = GetVaultStartLocation(FrontHit, SurfaceHit, false);
 	FVector TallVaultTarget = GetVaultStartLocation(FrontHit, SurfaceHit, true);
 
 	bool bTallVault = false;
-	if (IsInMovementMode(MOVE_Walking) && Height > CapsuleHalfHeight * 2)
+	if (IsInMovementMode(MOVE_Walking) && Height > CapsuleHalfHeight * VaultMoveParams.TallVaultHeightThresholdMultiplier)
 	{
 		bTallVault = true;
 	}
@@ -663,36 +665,58 @@ bool UStealthCharacterMovementComponent::TryVault()
 			bTallVault = true;
 		}
 	}
-	FVector TransitionTarget = bTallVault ? TallVaultTarget : ShortVaultTarget;
-	CAPSULE(TransitionTarget, FColor::Yellow, CapsuleHalfHeight, CapsuleRadius)
+
+	if (!bTallVault)
+	{
+		// If obstacle is low, allow jumping over it
+		FFindFloorResult FloorResult;
+		FindFloor(FrontHit.Location + Fwd * (VaultMoveParams.JumpThroughDistance + CapsuleRadius), FloorResult, false);
+		if (FloorResult.IsWalkableFloor())
+		{
+			// FVector FurtherClearCapLoc = FloorResult.HitResult.Location;
+			FVector FurtherClearCapLoc = FloorResult.HitResult.Location + FVector::UpVector * (CapsuleHalfHeight * 0.8);
+			if (GetWorld()->OverlapAnyTestByProfile(FurtherClearCapLoc, FQuat::Identity, "BlockAll", CapShape, Params))
+			{
+				CAPSULE(FurtherClearCapLoc, FColor::Red, CapsuleHalfHeight, CapsuleRadius)
+			}
+			else
+			{
+				CAPSULE(FurtherClearCapLoc, FColor::Green, CapsuleHalfHeight, CapsuleRadius)
+				ClearCapLoc = FurtherClearCapLoc;
+			}
+		}
+		else
+		{
+			FVector FurtherClearCapLoc = FloorResult.HitResult.Location + FVector::UpVector * (CapsuleHalfHeight);
+			CAPSULE(FurtherClearCapLoc, FColor::Red, CapsuleHalfHeight, CapsuleRadius)
+		}
+	}
 
 	// Perform Transition to Vault
 	CAPSULE(UpdatedComponent->GetComponentLocation(), FColor::Red, CapsuleHalfHeight, CapsuleRadius)
 
 	float UpSpeed = Velocity | FVector::UpVector;
-	float TransDistance = FVector::Dist(TransitionTarget, UpdatedComponent->GetComponentLocation());
+	float TransDistance = FVector::Dist(ClearCapLoc, UpdatedComponent->GetComponentLocation());
 
 	TransitionQueuedMontageSpeed = FMath::GetMappedRangeValueClamped(FVector2D(-500, 750), FVector2D(.9f, 1.2f), UpSpeed);
 	TransitionRMS.Reset();
 	TransitionRMS = MakeShared<FRootMotionSource_MoveToForce>();
 	TransitionRMS->AccumulateMode = ERootMotionAccumulateMode::Override;
 
-	TransitionRMS->Duration = FMath::Clamp(TransDistance / 500.f, .1f, .25f);
+	TransitionRMS->Duration = FMath::Clamp(TransDistance / VaultMoveParams.MaxDistance, VaultMoveParams.MinTransitionTime, VaultMoveParams.MaxTransitionTime);
 	SCREEN_LOG(FString::Printf(TEXT("Duration: %f"), TransitionRMS->Duration))
 	TransitionRMS->StartLocation = UpdatedComponent->GetComponentLocation();
-	// TransitionRMS->TargetLocation = TransitionTarget;
 	TransitionRMS->TargetLocation = ClearCapLoc;
 	TransitionRMS->FinishVelocityParams.Mode = ERootMotionFinishVelocityMode::SetVelocity;
 	TransitionRMS->FinishVelocityParams.SetVelocity = FVector::ZeroVector;
 
 	// Apply Transition Root Motion Source
 	Velocity = FVector::ZeroVector;
-	SetMovementMode(MOVE_Walking);
+	// Disable collision for the duration of the move
+	PlayerCharacterOwner->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetMovementMode(MOVE_Flying);
 	TransitionRMS_ID = ApplyRootMotionSource(TransitionRMS);
 	TransitionName = "Vault";
-
-	// Disable collision for the duration of the move
-	CharacterOwner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndProbe);
 
 	//TODO: Add vault animations
 	// Animations
