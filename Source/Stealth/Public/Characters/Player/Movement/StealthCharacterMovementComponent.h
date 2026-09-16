@@ -96,6 +96,29 @@ struct FVaultMoveParams
 	float MaxTransitionTime = 0.25f;
 };
 
+USTRUCT(BlueprintType)
+struct FFallDamageParams
+{
+	GENERATED_BODY()
+
+	/*
+	 * Below this value no of downward velocity no fall damage will be applied 
+	 */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0"))
+	float MinFallDamageVelocityThreshold = 1000.0f;
+	/*
+	 * Above this value no of downward velocity max fall damage will be applied
+	 */
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0"))
+	float MaxFallDamageVelocityThreshold = 1500.0f;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0"))
+	float MinFallDamage = 0.0f;
+
+	UPROPERTY(EditDefaultsOnly, meta = (ClampMin = "0"))
+	float MaxFallDamage = 100.0f;
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCustomMovementModeEntered, ECustomMovementMode, EnteredMovementMode);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FCustomMovementModeExit, ECustomMovementMode, ExitMovementMode);
@@ -148,6 +171,11 @@ protected:
 private:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<AStealthPlayerCharacter> PlayerCharacterOwner;
+	/*
+	 * Velocity of the character in the previous movement tick
+	 */
+	UPROPERTY(Transient)
+	FVector PreviousVelocity;
 
 #pragma region Slide
 
@@ -204,5 +232,12 @@ private:
 	bool TryVault();
 	UFUNCTION()
 	FVector GetVaultStartLocation(FHitResult FrontHit, FHitResult SurfaceHit, bool bTallVault) const;
+#pragma endregion
+
+#pragma region
+
+private:
+	UPROPERTY(EditDefaultsOnly, Category="Stealth Movement|Fall Damage")
+	FFallDamageParams FallDamageParams;
 #pragma endregion
 };

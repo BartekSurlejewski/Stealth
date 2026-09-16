@@ -39,6 +39,8 @@ public:
 	virtual float PlayAnimMontage(class UAnimMontage* AnimMontage, float InPlayRate = 1, FName StartSectionName = NAME_None) override;
 
 	UFUNCTION(BlueprintCallable)
+	void ApplyDamage(float DamageAmount);
+	UFUNCTION(BlueprintCallable)
 	void SetCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 	UFUNCTION(BlueprintCallable)
 	AActor* TryDropItem(const TSubclassOf<AActor> ItemToDropClass) const;

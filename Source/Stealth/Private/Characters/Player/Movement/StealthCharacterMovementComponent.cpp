@@ -43,7 +43,6 @@ void UStealthCharacterMovementComponent::TickComponent(float DeltaTime, ELevelTi
 		{
 			PlayerCharacterOwner->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-			// CharacterOwner->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 			SetMovementMode(MOVE_Walking);
 			TransitionRMS_ID = (uint16)0;
 		}
@@ -83,6 +82,8 @@ void UStealthCharacterMovementComponent::UpdateCharacterStateBeforeMovement(floa
 
 void UStealthCharacterMovementComponent::UpdateCharacterStateAfterMovement(float DeltaSeconds)
 {
+	PreviousVelocity = Velocity;
+
 	Super::UpdateCharacterStateAfterMovement(DeltaSeconds);
 }
 
@@ -108,6 +109,14 @@ void UStealthCharacterMovementComponent::OnMovementModeChanged(EMovementMode Pre
 	else if (PreviousMovementMode == MOVE_Custom && PreviousCustomMode == CMOVE_Slide)
 	{
 		ExitSlide();
+	}
+
+	if (PreviousMovementMode == MOVE_Falling && IsInMovementMode(MOVE_Walking))
+	{
+		float DamageToApply = FMath::GetMappedRangeValueClamped(FVector2f(FallDamageParams.MinFallDamageVelocityThreshold, FallDamageParams.MaxFallDamageVelocityThreshold),
+		                                                        FVector2f(FallDamageParams.MinFallDamage, FallDamageParams.MaxFallDamage), -PreviousVelocity.Z);
+
+		PlayerCharacterOwner->ApplyDamage(DamageToApply);
 	}
 }
 

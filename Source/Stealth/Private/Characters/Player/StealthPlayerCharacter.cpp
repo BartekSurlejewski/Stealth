@@ -164,6 +164,11 @@ float AStealthPlayerCharacter::PlayAnimMontage(class UAnimMontage* AnimMontage, 
 	return 0.f;
 }
 
+void AStealthPlayerCharacter::ApplyDamage(float DamageAmount)
+{
+	AttributeSet->SetHealth(FMath::Clamp(AttributeSet->GetHealth() - DamageAmount, 0.f, AttributeSet->GetMaxHealth()));
+}
+
 void AStealthPlayerCharacter::SetCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {
 	// FirstPersonMesh->SetCollisionEnabled(CollisionEnabled);
