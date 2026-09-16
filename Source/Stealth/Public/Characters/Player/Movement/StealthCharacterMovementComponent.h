@@ -11,6 +11,7 @@ enum ECustomMovementMode
 {
 	CMOVE_None UMETA(Hidden),
 	CMOVE_Slide UMETA(DisplayName = "Slide"),
+	CMOVE_Climb UMETA(DisplayName = "Climb"),
 	CMOVE_MAX UMETA(Hidden)
 };
 
