@@ -6,7 +6,8 @@ A personal, independent immersive-sim prototype built to learn Unreal Engine 5.7
 ## How To Start
 - Clone the repository
 - Fetch git LFS
-- Start the project using Unreal Engine 5.7
+- Start the project using Unreal Engine 5.8
+- Open "Camp" or "MainMenu" map
 - Start game in editor
 
 ## Controls
