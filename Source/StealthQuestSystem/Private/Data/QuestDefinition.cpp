@@ -33,7 +33,7 @@ EDataValidationResult UQuestDefinition::IsDataValid(class FDataValidationContext
 		if (SeenIDs.Contains(Obj->ObjectiveID))
 		{
 			Context.AddError(FText::Format(
-				NSLOCTEXT("Quest", "DupeID", "Objective ID duplicate: {0}"),
+				NSLOCTEXT("Quest", "DuplicateID", "Objective ID duplicate: {0}"),
 				FText::FromName(Obj->ObjectiveID)));
 			Result = EDataValidationResult::Invalid;
 		}

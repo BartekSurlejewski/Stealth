@@ -5,7 +5,7 @@
 #include "Components/StateTreeAIComponent.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "NpcContextComponent.generated.h"
 
 class UNpcProfile;
@@ -138,7 +138,7 @@ public:
 
 	// Subcomponent accessors
 	UFUNCTION(BlueprintPure, Category = "NPC|Components")
-	UNpcSuspicionComponent* GetSuspicionComponent() const;
+	UNpcPerceptionComponent* GetSuspicionComponent() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Components")
 	UNpcFocusComponent* GetFocusComponent() const;
@@ -184,7 +184,7 @@ protected:
 	TObjectPtr<ANpcAiController> NpcAiController;
 
 	UPROPERTY()
-	mutable TObjectPtr<UNpcSuspicionComponent> SuspicionComponent;
+	mutable TObjectPtr<UNpcPerceptionComponent> SuspicionComponent;
 
 	UPROPERTY()
 	mutable TObjectPtr<UNpcFocusComponent> FocusComponent;

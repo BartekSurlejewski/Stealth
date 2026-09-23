@@ -1,7 +1,7 @@
 #include "Misc/AutomationTest.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
 #include "Characters/NPCs/AI/States/NpcState.h"
-#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Perception/AIPerceptionTypes.h"
@@ -89,7 +89,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcStateOpenClosedExtensibilityTest, "Stealth.
 
 bool FNpcStateOpenClosedExtensibilityTest::RunTest(const FString& Parameters)
 {
-	UNpcSuspicionComponent* SuspicionComp = NewObject<UNpcSuspicionComponent>();
+	UNpcPerceptionComponent* SuspicionComp = NewObject<UNpcPerceptionComponent>();
 	SuspicionComp->InitializeDefaultStates();
 
 	// Verify UNpcState_Fleeing is registered and accessible via tag
@@ -136,7 +136,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcStateSingleSourceOfTruthTest, "Stealth.AI.S
 
 bool FNpcStateSingleSourceOfTruthTest::RunTest(const FString& Parameters)
 {
-	UNpcSuspicionComponent* SuspicionComp = NewObject<UNpcSuspicionComponent>();
+	UNpcPerceptionComponent* SuspicionComp = NewObject<UNpcPerceptionComponent>();
 	SuspicionComp->InitializeDefaultStates();
 
 	// Default state is Unaware

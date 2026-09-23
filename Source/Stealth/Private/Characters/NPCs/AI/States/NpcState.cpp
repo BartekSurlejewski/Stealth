@@ -1,6 +1,6 @@
 #include "Characters/NPCs/AI/States/NpcState.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/Player/StealthPlayerCharacter.h"

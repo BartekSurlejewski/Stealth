@@ -8,7 +8,7 @@
 class UNpcScheduleComponent;
 class UInventoryComponent;
 class UNpcFocusComponent;
-class UNpcSuspicionComponent;
+class UNpcPerceptionComponent;
 struct FGameplayTag;
 class UStateTreeAIComponent;
 class UPlayerExposureSubsystem;
@@ -27,7 +27,7 @@ public:
 	UNpcFocusComponent* GetFocusComponent() const { return FocusComponent; }
 
 	UFUNCTION(BlueprintPure, Category = "AI Components")
-	UNpcSuspicionComponent* GetSuspicionComponent() const { return SuspicionComponent; }
+	UNpcPerceptionComponent* GetSuspicionComponent() const { return NpcPerceptionComponent; }
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
@@ -35,6 +35,8 @@ protected:
 
 	UFUNCTION()
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+	UFUNCTION()
+	void OnTargetPerceptionForgotten(AActor* Actor);
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
@@ -42,7 +44,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UNpcSuspicionComponent> SuspicionComponent;
+	TObjectPtr<UNpcPerceptionComponent> NpcPerceptionComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UNpcFocusComponent> FocusComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")

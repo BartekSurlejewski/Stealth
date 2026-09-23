@@ -1,4 +1,4 @@
-#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
 #include "Characters/NPCs/AI/States/NpcState.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
@@ -6,7 +6,6 @@
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
-#include "AbilitySystemComponent.h"
 #include "Engine/World.h"
 #include "Exposure/PlayerExposureSubsystem.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
@@ -14,14 +13,14 @@
 #include "Messages/StealthMessages.h"
 #include "Perception/AIPerceptionTypes.h"
 
-UNpcSuspicionComponent::UNpcSuspicionComponent()
+UNpcPerceptionComponent::UNpcPerceptionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	PrimaryComponentTick.TickInterval = 0.05f; // 20 Hz ceiling
 }
 
-void UNpcSuspicionComponent::BeginPlay()
+void UNpcPerceptionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -32,7 +31,7 @@ void UNpcSuspicionComponent::BeginPlay()
 	InitializeDefaultStates();
 }
 
-void UNpcSuspicionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void UNpcPerceptionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if (PlayerInRestrictedAreaListenerHandle.IsValid())
 	{
@@ -43,7 +42,7 @@ void UNpcSuspicionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void UNpcSuspicionComponent::InitializeDefaultStates()
+void UNpcPerceptionComponent::InitializeDefaultStates()
 {
 	StateRegistry.Empty();
 
@@ -71,7 +70,7 @@ void UNpcSuspicionComponent::InitializeDefaultStates()
 	}
 }
 
-void UNpcSuspicionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UNpcPerceptionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
@@ -106,7 +105,7 @@ void UNpcSuspicionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	}
 }
 
-ANpcAiController* UNpcSuspicionComponent::GetAiController() const
+ANpcAiController* UNpcPerceptionComponent::GetAiController() const
 {
 	if (!CachedController.IsValid())
 	{
@@ -122,7 +121,7 @@ ANpcAiController* UNpcSuspicionComponent::GetAiController() const
 	return CachedController.Get();
 }
 
-UNpcFocusComponent* UNpcSuspicionComponent::GetFocusComponent() const
+UNpcFocusComponent* UNpcPerceptionComponent::GetFocusComponent() const
 {
 	if (!CachedFocusComponent.IsValid())
 	{
@@ -141,7 +140,7 @@ UNpcFocusComponent* UNpcSuspicionComponent::GetFocusComponent() const
 	return CachedFocusComponent.Get();
 }
 
-UNpcContextComponent* UNpcSuspicionComponent::GetContextComponent() const
+UNpcContextComponent* UNpcPerceptionComponent::GetContextComponent() const
 {
 	if (!CachedContextComponent.IsValid())
 	{
@@ -160,7 +159,7 @@ UNpcContextComponent* UNpcSuspicionComponent::GetContextComponent() const
 	return CachedContextComponent.Get();
 }
 
-AStealthPlayerCharacter* UNpcSuspicionComponent::GetPlayerCharacter() const
+AStealthPlayerCharacter* UNpcPerceptionComponent::GetPlayerCharacter() const
 {
 	if (!CachedPlayerCharacter.IsValid())
 	{
@@ -172,7 +171,7 @@ AStealthPlayerCharacter* UNpcSuspicionComponent::GetPlayerCharacter() const
 	return CachedPlayerCharacter.Get();
 }
 
-bool UNpcSuspicionComponent::IsPlayerPerformingIllegalAction() const
+bool UNpcPerceptionComponent::IsPlayerPerformingIllegalAction() const
 {
 	if (const ULegalitySubsystem* Legality = ULegalitySubsystem::Get(GetWorld()))
 	{
@@ -181,7 +180,7 @@ bool UNpcSuspicionComponent::IsPlayerPerformingIllegalAction() const
 	return false;
 }
 
-UNpcState* UNpcSuspicionComponent::GetStateByTag(const FGameplayTag& StateTag) const
+UNpcState* UNpcPerceptionComponent::GetStateByTag(const FGameplayTag& StateTag) const
 {
 	if (const TObjectPtr<UNpcState>* Found = StateRegistry.Find(StateTag))
 	{
@@ -190,7 +189,7 @@ UNpcState* UNpcSuspicionComponent::GetStateByTag(const FGameplayTag& StateTag) c
 	return nullptr;
 }
 
-void UNpcSuspicionComponent::RegisterState(UNpcState* NewState)
+void UNpcPerceptionComponent::RegisterState(UNpcState* NewState)
 {
 	if (NewState)
 	{
@@ -202,7 +201,7 @@ void UNpcSuspicionComponent::RegisterState(UNpcState* NewState)
 	}
 }
 
-void UNpcSuspicionComponent::UnregisterState(UNpcState* StateToRemove)
+void UNpcPerceptionComponent::UnregisterState(UNpcState* StateToRemove)
 {
 	if (StateToRemove)
 	{
@@ -211,7 +210,7 @@ void UNpcSuspicionComponent::UnregisterState(UNpcState* StateToRemove)
 	}
 }
 
-bool UNpcSuspicionComponent::TransitionToState(UNpcState* NewState)
+bool UNpcPerceptionComponent::TransitionToState(UNpcState* NewState)
 {
 	if (!NewState || CurrentState == NewState)
 	{
@@ -287,7 +286,7 @@ bool UNpcSuspicionComponent::TransitionToState(UNpcState* NewState)
 	return true;
 }
 
-bool UNpcSuspicionComponent::TransitionToStateByTag(const FGameplayTag& StateTag)
+bool UNpcPerceptionComponent::TransitionToStateByTag(const FGameplayTag& StateTag)
 {
 	if (UNpcState* TargetState = GetStateByTag(StateTag))
 	{
@@ -296,7 +295,7 @@ bool UNpcSuspicionComponent::TransitionToStateByTag(const FGameplayTag& StateTag
 	return false;
 }
 
-void UNpcSuspicionComponent::UpdatePerceptionState(float DeltaTime)
+void UNpcPerceptionComponent::UpdatePerceptionState(float DeltaTime)
 {
 	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
 	const bool bHasPlayer = (Player != nullptr);
@@ -325,7 +324,7 @@ void UNpcSuspicionComponent::UpdatePerceptionState(float DeltaTime)
 	}
 }
 
-FNpcStateTickContext UNpcSuspicionComponent::BuildTickContext(float DeltaTime) const
+FNpcStateTickContext UNpcPerceptionComponent::BuildTickContext(float DeltaTime) const
 {
 	FNpcStateTickContext Ctx;
 	Ctx.DeltaTime = DeltaTime;
@@ -368,15 +367,15 @@ FNpcStateTickContext UNpcSuspicionComponent::BuildTickContext(float DeltaTime) c
 	return Ctx;
 }
 
-void UNpcSuspicionComponent::OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus)
+void UNpcPerceptionComponent::OnSightStimulus(const AActor* TargetActor, const FAIStimulus& Stimulus)
 {
-	if (!Actor || Actor != GetPlayerCharacter())
+	if (!TargetActor || TargetActor != GetPlayerCharacter())
 	{
 		//TODO: add support for non-player actors
 		return;
 	}
 
-	FVector SeenActorLocation = Actor->GetActorLocation();
+	FVector SeenActorLocation = TargetActor->GetActorLocation();
 	float DistanceFromActor = FVector::Distance(SeenActorLocation, CachedController->GetPawn()->GetActorLocation());
 
 	if (DistanceFromActor <= CurrentState->GetStateProfile()->AlwaysSeePlayerRange)
@@ -401,7 +400,7 @@ void UNpcSuspicionComponent::OnSightStimulus(const AActor* Actor, const FAIStimu
 	UNpcContextComponent* Context = GetContextComponent();
 	if (CurrentState)
 	{
-		const FGameplayTag TransitionTag = CurrentState->HandleSightStimulus(Context, const_cast<AActor*>(Actor), Stimulus);
+		const FGameplayTag TransitionTag = CurrentState->HandleSightStimulus(Context, const_cast<AActor*>(TargetActor), Stimulus);
 		if (TransitionTag.IsValid() && TransitionTag != CurrentStateTag)
 		{
 			TransitionToStateByTag(TransitionTag);
@@ -409,7 +408,7 @@ void UNpcSuspicionComponent::OnSightStimulus(const AActor* Actor, const FAIStimu
 	}
 }
 
-ENpcNoiseType UNpcSuspicionComponent::ClassifyNoiseStimulus(const FAIStimulus& Stimulus) const
+ENpcNoiseType UNpcPerceptionComponent::ClassifyNoiseStimulus(const FAIStimulus& Stimulus) const
 {
 	if (Stimulus.Tag == StealthAiTags::TAG_Noise_Critical.GetTag().GetTagName())
 	{
@@ -444,7 +443,7 @@ ENpcNoiseType UNpcSuspicionComponent::ClassifyNoiseStimulus(const FAIStimulus& S
 	return ENpcNoiseType::Subtle;
 }
 
-bool UNpcSuspicionComponent::ShouldReactToNoise(ENpcNoiseType NoiseType, const FAIStimulus& Stimulus) const
+bool UNpcPerceptionComponent::ShouldReactToNoise(ENpcNoiseType NoiseType, const FAIStimulus& Stimulus) const
 {
 	if (GetBehaviourState() == ENpcBehaviourState::Combat || GetAlertLevel() == ENpcAlertLevel::Hostile)
 	{
@@ -459,7 +458,7 @@ bool UNpcSuspicionComponent::ShouldReactToNoise(ENpcNoiseType NoiseType, const F
 	return true;
 }
 
-bool UNpcSuspicionComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
+bool UNpcPerceptionComponent::OnHearingStimulus(AActor* TargetActor, const FAIStimulus& Stimulus)
 {
 	if (!Stimulus.WasSuccessfullySensed())
 	{
@@ -472,15 +471,15 @@ bool UNpcSuspicionComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus&
 		return false;
 	}
 
-	const bool bIsPlayer = (Actor != nullptr && Actor == GetPlayerCharacter());
+	const bool bIsPlayer = (TargetActor != nullptr && TargetActor == GetPlayerCharacter());
 	bStimulusIsFromPlayer = bIsPlayer;
-	CurrentStimulusSourceActor = Actor;
+	CurrentStimulusSourceActor = TargetActor;
 	LastHeardSoundLocation = Stimulus.StimulusLocation;
 
 	UNpcContextComponent* Context = GetContextComponent();
 	if (CurrentState)
 	{
-		const FGameplayTag TransitionTag = CurrentState->HandleHearingStimulus(Context, Actor, Stimulus, NoiseType);
+		const FGameplayTag TransitionTag = CurrentState->HandleHearingStimulus(Context, TargetActor, Stimulus, NoiseType);
 		if (TransitionTag.IsValid() && TransitionTag != CurrentStateTag)
 		{
 			TransitionToStateByTag(TransitionTag);
@@ -496,7 +495,10 @@ bool UNpcSuspicionComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus&
 	return true;
 }
 
-void UNpcSuspicionComponent::HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload)
+void UNpcPerceptionComponent::OnPredictionStimulus(AActor* TargetActor, const FAIStimulus& Stimulus) {}
+void UNpcPerceptionComponent::OnTargetPerceptionForgotten(AActor* TargetActor) {}
+
+void UNpcPerceptionComponent::HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload)
 {
 	LastHeardSoundLocation = CrimePayload.CrimeLocation;
 	LastKnownPlayerPos = CrimePayload.CrimeLocation;
@@ -526,7 +528,7 @@ void UNpcSuspicionComponent::HandleCrimeReported(const FAiCrimeEventPayload& Cri
 	}
 }
 
-void UNpcSuspicionComponent::AddSuspicion(float Amount)
+void UNpcPerceptionComponent::AddSuspicion(float Amount)
 {
 	const float PrevSuspicion = CurrentSuspicion;
 	CurrentSuspicion = FMath::Clamp(CurrentSuspicion + Amount, 0.0f, 100.0f);
@@ -537,7 +539,7 @@ void UNpcSuspicionComponent::AddSuspicion(float Amount)
 	}
 }
 
-void UNpcSuspicionComponent::SetSuspicion(float Value)
+void UNpcPerceptionComponent::SetSuspicion(float Value)
 {
 	const float PrevSuspicion = CurrentSuspicion;
 	CurrentSuspicion = FMath::Clamp(Value, 0.0f, 100.0f);
@@ -548,7 +550,7 @@ void UNpcSuspicionComponent::SetSuspicion(float Value)
 	}
 }
 
-void UNpcSuspicionComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
+void UNpcPerceptionComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 {
 	FGameplayTag TargetTag = StealthAiTags::TAG_NPC_State_Unaware;
 	switch (NewAlertLevel)
@@ -571,7 +573,7 @@ void UNpcSuspicionComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 	TransitionToStateByTag(TargetTag);
 }
 
-void UNpcSuspicionComponent::SetBehaviourState(ENpcBehaviourState NewState)
+void UNpcPerceptionComponent::SetBehaviourState(ENpcBehaviourState NewState)
 {
 	FGameplayTag TargetTag = StealthAiTags::TAG_NPC_State_Unaware;
 	switch (NewState)
@@ -597,17 +599,17 @@ void UNpcSuspicionComponent::SetBehaviourState(ENpcBehaviourState NewState)
 	TransitionToStateByTag(TargetTag);
 }
 
-ENpcAlertLevel UNpcSuspicionComponent::GetAlertLevel() const
+ENpcAlertLevel UNpcPerceptionComponent::GetAlertLevel() const
 {
 	return CurrentState ? CurrentState->GetAlertLevel() : ENpcAlertLevel::Unaware;
 }
 
-ENpcBehaviourState UNpcSuspicionComponent::GetBehaviourState() const
+ENpcBehaviourState UNpcPerceptionComponent::GetBehaviourState() const
 {
 	return CurrentState ? CurrentState->GetBehaviourState() : ENpcBehaviourState::Routine;
 }
 
-float UNpcSuspicionComponent::CalculatePlayerExposureMultiplier() const
+float UNpcPerceptionComponent::CalculatePlayerExposureMultiplier() const
 {
 	if (const UWorld* World = GetWorld())
 	{
@@ -619,7 +621,7 @@ float UNpcSuspicionComponent::CalculatePlayerExposureMultiplier() const
 	return 1.0f;
 }
 
-bool UNpcSuspicionComponent::IsLookingDirectlyAtPlayer(const AStealthPlayerCharacter* Player) const
+bool UNpcPerceptionComponent::IsLookingDirectlyAtPlayer(const AStealthPlayerCharacter* Player) const
 {
 	if (!Player)
 	{

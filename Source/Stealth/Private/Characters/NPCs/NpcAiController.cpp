@@ -2,12 +2,12 @@
 
 #include "Characters/NPCs/NpcCharacter.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/Schedule/NpcScheduleComponent.h"
-#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Inventory/InventoryComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Prediction.h"
 #include "Perception/AISense_Sight.h"
 
 
@@ -16,7 +16,7 @@ ANpcAiController::ANpcAiController()
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
 	StateTreeAIComponent = CreateDefaultSubobject<UStateTreeAIComponent>("State Tree AI Component");
 	NpcInventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
-	SuspicionComponent = CreateDefaultSubobject<UNpcSuspicionComponent>("Suspicion Component");
+	NpcPerceptionComponent = CreateDefaultSubobject<UNpcPerceptionComponent>("Suspicion Component");
 	FocusComponent = CreateDefaultSubobject<UNpcFocusComponent>("Focus Component");
 }
 
@@ -32,6 +32,7 @@ void ANpcAiController::OnPossess(APawn* InPawn)
 	if (PerceptionComponent)
 	{
 		PerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &ANpcAiController::OnTargetPerceptionUpdated);
+		PerceptionComponent->OnTargetPerceptionForgotten.AddDynamic(this, &ANpcAiController::OnTargetPerceptionForgotten);
 	}
 }
 
@@ -40,6 +41,7 @@ void ANpcAiController::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (PerceptionComponent)
 	{
 		PerceptionComponent->OnTargetPerceptionUpdated.RemoveAll(this);
+		PerceptionComponent->OnTargetPerceptionForgotten.RemoveAll(this);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -49,16 +51,25 @@ void ANpcAiController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 {
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
-		if (SuspicionComponent)
+		if (NpcPerceptionComponent)
 		{
-			SuspicionComponent->OnSightStimulus(Actor, Stimulus);
+			NpcPerceptionComponent->OnSightStimulus(Actor, Stimulus);
 		}
 	}
 	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
 	{
-		if (SuspicionComponent)
+		if (NpcPerceptionComponent)
 		{
-			SuspicionComponent->OnHearingStimulus(Actor, Stimulus);
+			NpcPerceptionComponent->OnHearingStimulus(Actor, Stimulus);
+		}
+	}
+	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Prediction>())
+	{
+		if (NpcPerceptionComponent)
+		{
+			NpcPerceptionComponent->OnPredictionStimulus(Actor, Stimulus);
 		}
 	}
 }
+
+void ANpcAiController::OnTargetPerceptionForgotten(AActor* Actor) {}

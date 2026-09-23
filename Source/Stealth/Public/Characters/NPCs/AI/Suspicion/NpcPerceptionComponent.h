@@ -5,7 +5,7 @@
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Characters/NPCs/AI/States/NpcState.h"
-#include "NpcSuspicionComponent.generated.h"
+#include "NpcPerceptionComponent.generated.h"
 
 class UNpcProfile;
 class AStealthPlayerCharacter;
@@ -16,11 +16,17 @@ struct FBooleanMessage;
 struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcSuspicionChanged, float, NewSuspicion);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnNpcPlayerInSightChanged, bool, IsPlayerInDirectSight);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcAlertStateEvaluated, const FGameplayTag&, TargetStateTag, ENpcAlertLevel, NewAlertLevel);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcNoiseHeard, ENpcNoiseType, NoiseType, const FVector&, NoiseLocation);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
 
 /**
@@ -29,12 +35,12 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplay
  * and state transition dispatching.
  */
 UCLASS(ClassGroup = "NPC|Suspicion", meta = (BlueprintSpawnableComponent))
-class STEALTH_API UNpcSuspicionComponent : public UActorComponent
+class STEALTH_API UNpcPerceptionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UNpcSuspicionComponent();
+	UNpcPerceptionComponent();
 
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -63,11 +69,17 @@ public:
 	FOnNpcStateChanged OnNpcStateChanged;
 
 	// Perception & Stimulus Handlers
-	UFUNCTION()
-	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus);
+	UFUNCTION(Category = "NPC|Suspicion")
+	virtual void OnSightStimulus(const AActor* TargetActor, const FAIStimulus& Stimulus);
 
-	UFUNCTION(BlueprintCallable, Category = "NPC|Suspicion")
-	virtual bool OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+	UFUNCTION(Category = "NPC|Suspicion")
+	virtual bool OnHearingStimulus(AActor* TargetActor, const FAIStimulus& Stimulus);
+
+	UFUNCTION(Category = "NPC|Suspicion")
+	virtual void OnPredictionStimulus(AActor* TargetActor, const FAIStimulus& Stimulus);
+
+	UFUNCTION(Category = "NPC|Suspicion")
+	virtual void OnTargetPerceptionForgotten(AActor* TargetActor);
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Suspicion")
 	ENpcNoiseType ClassifyNoiseStimulus(const FAIStimulus& Stimulus) const;

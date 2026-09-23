@@ -9,7 +9,7 @@
 #include "NpcState.generated.h"
 
 class UNpcContextComponent;
-class UNpcSuspicionComponent;
+class UNpcPerceptionComponent;
 class UNpcState;
 class UAnimMontage;
 

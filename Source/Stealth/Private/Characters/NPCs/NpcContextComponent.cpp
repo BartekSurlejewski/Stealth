@@ -5,7 +5,7 @@
 #include "Characters/NPCs/NpcCharacter.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/Suspicion/NpcSuspicionComponent.h"
+#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "Characters/Player/StealthPlayerCharacter.h"
 #include "Engine/World.h"
 #include "GameFramework/GameplayMessageSubsystem.h"
@@ -68,7 +68,7 @@ void UNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UNpcContextComponent::BindToSubcomponents()
 {
-	UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent();
+	UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent();
 	if (SuspicionComp)
 	{
 		if (Profile && !SuspicionComp->GetProfile())
@@ -89,17 +89,17 @@ void UNpcContextComponent::BindToSubcomponents()
 	}
 }
 
-UNpcSuspicionComponent* UNpcContextComponent::GetSuspicionComponent() const
+UNpcPerceptionComponent* UNpcContextComponent::GetSuspicionComponent() const
 {
 	if (!SuspicionComponent)
 	{
 		if (GetOwner())
 		{
-			SuspicionComponent = GetOwner()->FindComponentByClass<UNpcSuspicionComponent>();
+			SuspicionComponent = GetOwner()->FindComponentByClass<UNpcPerceptionComponent>();
 		}
 		if (!SuspicionComponent && NpcAiController)
 		{
-			SuspicionComponent = NpcAiController->FindComponentByClass<UNpcSuspicionComponent>();
+			SuspicionComponent = NpcAiController->FindComponentByClass<UNpcPerceptionComponent>();
 		}
 	}
 	return SuspicionComponent;
@@ -124,7 +124,7 @@ UNpcFocusComponent* UNpcContextComponent::GetFocusComponent() const
 void UNpcContextComponent::SetProfile(UNpcProfile* InProfile)
 {
 	Profile = InProfile;
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->SetProfile(InProfile);
 	}
@@ -142,7 +142,7 @@ bool UNpcContextComponent::IsPlayerPerformingIllegalAction() const
 
 FGameplayTag UNpcContextComponent::GetCurrentStateTag() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetCurrentStateTag();
 	}
@@ -151,7 +151,7 @@ FGameplayTag UNpcContextComponent::GetCurrentStateTag() const
 
 float UNpcContextComponent::GetSuspicion() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetSuspicion();
 	}
@@ -160,7 +160,7 @@ float UNpcContextComponent::GetSuspicion() const
 
 float UNpcContextComponent::GetAwareness() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetAwareness();
 	}
@@ -170,7 +170,7 @@ float UNpcContextComponent::GetAwareness() const
 
 ENpcAlertLevel UNpcContextComponent::GetAlertLevel() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetAlertLevel();
 	}
@@ -179,7 +179,7 @@ ENpcAlertLevel UNpcContextComponent::GetAlertLevel() const
 
 ENpcBehaviourState UNpcContextComponent::GetBehaviourState() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetBehaviourState();
 	}
@@ -188,7 +188,7 @@ ENpcBehaviourState UNpcContextComponent::GetBehaviourState() const
 
 bool UNpcContextComponent::HasPlayerLineOfSight() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->HasPlayerLineOfSight();
 	}
@@ -197,7 +197,7 @@ bool UNpcContextComponent::HasPlayerLineOfSight() const
 
 bool UNpcContextComponent::EffectivelySeesPlayer() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->EffectivelySeesPlayer();
 	}
@@ -206,7 +206,7 @@ bool UNpcContextComponent::EffectivelySeesPlayer() const
 
 const FVector& UNpcContextComponent::GetLastKnownPlayerPos() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetLastKnownPlayerPos();
 	}
@@ -215,7 +215,7 @@ const FVector& UNpcContextComponent::GetLastKnownPlayerPos() const
 
 const FVector& UNpcContextComponent::GetLastHeardSoundLocation() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetLastHeardSoundLocation();
 	}
@@ -259,7 +259,7 @@ void UNpcContextComponent::ClearFocus(ENpcFocusPriority MinimumPriorityToClear)
 
 void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->OnSightStimulus(Actor, Stimulus);
 	}
@@ -267,7 +267,7 @@ void UNpcContextComponent::OnSightStimulus(const AActor* Actor, const FAIStimulu
 
 bool UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->OnHearingStimulus(Actor, Stimulus);
 	}
@@ -276,7 +276,7 @@ bool UNpcContextComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& S
 
 void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->HandleCrimeReported(CrimePayload);
 	}
@@ -285,7 +285,7 @@ void UNpcContextComponent::HandleCrimeReported(const FAiCrimeEventPayload& Crime
 
 void UNpcContextComponent::AddSuspicion(float Amount)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->AddSuspicion(Amount);
 	}
@@ -293,7 +293,7 @@ void UNpcContextComponent::AddSuspicion(float Amount)
 
 UNpcState* UNpcContextComponent::GetCurrentState() const
 {
-	if (const UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (const UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		return SuspicionComp->GetCurrentState();
 	}
@@ -302,7 +302,7 @@ UNpcState* UNpcContextComponent::GetCurrentState() const
 
 void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->SetAlertLevel(NewAlertLevel);
 	}
@@ -310,7 +310,7 @@ void UNpcContextComponent::SetAlertLevel(ENpcAlertLevel NewAlertLevel)
 
 void UNpcContextComponent::SetBehaviourState(ENpcBehaviourState NewState)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->SetBehaviourState(NewState);
 	}
@@ -318,7 +318,7 @@ void UNpcContextComponent::SetBehaviourState(ENpcBehaviourState NewState)
 
 void UNpcContextComponent::SetNpcState(const FGameplayTag& NewStateTag)
 {
-	if (UNpcSuspicionComponent* SuspicionComp = GetSuspicionComponent())
+	if (UNpcPerceptionComponent* SuspicionComp = GetSuspicionComponent())
 	{
 		SuspicionComp->TransitionToStateByTag(NewStateTag);
 	}
