@@ -121,7 +121,7 @@ public:
 public:
 	UFUNCTION(BlueprintCallable, Category="Registry|Player")
 	AStealthPlayerCharacter* GetPlayerCharacter() const;
-	
+
 	/**
 	 * Get complete NPC entry (O(1))
 	 */
@@ -156,7 +156,6 @@ public:
 	 * LOOKUPS: By Character (Reverse Lookup)
 	 *=========================================================================*/
 public:
-
 	/**
 	 * Get GUID from character (O(1) via cached map)
 	 */
@@ -210,11 +209,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	int32 GetNpcCount() const { return NpcRegistry.Num(); }
-
-	// Reverse lookup: Controller → GUID (O(1))
-private:
-	UPROPERTY()
-	TMap<TObjectPtr<ANpcAiController>, FGuid> ControllerToGuidMap;
 
 	/*=========================================================================
 	 * SPATIAL GRID (uniform grid hash for radius queries)
@@ -317,6 +311,10 @@ private:
 	// Reverse lookup: Character → GUID (for O(1) reverse lookup)
 	UPROPERTY()
 	TMap<TObjectPtr<ANpcCharacter>, FGuid> CharacterToGuidMap;
+
+	// Reverse lookup: Controller → GUID (O(1))
+	UPROPERTY()
+	TMap<TObjectPtr<ANpcAiController>, FGuid> ControllerToGuidMap;
 
 	// Reverse lookup: Inventory → GUID
 	UPROPERTY()

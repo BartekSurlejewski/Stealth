@@ -16,6 +16,9 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 	TObjectPtr<UNpcContextComponent> NpcContext = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
+	FStateTreeAiPerceptionData PerceptionSnapshot;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
 	FGameplayTag CurrentStateTag;
 
 	UPROPERTY(EditAnywhere, Category = "Output")

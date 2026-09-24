@@ -1,22 +1,26 @@
 #include "Characters/NPCs/NpcAiController.h"
 
 #include "Characters/NPCs/NpcCharacter.h"
+#include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
+#include "Characters/NPCs/AI/Perception/NpcSensorComponent.h"
+#include "Characters/NPCs/AI/Perception/NpcAwarenessComponent.h"
 #include "Components/StateTreeAIComponent.h"
 #include "Inventory/InventoryComponent.h"
 #include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISense_Hearing.h"
 #include "Perception/AISense_Prediction.h"
 #include "Perception/AISense_Sight.h"
-
+#include "Perception/AISense_Touch.h"
+#include "Perception/AISense_Damage.h"
 
 ANpcAiController::ANpcAiController()
 {
 	PerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>("Perception Component");
 	StateTreeAIComponent = CreateDefaultSubobject<UStateTreeAIComponent>("State Tree AI Component");
 	NpcInventoryComponent = CreateDefaultSubobject<UInventoryComponent>("Inventory Component");
-	NpcPerceptionComponent = CreateDefaultSubobject<UNpcPerceptionComponent>("Suspicion Component");
+	SensorComponent = CreateDefaultSubobject<UNpcSensorComponent>("Sensor Component");
+	AwarenessComponent = CreateDefaultSubobject<UNpcAwarenessComponent>("Awareness Component");
 	FocusComponent = CreateDefaultSubobject<UNpcFocusComponent>("Focus Component");
 }
 
@@ -51,25 +55,44 @@ void ANpcAiController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stim
 {
 	if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 	{
-		if (NpcPerceptionComponent)
+		if (SensorComponent)
 		{
-			NpcPerceptionComponent->OnSightStimulus(Actor, Stimulus);
+			SensorComponent->OnSightStimulus(Actor, Stimulus);
 		}
 	}
 	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
 	{
-		if (NpcPerceptionComponent)
+		if (SensorComponent)
 		{
-			NpcPerceptionComponent->OnHearingStimulus(Actor, Stimulus);
+			SensorComponent->OnHearingStimulus(Actor, Stimulus);
 		}
 	}
 	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Prediction>())
 	{
-		if (NpcPerceptionComponent)
+		if (SensorComponent)
 		{
-			NpcPerceptionComponent->OnPredictionStimulus(Actor, Stimulus);
+			SensorComponent->OnPredictionStimulus(Actor, Stimulus);
+		}
+	}
+	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Touch>())
+	{
+		if (SensorComponent)
+		{
+			SensorComponent->OnTouchStimulus(Actor, Stimulus);
+		}
+	}
+	else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Damage>())
+	{
+		if (SensorComponent)
+		{
+			SensorComponent->OnDamageStimulus(Actor, Stimulus);
 		}
 	}
 }
 
 void ANpcAiController::OnTargetPerceptionForgotten(AActor* Actor) {}
+
+UNpcContextComponent* ANpcAiController::GetContextComponent() const
+{
+	return FindComponentByClass<UNpcContextComponent>();
+}

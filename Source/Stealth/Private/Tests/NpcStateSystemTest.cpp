@@ -1,7 +1,7 @@
 #include "Misc/AutomationTest.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/States/NpcState.h"
-#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
+#include "Characters/NPCs/AI/Perception/NpcSensorComponent.h"
+#include "Characters/NPCs/AI/Perception/NpcAwarenessComponent.h"
 #include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Perception/AIPerceptionTypes.h"
@@ -85,73 +85,61 @@ bool FNpcPlayerAttentionGatingTest::RunTest(const FString& Parameters)
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcStateOpenClosedExtensibilityTest, "Stealth.AI.State.OpenClosedExtensibility", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcSuspicionModesTest, "Stealth.AI.Awareness.SuspicionModes", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FNpcStateOpenClosedExtensibilityTest::RunTest(const FString& Parameters)
+bool FNpcSuspicionModesTest::RunTest(const FString& Parameters)
 {
-	UNpcPerceptionComponent* SuspicionComp = NewObject<UNpcPerceptionComponent>();
-	SuspicionComp->InitializeDefaultStates();
+	UNpcAwarenessComponent* AwarenessComp = NewObject<UNpcAwarenessComponent>();
 
-	// Verify UNpcState_Fleeing is registered and accessible via tag
-	UNpcState* FleeingState = SuspicionComp->GetStateByTag(StealthAiTags::TAG_NPC_State_Fleeing);
-	TestNotNull(TEXT("UNpcState_Fleeing should be retrieved by TAG_NPC_State_Fleeing"), FleeingState);
+	// Test SetPerceptionTuningDirect
+	AwarenessComp->SetPerceptionTuningDirect(ENpcSuspicionMode::Normal, 1.2f, 0.8f);
+	TestTrue(TEXT("Tuning mode should be Normal"), AwarenessComp->GetTuningParams().Mode == ENpcSuspicionMode::Normal);
+	TestEqual(TEXT("Gain multiplier should be 1.2"), AwarenessComp->GetTuningParams().SuspicionGainMultiplier, 1.2f);
+	TestEqual(TEXT("Decay multiplier should be 0.8"), AwarenessComp->GetTuningParams().SuspicionDecayMultiplier, 0.8f);
 
-	const bool bTransitioned = SuspicionComp->TransitionToStateByTag(StealthAiTags::TAG_NPC_State_Fleeing);
-	TestTrue(TEXT("Should transition cleanly to UNpcState_Fleeing"), bTransitioned);
-	TestTrue(TEXT("Current state tag must be TAG_NPC_State_Fleeing"), SuspicionComp->GetCurrentStateTag().MatchesTagExact(StealthAiTags::TAG_NPC_State_Fleeing));
+	// Test SetSuspicion clamp
+	AwarenessComp->SetSuspicion(150.0f);
+	TestEqual(TEXT("Suspicion clamped to 100"), AwarenessComp->GetSuspicion(), 100.0f);
+
+	AwarenessComp->SetSuspicion(-50.0f);
+	TestEqual(TEXT("Suspicion clamped to 0"), AwarenessComp->GetSuspicion(), 0.0f);
+
+	AwarenessComp->AddSuspicion(50.0f);
+	TestEqual(TEXT("Suspicion after add should be 50"), AwarenessComp->GetSuspicion(), 50.0f);
 
 	return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcLegalitySuspicionGatingTest, "Stealth.AI.Suspicion.LegalityGating", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter)
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcContextStateMappingTest, "Stealth.AI.Context.StateMapping", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter)
 
-bool FNpcLegalitySuspicionGatingTest::RunTest(const FString& Parameters)
+bool FNpcContextStateMappingTest::RunTest(const FString& Parameters)
 {
-	UNpcState_Unaware* UnawareState = NewObject<UNpcState_Unaware>();
-
-	// Context: Player is in direct sight and focused, but NOT performing illegal action
-	FNpcStateTickContext LegalCtx;
-	LegalCtx.DeltaTime = 0.05f;
-	LegalCtx.bHasLineOfSight = true;
-	LegalCtx.bIsFocusingOnPlayer = true;
-	LegalCtx.bIsLookingDirectlyAtPlayer = true;
-	LegalCtx.bIsPlayerPerformingIllegalAction = false;
-	LegalCtx.BaseGainRateSight = 40.0f;
-	LegalCtx.BaseDecayRate = 8.0f;
-
-	const float LegalDelta = UnawareState->GetSuspicionDelta(LegalCtx);
-	TestTrue(TEXT("Suspicion delta must not increase when player is not performing illegal action"), LegalDelta <= 0.0f);
-
-	// Context: Player is performing illegal action
-	FNpcStateTickContext IllegalCtx = LegalCtx;
-	IllegalCtx.bIsPlayerPerformingIllegalAction = true;
-
-	const float IllegalDelta = UnawareState->GetSuspicionDelta(IllegalCtx);
-	TestTrue(TEXT("Suspicion delta must increase when player is performing illegal action"), IllegalDelta > 0.0f);
-
-	return true;
-}
-
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FNpcStateSingleSourceOfTruthTest, "Stealth.AI.State.SingleSourceOfTruth", EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::ProductFilter)
-
-bool FNpcStateSingleSourceOfTruthTest::RunTest(const FString& Parameters)
-{
-	UNpcPerceptionComponent* SuspicionComp = NewObject<UNpcPerceptionComponent>();
-	SuspicionComp->InitializeDefaultStates();
+	UNpcContextComponent* ContextComp = NewObject<UNpcContextComponent>();
 
 	// Default state is Unaware
-	TestTrue(TEXT("Default AlertLevel must resolve from Unaware state"), SuspicionComp->GetAlertLevel() == ENpcAlertLevel::Unaware);
-	TestTrue(TEXT("Default BehaviourState must resolve from Unaware state"), SuspicionComp->GetBehaviourState() == ENpcBehaviourState::Routine);
+	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Unaware);
+	TestTrue(TEXT("Default AlertLevel must resolve to Unaware"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Unaware);
+	TestTrue(TEXT("Default BehaviourState must resolve to Routine"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Routine);
 
-	// Transition to Combat
-	SuspicionComp->TransitionToStateByTag(StealthAiTags::TAG_NPC_State_Combat);
-	TestTrue(TEXT("AlertLevel must resolve to Hostile in Combat state"), SuspicionComp->GetAlertLevel() == ENpcAlertLevel::Hostile);
-	TestTrue(TEXT("BehaviourState must resolve to Combat in Combat state"), SuspicionComp->GetBehaviourState() == ENpcBehaviourState::Combat);
+	// Combat State
+	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Combat);
+	TestTrue(TEXT("AlertLevel must resolve to Hostile in Combat state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Hostile);
+	TestTrue(TEXT("BehaviourState must resolve to Combat in Combat state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Combat);
 
-	// Transition to Alerted
-	SuspicionComp->TransitionToStateByTag(StealthAiTags::TAG_NPC_State_Alerted);
-	TestTrue(TEXT("AlertLevel must resolve to Alerted in Alerted state"), SuspicionComp->GetAlertLevel() == ENpcAlertLevel::Alerted);
-	TestTrue(TEXT("BehaviourState must resolve to Alerted in Alerted state"), SuspicionComp->GetBehaviourState() == ENpcBehaviourState::Alerted);
+	// Alerted State
+	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Alerted);
+	TestTrue(TEXT("AlertLevel must resolve to Alerted in Alerted state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Alerted);
+	TestTrue(TEXT("BehaviourState must resolve to Alerted in Alerted state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Alerted);
+
+	// Search State
+	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Search);
+	TestTrue(TEXT("AlertLevel must resolve to Alerted in Search state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Alerted);
+	TestTrue(TEXT("BehaviourState must resolve to Search in Search state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Search);
+
+	// Suspicious State
+	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Suspicious);
+	TestTrue(TEXT("AlertLevel must resolve to Suspicious in Suspicious state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Suspicious);
+	TestTrue(TEXT("BehaviourState must resolve to Suspicious in Suspicious state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Suspicious);
 
 	return true;
 }

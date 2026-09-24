@@ -5,22 +5,22 @@
 #include "Components/StateTreeAIComponent.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
-#include "Characters/NPCs/AI/Suspicion/NpcPerceptionComponent.h"
 #include "NpcContextComponent.generated.h"
 
 class UNpcProfile;
 class ANpcAiController;
 class AStealthPlayerCharacter;
+class UNpcSensorComponent;
+class UNpcAwarenessComponent;
 struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSuspicionChanged, float, NewSuspicion);
 
 /**
  * Context Component acting as an interface and unified data facade
- * between NPC subsystems/components (Suspicion, Focus, Schedule, Profile)
+ * between NPC subsystems/components (Sensor, Awareness, Focus, Schedule, Profile)
  * and AI systems (StateTrees, Gameplay Messages, external queries).
  */
 UCLASS(Blueprintable, ClassGroup = "NPC")
@@ -56,23 +56,29 @@ public:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	// Perception callbacks (forwarded to SuspicionComponent)
+	// Stimulus Handlers
 	UFUNCTION()
 	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus);
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Perception")
-	virtual bool OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus);
+	virtual void HandleHearingStimulus(ENpcNoiseType NoiseType, const FAIStimulus& Stimulus);
 
 	/** Handle crime report dispatched from HousingSubsystem */
 	UFUNCTION(BlueprintCallable, Category = "NPC|Crime")
 	virtual void HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload);
 
-	// State & Data Accessors for StateTree and external systems
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	FGameplayTag GetCurrentStateTag() const;
+	// State Bookkeeping (Called by StateTree ApplyPerceptionProfile task)
+	UFUNCTION(BlueprintCallable, Category = "NPC|State")
+	void SetCurrentStateTag(const FGameplayTag& NewStateTag);
+
+	UFUNCTION(BlueprintCallable, Category = "NPC|State")
+	void SetCurrentStanceTag(const FGameplayTag& NewStanceTag);
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	UNpcState* GetCurrentState() const;
+	FGameplayTag GetCurrentStateTag() const { return CurrentStateTag; }
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	FGameplayTag GetCurrentStanceTag() const { return CurrentStanceTag; }
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	const FGuid& GetNpcGuid() const { return OwnerNpcGuid; }
@@ -99,13 +105,19 @@ public:
 	bool EffectivelySeesPlayer() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	const FVector& GetLastKnownPlayerPos() const;
+	FVector GetLastKnownPlayerPos() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	const FVector& GetLastHeardSoundLocation() const;
+	FVector GetLastHeardSoundLocation() const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	FVector GetInvestigationTarget() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	const FNpcFocusTarget& GetCurrentFocus() const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|State")
+	const FStateTreeAiPerceptionData& GetPerceptionSnapshot() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	bool IsDistracted() const;
@@ -114,15 +126,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "NPC|State")
 	void AddSuspicion(float Amount);
 
-	/** Single source of truth for NPC state */
 	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void SetNpcState(const FGameplayTag& NewStateTag);
-
-	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void SetAlertLevel(ENpcAlertLevel NewAlertLevel);
-
-	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void SetBehaviourState(ENpcBehaviourState NewState);
+	void SetSuspicion(float NewSuspicion);
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Focus")
 	bool RequestFocus(const FNpcFocusTarget& NewFocusCandidate);
@@ -138,22 +143,22 @@ public:
 
 	// Subcomponent accessors
 	UFUNCTION(BlueprintPure, Category = "NPC|Components")
-	UNpcPerceptionComponent* GetSuspicionComponent() const;
+	UNpcSensorComponent* GetSensorComponent() const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|Components")
+	UNpcAwarenessComponent* GetAwarenessComponent() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Components")
 	UNpcFocusComponent* GetFocusComponent() const;
 
 	UFUNCTION(BlueprintPure, Category = "NPC|Profile")
-	UNpcProfile* GetProfile() const { return Profile; }
+	UNpcProfile* GetNpcProfile() const;
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Profile")
 	void SetProfile(UNpcProfile* InProfile);
 
 protected:
 	void BindToSubcomponents();
-
-	UFUNCTION()
-	void HandleNpcStateChanged(const FGameplayTag& NewStateTag, const FGameplayTag& PreviousStateTag);
 
 	UFUNCTION()
 	void HandleSuspicionChanged(float NewSuspicion);
@@ -164,8 +169,8 @@ protected:
 	UFUNCTION()
 	void HandleFocusChanged(const FNpcFocusTarget& NewFocus, const FNpcFocusTarget& PreviousFocus);
 
-	UFUNCTION()
-	void HandleNoiseHeard(ENpcNoiseType NoiseType, const FVector& NoiseLocation);
+	static ENpcAlertLevel ResolveAlertLevelFromStateTag(const FGameplayTag& StateTag);
+	static ENpcBehaviourState ResolveBehaviourStateFromStateTag(const FGameplayTag& StateTag);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC|Profile")
@@ -173,6 +178,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
 	FGameplayTag CurrentStateTag;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
+	FGameplayTag CurrentStanceTag;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
 	FGuid OwnerNpcGuid;
@@ -184,7 +192,10 @@ protected:
 	TObjectPtr<ANpcAiController> NpcAiController;
 
 	UPROPERTY()
-	mutable TObjectPtr<UNpcPerceptionComponent> SuspicionComponent;
+	mutable TObjectPtr<UNpcSensorComponent> SensorComponent;
+
+	UPROPERTY()
+	mutable TObjectPtr<UNpcAwarenessComponent> AwarenessComponent;
 
 	UPROPERTY()
 	mutable TObjectPtr<UNpcFocusComponent> FocusComponent;

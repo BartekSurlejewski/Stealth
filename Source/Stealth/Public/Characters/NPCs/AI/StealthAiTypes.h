@@ -31,6 +31,8 @@ namespace StealthAiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_FocusCleared);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_SearchExpired);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_ResumeRoutine);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_DamageReceived);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_TouchDetected);
 
 
 	// NPC Activity Tags (Schedule & Routines)
@@ -81,6 +83,47 @@ enum class ENpcBehaviourState : uint8
 using EGuardBehaviourState = ENpcBehaviourState;
 
 /**
+ * Suspicion evaluation mode configured per StateTree state
+ */
+UENUM(BlueprintType)
+enum class ENpcSuspicionMode : uint8
+{
+	Normal UMETA(DisplayName = "Normal"),
+	FrozenWhileVisible UMETA(DisplayName = "Frozen While Visible"),
+	AlwaysDecay UMETA(DisplayName = "Always Decay")
+};
+
+/**
+ * Graded visibility of player from NPC's point of view
+ */
+UENUM(BlueprintType)
+enum class ENpcVisibilityGrade : uint8
+{
+	Hidden UMETA(DisplayName = "Hidden"),
+	Shadowed UMETA(DisplayName = "Shadowed"),
+	PartiallyExposed UMETA(DisplayName = "Partially Exposed"),
+	FullyVisible UMETA(DisplayName = "Fully Visible")
+};
+
+/**
+ * Perception tuning parameters passed from StateTree to UNpcAwarenessComponent
+ */
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcPerceptionTuningParams
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	ENpcSuspicionMode Mode = ENpcSuspicionMode::Normal;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float SuspicionGainMultiplier = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float SuspicionDecayMultiplier = 1.0f;
+};
+
+/**
  * Noise classification for hearing stimuli
  */
 UENUM(BlueprintType)
@@ -121,72 +164,6 @@ enum class ENpcFocusPriority : uint8
 	CombatTarget = 60          // Confirmed hostile player in combat / illegal act seen (highest priority)
 };
 
-/**
- * Immutable per-tick context passed to UNpcState virtual evaluation methods.
- * Keeps state logic free of component-internal lookups and easy to unit test.
- */
-USTRUCT(BlueprintType)
-struct STEALTH_API FNpcStateTickContext
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float DeltaTime = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float CurrentSuspicion = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	bool bHasLineOfSight = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	bool bEffectivelySeesPlayer = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	bool bIsPlayerPerformingIllegalAction = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	bool bIsFocusingOnPlayer = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float FocusAwarenessMultiplier = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float PlayerDistance = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float PlayerExposureMultiplier = 1.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	bool bIsLookingDirectlyAtPlayer = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float LostSightDuration = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float SearchDuration = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float BaseGainRateSight = 40.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float BaseGainRatePeripheral = 15.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float BaseDecayRate = 8.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float AlertThreshold = 75.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float SuspiciousThreshold = 25.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float SightLossGrace = 2.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|State")
-	float AlwaysSeeRange = 100.0f;
-};
 
 /**
  * Snapshot of what the NPC is currently focusing on
@@ -237,6 +214,11 @@ struct STEALTH_API FNpcFocusTarget
 	}
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSuspicionChanged, float, NewSuspicion);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcNoiseHeard, ENpcNoiseType, NoiseType, const FVector&, NoiseLocation);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcFocusChanged, const FNpcFocusTarget&, NewFocus, const FNpcFocusTarget&, PreviousFocus);
+
 /**
  * Perception snapshot passed to StateTree and listeners
  */
@@ -246,19 +228,49 @@ struct FStateTreeAiPerceptionData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float Awareness = 0.0f; // 0.0 to 100.0
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bHasPlayerLineOfSight = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bEffectivelySeesPlayer = false;
+	FVector PlayerPosition = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
 	FVector LastKnownPlayerPosition = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bIsPlayerVisible = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bLineOfSightValid = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bLineOfSightBlocked = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float HearingStimulusStrength = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float Suspicion = 0.0f; // 0.0 to 100.0
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	FVector InvestigationTarget = FVector::ZeroVector;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float LastValidObservationTime = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float CurrentExposure = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	ENpcVisibilityGrade VisibilityGrade = ENpcVisibilityGrade::Hidden;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float DistanceToPlayer = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bInDetectionRange = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bMemoryStale = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bIsFullyVisibleByDistance = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
 	FVector LastHeardSoundLocation = FVector::ZeroVector;
@@ -271,6 +283,19 @@ struct FStateTreeAiPerceptionData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
 	FGameplayTag LastStimulusTag;
+
+	// Legacy / convenience fields
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	float Awareness = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bHasPlayerLineOfSight = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	bool bEffectivelySeesPlayer = false;
 };
 
 /**

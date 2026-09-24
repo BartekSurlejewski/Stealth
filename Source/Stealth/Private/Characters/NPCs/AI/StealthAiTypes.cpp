@@ -21,6 +21,8 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_FocusCleared, "NPC.Event.FocusCleared");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_SearchExpired, "NPC.Event.SearchExpired");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_ResumeRoutine, "NPC.Event.ResumeRoutine");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_DamageReceived, "NPC.Event.DamageReceived");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_TouchDetected, "NPC.Event.TouchDetected");
 
 
 	// NPC Activity Tags (Schedule & Routines)

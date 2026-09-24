@@ -146,6 +146,7 @@ void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVect
 	GlobalAlarmLevel = NewLevel;
 	if (NewLevel >= 2)
 	{
-		SetAlertLevel(ENpcAlertLevel::Hostile);
+		AddSuspicion(100.0f);
+		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_CrimeReported);
 	}
 }

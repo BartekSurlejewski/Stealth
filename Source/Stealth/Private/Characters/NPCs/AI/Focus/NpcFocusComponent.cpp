@@ -119,6 +119,11 @@ bool UNpcFocusComponent::IsDistracted() const
 	return CurrentFocus.Priority >= ENpcFocusPriority::MinorDistraction && CurrentFocus.Priority < ENpcFocusPriority::SuspiciousPlayer;
 }
 
+bool UNpcFocusComponent::IsFocusingOnPlayer() const
+{
+	return CurrentFocus.Priority >= ENpcFocusPriority::SuspiciousPlayer;
+}
+
 float UNpcFocusComponent::GetAwarenessMultiplier() const
 {
 	if (IsDistracted())

@@ -5,9 +5,6 @@
 #include "GameplayTagContainer.h"
 #include "NpcProfile.generated.h"
 
-class UNpcStateProfile;
-
-//TODO: Remove?
 UCLASS(BlueprintType)
 class STEALTH_API UNpcProfile : public UDataAsset
 {
@@ -25,6 +22,9 @@ public:
 	float SuspicionDecayPerSecond = 8.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Suspicion")
+	float SuspicionThreshold_Suspicious = 25.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Suspicion")
 	float SuspicionThreshold_Alert = 75.f;
 
 	// Perception
@@ -35,17 +35,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Perception")
 	float LosePlayerSightGracePeriod = 1.0f;
 
+	// Visibility Grade Exposure Thresholds
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Perception|Visibility")
+	float VisibilityExposureThreshold_Shadowed = 0.15f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Perception|Visibility")
+	float VisibilityExposureThreshold_FullyVisible = 0.6f;
+
 	// Modifiers
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Modifiers")
 	float CrouchSuspicionMultiplier = 0.5f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Modifiers")
 	float ShadowSuspicionMultiplier = 0.3f;
-
-	/** State profiles mapped by State GameplayTag (e.g. NPC.State.Combat -> CombatStateProfile) */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="States")
-	TMap<FGameplayTag, TObjectPtr<UNpcStateProfile>> StateProfiles;
-
-	UFUNCTION(BlueprintPure, Category="NPC|Profile")
-	UNpcStateProfile* GetStateProfile(const FGameplayTag& StateTag) const;
 };

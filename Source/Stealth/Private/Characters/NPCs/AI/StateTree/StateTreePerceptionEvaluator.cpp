@@ -58,6 +58,7 @@ void FStateTreePerceptionEvaluator::Tick(FStateTreeExecutionContext& Context, co
 		}
 	}
 
+	InstanceData.PerceptionSnapshot = InstanceData.NpcContext->GetPerceptionSnapshot();
 	InstanceData.CurrentStateTag = InstanceData.NpcContext->GetCurrentStateTag();
 	InstanceData.Awareness = InstanceData.NpcContext->GetAwareness();
 	InstanceData.AlertLevel = InstanceData.NpcContext->GetAlertLevel();

@@ -8,7 +8,9 @@
 class UNpcScheduleComponent;
 class UInventoryComponent;
 class UNpcFocusComponent;
-class UNpcPerceptionComponent;
+class UNpcSensorComponent;
+class UNpcAwarenessComponent;
+class UNpcContextComponent;
 struct FGameplayTag;
 class UStateTreeAIComponent;
 class UPlayerExposureSubsystem;
@@ -27,7 +29,16 @@ public:
 	UNpcFocusComponent* GetFocusComponent() const { return FocusComponent; }
 
 	UFUNCTION(BlueprintPure, Category = "AI Components")
-	UNpcPerceptionComponent* GetSuspicionComponent() const { return NpcPerceptionComponent; }
+	UNpcSensorComponent* GetSensorComponent() const { return SensorComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "AI Components")
+	UNpcAwarenessComponent* GetAwarenessComponent() const { return AwarenessComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "AI Components")
+	UNpcAwarenessComponent* GetSuspicionComponent() const { return AwarenessComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "AI Components")
+	UNpcContextComponent* GetContextComponent() const;
 
 protected:
 	virtual void OnPossess(APawn* InPawn) override;
@@ -44,7 +55,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UNpcPerceptionComponent> NpcPerceptionComponent;
+	TObjectPtr<UNpcSensorComponent> SensorComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNpcAwarenessComponent> AwarenessComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UNpcFocusComponent> FocusComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")

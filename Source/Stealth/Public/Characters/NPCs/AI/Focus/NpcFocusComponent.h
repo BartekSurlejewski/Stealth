@@ -7,8 +7,6 @@
 
 class ANpcAiController;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcFocusChanged, const FNpcFocusTarget&, NewFocus, const FNpcFocusTarget&, PreviousFocus);
-
 /**
  * Component responsible exclusively for NPC focus arbitration, physical head/body facing,
  * focus duration countdowns, and distraction awareness calculation.
@@ -42,9 +40,16 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NPC|Focus")
 	bool IsDistracted() const;
 
+	/** True if NPC is focusing on the player (suspicious or hostile) */
+	UFUNCTION(BlueprintPure, Category = "NPC|Focus")
+	bool IsFocusingOnPlayer() const;
+
 	/** Multiplier applied to awareness/suspicion gain while distracted */
 	UFUNCTION(BlueprintPure, Category = "NPC|Focus")
 	float GetAwarenessMultiplier() const;
+
+	UFUNCTION(BlueprintPure, Category = "NPC|Focus")
+	float GetFocusAwarenessMultiplier() const { return GetAwarenessMultiplier(); }
 
 	/** Applies physical focus to the AI controller */
 	UFUNCTION(BlueprintCallable, Category = "NPC|Focus")

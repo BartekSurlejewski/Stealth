@@ -32,12 +32,16 @@ EStateTreeRunStatus FStateTreeTask_NpcInvestigate::EnterState(FStateTreeExecutio
 	InstanceData.CurrentInvestigationTime = 0.0f;
 	InstanceData.bHasReachedLocation = false;
 
-	if (InstanceData.NpcContext)
+	if (InstanceData.NpcContext && InstanceData.InvestigateLocation.IsZero())
 	{
 		const FNpcFocusTarget& CurrentFocus = InstanceData.NpcContext->GetCurrentFocus();
 		if (CurrentFocus.IsValid() && !CurrentFocus.FocusLocation.IsZero())
 		{
 			InstanceData.InvestigateLocation = CurrentFocus.FocusLocation;
+		}
+		else if (!InstanceData.NpcContext->GetInvestigationTarget().IsZero())
+		{
+			InstanceData.InvestigateLocation = InstanceData.NpcContext->GetInvestigationTarget();
 		}
 		else if (!InstanceData.NpcContext->GetLastHeardSoundLocation().IsZero())
 		{
@@ -110,11 +114,5 @@ void FStateTreeTask_NpcInvestigate::ExitState(FStateTreeExecutionContext& Contex
 	if (InstanceData.NpcContext)
 	{
 		InstanceData.NpcContext->ClearFocus(ENpcFocusPriority::MajorDisturbance);
-
-		// When investigation concludes, transition back down from Alerted
-		if (InstanceData.NpcContext->GetBehaviourState() == ENpcBehaviourState::Alerted)
-		{
-			InstanceData.NpcContext->SetNpcState(StealthAiTags::TAG_NPC_State_Unaware);
-		}
 	}
 }
