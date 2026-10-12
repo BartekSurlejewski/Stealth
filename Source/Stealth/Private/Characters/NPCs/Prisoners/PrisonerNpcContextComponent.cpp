@@ -31,7 +31,7 @@ void UPrisonerNpcContextComponent::TickComponent(float DeltaTime, ELevelTick Tic
 
 void UPrisonerNpcContextComponent::MoveToPosition(const FVector& Destination, TFunction<void(bool bSuccess)> OnComplete)
 {
-	if (!NpcAiController)
+	if (!CachedNpcAiController.Get())
 	{
 		OnComplete(false);
 		return;
@@ -39,15 +39,15 @@ void UPrisonerNpcContextComponent::MoveToPosition(const FVector& Destination, TF
 
 	PendingMoveCallback = MoveTemp(OnComplete);
 
-	NpcAiController->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
-	NpcAiController->ReceiveMoveCompleted.AddDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	CachedNpcAiController->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	CachedNpcAiController->ReceiveMoveCompleted.AddDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
 
-	NpcAiController->MoveToLocation(Destination, 50.0f, true, true);
+	CachedNpcAiController->MoveToLocation(Destination, 50.0f, true, true);
 }
 
 void UPrisonerNpcContextComponent::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
-	NpcAiController->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	CachedNpcAiController->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
 
 	if (PendingMoveCallback)
 	{

@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "GameplayTagContainer.h"
 #include "NpcProfile.generated.h"
 
 UCLASS(BlueprintType)

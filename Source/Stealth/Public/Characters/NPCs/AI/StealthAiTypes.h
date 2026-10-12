@@ -34,7 +34,6 @@ namespace StealthAiTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_DamageReceived);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_TouchDetected);
 
-
 	// NPC Activity Tags (Schedule & Routines)
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Patrol);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_GuardPost);
@@ -156,12 +155,12 @@ UENUM(BlueprintType)
 enum class ENpcFocusPriority : uint8
 {
 	None = 0,
-	Routine = 10,              // Daily activity / idle facing
-	MinorDistraction = 20,     // Soft noise, rock throw, whistling
-	SuspiciousPlayer = 25,     // Player spotted / suspicious presence (sub-disturbance, ignored if busy with major tasks)
-	MajorDisturbance = 30,     // Open door in secure area, blood, missing item
-	CriticalDisturbance = 40,  // Dead / incapacitated body
-	CombatTarget = 60          // Confirmed hostile player in combat / illegal act seen (highest priority)
+	Routine = 10, // Daily activity / idle facing
+	MinorDistraction = 20, // Soft noise, rock throw, whistling
+	SuspiciousPlayer = 25, // Player spotted / suspicious presence (sub-disturbance, ignored if busy with major tasks)
+	MajorDisturbance = 30, // Open door in secure area, blood, missing item
+	CriticalDisturbance = 40, // Dead / incapacitated body
+	CombatTarget = 60 // Confirmed hostile player in combat / illegal act seen (highest priority)
 };
 
 
@@ -215,8 +214,11 @@ struct STEALTH_API FNpcFocusTarget
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSuspicionChanged, float, NewSuspicion);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcNoiseHeard, ENpcNoiseType, NoiseType, const FVector&, NoiseLocation);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcFocusChanged, const FNpcFocusTarget&, NewFocus, const FNpcFocusTarget&, PreviousFocus);
 
 /**

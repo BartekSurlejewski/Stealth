@@ -15,7 +15,9 @@ class UNpcAwarenessComponent;
 struct FAIStimulus;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
 
 /**
@@ -186,17 +188,17 @@ protected:
 	FGuid OwnerNpcGuid;
 
 	UPROPERTY()
-	TObjectPtr<UStateTreeAIComponent> StateTreeComponent;
+	TWeakObjectPtr<UStateTreeAIComponent> CachedStateTreeComponent;
 
 	UPROPERTY()
-	TObjectPtr<ANpcAiController> NpcAiController;
+	TWeakObjectPtr<ANpcAiController> CachedNpcAiController;
 
 	UPROPERTY()
-	mutable TObjectPtr<UNpcSensorComponent> SensorComponent;
+	mutable TWeakObjectPtr<UNpcSensorComponent> CachedSensorComponent;
 
 	UPROPERTY()
-	mutable TObjectPtr<UNpcAwarenessComponent> AwarenessComponent;
+	mutable TWeakObjectPtr<UNpcAwarenessComponent> CachedAwarenessComponent;
 
 	UPROPERTY()
-	mutable TObjectPtr<UNpcFocusComponent> FocusComponent;
+	mutable TWeakObjectPtr<UNpcFocusComponent> CachedFocusComponent;
 };

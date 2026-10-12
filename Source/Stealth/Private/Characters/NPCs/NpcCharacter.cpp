@@ -60,11 +60,6 @@ void ANpcCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void ANpcCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-}
-
 #if WITH_EDITOR
 void ANpcCharacter::PostEditImport()
 {

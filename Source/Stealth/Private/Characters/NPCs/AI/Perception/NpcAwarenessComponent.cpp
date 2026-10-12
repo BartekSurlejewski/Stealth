@@ -105,7 +105,7 @@ UNpcContextComponent* UNpcAwarenessComponent::GetContextComponent() const
 	return CachedContextComponent.Get();
 }
 
-UNpcProfile* UNpcAwarenessComponent::GetNpcProfile() const
+const UNpcProfile* UNpcAwarenessComponent::GetNpcProfile() const
 {
 	if (const UNpcSensorComponent* Sensor = GetSensorComponent())
 	{
@@ -183,7 +183,7 @@ void UNpcAwarenessComponent::UpdateVisibilityGrade()
 		return;
 	}
 
-	UNpcProfile* Profile = GetNpcProfile();
+	const UNpcProfile* Profile = GetNpcProfile();
 	const float ShadowThreshold = Profile ? Profile->VisibilityExposureThreshold_Shadowed : 0.15f;
 	const float FullyVisibleThreshold = Profile ? Profile->VisibilityExposureThreshold_FullyVisible : 0.6f;
 
@@ -222,13 +222,13 @@ void UNpcAwarenessComponent::UpdateVisibilityGrade()
 
 void UNpcAwarenessComponent::UpdateSuspicion(float DeltaTime)
 {
-	UNpcSensorComponent* Sensor = GetSensorComponent();
+	const UNpcSensorComponent* Sensor = GetSensorComponent();
 	if (!Sensor)
 	{
 		return;
 	}
 
-	UNpcProfile* Profile = GetNpcProfile();
+	const UNpcProfile* Profile = GetNpcProfile();
 	const float BaseGainRateSight = Profile ? Profile->SuspicionGainPerSecond_Sight : 40.0f;
 	const float BaseGainRatePeripheral = Profile ? Profile->SuspicionGainPerSecond_Peripheral : 15.0f;
 	const float BaseDecayRate = Profile ? Profile->SuspicionDecayPerSecond : 8.0f;

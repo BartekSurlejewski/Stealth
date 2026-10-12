@@ -15,7 +15,6 @@ struct FGameplayTag;
 class UStateTreeAIComponent;
 class UPlayerExposureSubsystem;
 struct FAIStimulus;
-class UAIPerceptionComponent;
 
 UCLASS(Abstract)
 class STEALTH_API ANpcAiController : public AAIController
@@ -33,9 +32,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "AI Components")
 	UNpcAwarenessComponent* GetAwarenessComponent() const { return AwarenessComponent; }
-
-	UFUNCTION(BlueprintPure, Category = "AI Components")
-	UNpcAwarenessComponent* GetSuspicionComponent() const { return AwarenessComponent; }
 
 	UFUNCTION(BlueprintPure, Category = "AI Components")
 	UNpcContextComponent* GetContextComponent() const;
@@ -64,4 +60,7 @@ protected:
 	FGameplayTag ChangedStateEventTag;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
 	FGuid NpcGUID;
+
+private:
+	mutable TWeakObjectPtr<UNpcContextComponent> CachedNpcContextComponent;
 };

@@ -105,26 +105,19 @@ protected:
 	void UpdateLineOfSight(float DeltaTime);
 	void UpdatePlayerLegality();
 
+	UFUNCTION()
 	ANpcAiController* GetAiController() const;
+	UFUNCTION()
+	UPlayerExposureSubsystem* GetPlayerExposureSubsystem() const;
+	UFUNCTION()
+	ULegalitySubsystem* GetLegalitySubsystem() const;
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Profile")
 	TObjectPtr<UNpcProfile> NpcProfile;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bHasLineOfSight = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bLineOfSightValid = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bLineOfSightBlocked = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
 	float PlayerDistance = 0.0f;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bIsLookingDirectlyAtPlayer = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
 	FVector LastKnownPlayerPos = FVector::ZeroVector;
@@ -151,27 +144,39 @@ protected:
 	float LastHeardSoundTime = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bInDetectionRange = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bIsFullyVisibleByDistance = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bIsPlayerPerformingIllegalAction = false;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
 	float TimeSinceLastStimulus = 0.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bTouchSensedThisTick = false;
+	uint8 bHasLineOfSight : 1 = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
-	bool bDamageSensedThisTick = false;
+	uint8 bLineOfSightValid : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bLineOfSightBlocked : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bIsLookingDirectlyAtPlayer : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bInDetectionRange : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bIsFullyVisibleByDistance : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bIsPlayerPerformingIllegalAction : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bTouchSensedThisTick : 1 = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Perception|Sensor")
+	uint8 bDamageSensedThisTick : 1 = false;
 
 private:
 	mutable TWeakObjectPtr<ANpcAiController> CachedController;
-	TWeakObjectPtr<UPlayerExposureSubsystem> CachedExposureSubsystem;
-	TWeakObjectPtr<ULegalitySubsystem> CachedLegalitySubsystem;
+	mutable TWeakObjectPtr<UPlayerExposureSubsystem> CachedPlayerExposureSubsystem;
+	mutable TWeakObjectPtr<ULegalitySubsystem> CachedLegalitySubsystem;
 
 	bool bWasPreviouslySensedBySight = false;
 };

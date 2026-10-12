@@ -28,6 +28,8 @@ void ANpcAiController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
+	CachedNpcContextComponent = FindComponentByClass<UNpcContextComponent>();
+
 	if (const ANpcCharacter* NpcCharacter = Cast<ANpcCharacter>(InPawn))
 	{
 		NpcGUID = NpcCharacter->GetNpcGUID();
@@ -94,5 +96,10 @@ void ANpcAiController::OnTargetPerceptionForgotten(AActor* Actor) {}
 
 UNpcContextComponent* ANpcAiController::GetContextComponent() const
 {
-	return FindComponentByClass<UNpcContextComponent>();
+	if (!CachedNpcContextComponent.IsValid())
+	{
+		CachedNpcContextComponent = FindComponentByClass<UNpcContextComponent>();
+	}
+
+	return CachedNpcContextComponent.Get();
 }

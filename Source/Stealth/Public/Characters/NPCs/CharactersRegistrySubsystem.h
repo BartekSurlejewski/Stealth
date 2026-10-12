@@ -163,7 +163,7 @@ public:
 	FGuid GetNpcGuidByCharacter(ANpcCharacter* Character) const;
 
 	/**
-	 * Get GUID from controller (O(1))
+	 * Get GUID from controller (O(n))
 	 */
 	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
 	FGuid GetNpcGuidByController(ANpcAiController* Controller) const;
@@ -217,8 +217,6 @@ public:
 	static constexpr float SpatialCellSize = 500.0f; // cm; tune to typical query radius
 
 	// Cell (X,Y in grid space) → GUIDs currently in that cell. Grid is 2D (Z ignored),
-	// fine for a stealth game where verticality within a query radius is usually small;
-	// widen the Z tolerance in the distance check below if that's not true for you.
 	TMap<FIntPoint, TArray<FGuid>> SpatialGrid;
 
 	// Which cell each GUID currently occupies, so moves/removals are O(1) instead of a scan.
@@ -278,9 +276,9 @@ public:
 	FString GetRegistryStats() const;
 
 	/**
-	 * Clear all entries (called on map transition)
+	 * Clear all entries
 	 */
-	UFUNCTION(BlueprintCallable, Category="Registry|NPC")
+	UFUNCTION(BlueprintCallable, Category="Registry")
 	void ClearRegistry();
 
 	/*=========================================================================

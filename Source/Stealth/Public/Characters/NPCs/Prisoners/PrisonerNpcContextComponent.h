@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Characters/NPCs/NpcContextComponent.h"
+#include "GameFramework/GameplayMessageSubsystem.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Messages/StealthMessages.h"
 #include "PrisonerNpcContextComponent.generated.h"

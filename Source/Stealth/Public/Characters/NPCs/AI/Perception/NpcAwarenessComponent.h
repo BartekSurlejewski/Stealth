@@ -68,7 +68,7 @@ public:
 	const FNpcPerceptionTuningParams& GetTuningParams() const { return TuningParams; }
 
 	UFUNCTION(BlueprintPure, Category = "AI|Perception|Awareness")
-	UNpcProfile* GetNpcProfile() const;
+	const UNpcProfile* GetNpcProfile() const;
 
 	UPROPERTY(BlueprintAssignable, Category = "AI|Perception|Awareness")
 	FOnSuspicionChanged OnSuspicionChanged;

@@ -11,7 +11,6 @@
 #include "GameFramework/GameplayMessageSubsystem.h"
 #include "Legality/LegalitySubsystem.h"
 #include "Messages/StealthMessages.h"
-#include "Stealth/Stealth.h"
 
 namespace
 {
@@ -29,16 +28,16 @@ void UNpcContextComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	StateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeAIComponent>();
-	NpcAiController = Cast<ANpcAiController>(GetOwner());
+	CachedStateTreeComponent = GetOwner()->FindComponentByClass<UStateTreeAIComponent>();
+	CachedNpcAiController = Cast<ANpcAiController>(GetOwner());
 
 	CurrentStateTag = StealthAiTags::TAG_NPC_State_Unaware;
 
 	if (const UCharactersRegistrySubsystem* Registry = UCharactersRegistrySubsystem::Get(this))
 	{
-		if (NpcAiController)
+		if (CachedNpcAiController.Get())
 		{
-			OwnerNpcGuid = Registry->GetNpcGuidByController(NpcAiController);
+			OwnerNpcGuid = Registry->GetNpcGuidByController(CachedNpcAiController.Get());
 		}
 		else if (ANpcCharacter* NpcChar = Cast<ANpcCharacter>(GetOwner()))
 		{
@@ -51,14 +50,14 @@ void UNpcContextComponent::BeginPlay()
 
 void UNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (AwarenessComponent)
+	if (CachedAwarenessComponent.Get())
 	{
-		AwarenessComponent->OnSuspicionChanged.RemoveDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
+		CachedAwarenessComponent->OnSuspicionChanged.RemoveDynamic(this, &UNpcContextComponent::HandleSuspicionChanged);
 	}
 
-	if (FocusComponent)
+	if (CachedFocusComponent.Get())
 	{
-		FocusComponent->OnNpcFocusChanged.RemoveDynamic(this, &UNpcContextComponent::HandleFocusChanged);
+		CachedFocusComponent->OnNpcFocusChanged.RemoveDynamic(this, &UNpcContextComponent::HandleFocusChanged);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -81,50 +80,50 @@ void UNpcContextComponent::BindToSubcomponents()
 
 UNpcSensorComponent* UNpcContextComponent::GetSensorComponent() const
 {
-	if (!SensorComponent)
+	if (!CachedSensorComponent.Get())
 	{
 		if (GetOwner())
 		{
-			SensorComponent = GetOwner()->FindComponentByClass<UNpcSensorComponent>();
+			CachedSensorComponent = GetOwner()->FindComponentByClass<UNpcSensorComponent>();
 		}
-		if (!SensorComponent && NpcAiController)
+		if (!CachedSensorComponent.Get() && CachedNpcAiController.Get())
 		{
-			SensorComponent = NpcAiController->FindComponentByClass<UNpcSensorComponent>();
+			CachedSensorComponent = CachedNpcAiController->FindComponentByClass<UNpcSensorComponent>();
 		}
 	}
-	return SensorComponent;
+	return CachedSensorComponent.Get();
 }
 
 UNpcAwarenessComponent* UNpcContextComponent::GetAwarenessComponent() const
 {
-	if (!AwarenessComponent)
+	if (!CachedAwarenessComponent.Get())
 	{
 		if (GetOwner())
 		{
-			AwarenessComponent = GetOwner()->FindComponentByClass<UNpcAwarenessComponent>();
+			CachedAwarenessComponent = GetOwner()->FindComponentByClass<UNpcAwarenessComponent>();
 		}
-		if (!AwarenessComponent && NpcAiController)
+		if (!CachedAwarenessComponent.Get() && CachedNpcAiController.Get())
 		{
-			AwarenessComponent = NpcAiController->FindComponentByClass<UNpcAwarenessComponent>();
+			CachedAwarenessComponent = CachedNpcAiController->FindComponentByClass<UNpcAwarenessComponent>();
 		}
 	}
-	return AwarenessComponent;
+	return CachedAwarenessComponent.Get();
 }
 
 UNpcFocusComponent* UNpcContextComponent::GetFocusComponent() const
 {
-	if (!FocusComponent)
+	if (!CachedFocusComponent.Get())
 	{
 		if (GetOwner())
 		{
-			FocusComponent = GetOwner()->FindComponentByClass<UNpcFocusComponent>();
+			CachedFocusComponent = GetOwner()->FindComponentByClass<UNpcFocusComponent>();
 		}
-		if (!FocusComponent && NpcAiController)
+		if (!CachedFocusComponent.Get() && CachedNpcAiController.Get())
 		{
-			FocusComponent = NpcAiController->FindComponentByClass<UNpcFocusComponent>();
+			CachedFocusComponent = CachedNpcAiController->FindComponentByClass<UNpcFocusComponent>();
 		}
 	}
-	return FocusComponent;
+	return CachedFocusComponent.Get();
 }
 
 UNpcProfile* UNpcContextComponent::GetNpcProfile() const
@@ -344,9 +343,9 @@ void UNpcContextComponent::SetCurrentStanceTag(const FGameplayTag& NewStanceTag)
 
 void UNpcContextComponent::SendStateTreeEvent(const FGameplayTag& Tag) const
 {
-	if (StateTreeComponent && Tag.IsValid())
+	if (CachedStateTreeComponent.Get() && Tag.IsValid())
 	{
-		StateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
+		CachedStateTreeComponent->SendStateTreeEvent(FStateTreeEvent(Tag));
 	}
 }
 

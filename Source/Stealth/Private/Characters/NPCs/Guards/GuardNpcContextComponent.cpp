@@ -34,9 +34,9 @@ APatrolRoute* UGuardNpcContextComponent::AssignPatrolRouteForLocation(const FGam
 	if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(this))
 	{
 		FVector RequesterPos = FVector::ZeroVector;
-		if (NpcAiController && NpcAiController->GetPawn())
+		if (CachedNpcAiController.Get() && CachedNpcAiController->GetPawn())
 		{
-			RequesterPos = NpcAiController->GetPawn()->GetActorLocation();
+			RequesterPos = CachedNpcAiController->GetPawn()->GetActorLocation();
 		}
 		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
 		{
@@ -78,9 +78,9 @@ void UGuardNpcContextComponent::ResumePatrol()
 	if (const APatrolRoute* Route = GetActivePatrolRoute())
 	{
 		FVector RequesterPos = FVector::ZeroVector;
-		if (NpcAiController && NpcAiController->GetPawn())
+		if (CachedNpcAiController.Get() && CachedNpcAiController->GetPawn())
 		{
-			RequesterPos = NpcAiController->GetPawn()->GetActorLocation();
+			RequesterPos = CachedNpcAiController->GetPawn()->GetActorLocation();
 		}
 		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
 		{
@@ -122,7 +122,7 @@ bool UGuardNpcContextComponent::HasStandingGuardSpot() const
 
 void UGuardNpcContextComponent::LookAtPlayer()
 {
-	if (!NpcAiController || !NpcAiController->GetPawn())
+	if (!CachedNpcAiController.Get() || !CachedNpcAiController->GetPawn())
 	{
 		return;
 	}
@@ -133,12 +133,12 @@ void UGuardNpcContextComponent::LookAtPlayer()
 		return;
 	}
 
-	FVector DirectionToPlayer = Player->GetActorLocation() - NpcAiController->GetPawn()->GetActorLocation();
+	FVector DirectionToPlayer = Player->GetActorLocation() - CachedNpcAiController->GetPawn()->GetActorLocation();
 	FRotator LookAtRotation = DirectionToPlayer.Rotation();
 	LookAtRotation.Pitch = 0.0f;
 	LookAtRotation.Roll = 0.0f;
 
-	NpcAiController->GetPawn()->SetActorRotation(LookAtRotation);
+	CachedNpcAiController->GetPawn()->SetActorRotation(LookAtRotation);
 }
 
 void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVector& SourceLocation)

@@ -1,7 +1,6 @@
 ﻿#include "Characters/NPCs/Guards/GuardNpcAiController.h"
 
 #include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
-#include "Perception/AISenseConfig_Hearing.h"
 #include "Perception/AISenseConfig_Sight.h"
 
 

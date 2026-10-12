@@ -21,7 +21,7 @@ void UNpcSensorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CachedExposureSubsystem = UPlayerExposureSubsystem::Get(this);
+	CachedPlayerExposureSubsystem = UPlayerExposureSubsystem::Get(this);
 	CachedLegalitySubsystem = ULegalitySubsystem::Get(this);
 }
 
@@ -54,7 +54,28 @@ ANpcAiController* UNpcSensorComponent::GetAiController() const
 			}
 		}
 	}
+
 	return CachedController.Get();
+}
+
+UPlayerExposureSubsystem* UNpcSensorComponent::GetPlayerExposureSubsystem() const
+{
+	if (!CachedPlayerExposureSubsystem.IsValid())
+	{
+		CachedPlayerExposureSubsystem = UPlayerExposureSubsystem::Get(this);
+	}
+
+	return CachedPlayerExposureSubsystem.Get();
+}
+
+ULegalitySubsystem* UNpcSensorComponent::GetLegalitySubsystem() const
+{
+	if (!CachedLegalitySubsystem.IsValid())
+	{
+		CachedLegalitySubsystem = ULegalitySubsystem::Get(this);
+	}
+
+	return CachedLegalitySubsystem.Get();
 }
 
 UNpcProfile* UNpcSensorComponent::GetNpcProfile() const
@@ -66,7 +87,7 @@ UNpcProfile* UNpcSensorComponent::GetNpcProfile() const
 
 	if (const ANpcAiController* Controller = GetAiController())
 	{
-		if (const UNpcContextComponent* Context = Controller->FindComponentByClass<UNpcContextComponent>())
+		if (const UNpcContextComponent* Context = Controller->GetContextComponent())
 		{
 			return Context->GetNpcProfile();
 		}
@@ -78,7 +99,7 @@ float UNpcSensorComponent::GetConfiguredSightRadius() const
 {
 	if (const ANpcAiController* Controller = GetAiController())
 	{
-		if (const UAIPerceptionComponent* Perception = Controller->FindComponentByClass<UAIPerceptionComponent>())
+		if (const UAIPerceptionComponent* Perception = Controller->GetAIPerceptionComponent())
 		{
 			if (const UAISenseConfig_Sight* SightConfig = Cast<UAISenseConfig_Sight>(Perception->GetSenseConfig(UAISense::GetSenseID<UAISense_Sight>())))
 			{
@@ -91,28 +112,30 @@ float UNpcSensorComponent::GetConfiguredSightRadius() const
 
 void UNpcSensorComponent::OnSightStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (Actor && Actor->IsA<AStealthPlayerCharacter>())
+	if (!Actor || !Actor->IsA<AStealthPlayerCharacter>())
 	{
-		LastPerceivedActor = Actor;
-		TimeSinceLastStimulus = 0.0f;
-		LastStimulusTag = Stimulus.Tag.IsNone() ? FGameplayTag::EmptyTag : FGameplayTag::RequestGameplayTag(Stimulus.Tag, false);
+		return;
+	}
 
-		if (Stimulus.WasSuccessfullySensed())
+	LastPerceivedActor = Actor;
+	TimeSinceLastStimulus = 0.0f;
+	LastStimulusTag = Stimulus.Tag.IsNone() ? FGameplayTag::EmptyTag : FGameplayTag::RequestGameplayTag(Stimulus.Tag, false);
+
+	if (Stimulus.WasSuccessfullySensed())
+	{
+		bLineOfSightValid = true;
+		bLineOfSightBlocked = false;
+		bWasPreviouslySensedBySight = true;
+		LastValidObservationTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
+		LastKnownPlayerPos = Stimulus.StimulusLocation;
+	}
+	else
+	{
+		if (bWasPreviouslySensedBySight)
 		{
-			bLineOfSightValid = true;
-			bLineOfSightBlocked = false;
-			bWasPreviouslySensedBySight = true;
-			LastValidObservationTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
-			LastKnownPlayerPos = Stimulus.StimulusLocation;
+			bLineOfSightBlocked = true;
 		}
-		else
-		{
-			if (bWasPreviouslySensedBySight)
-			{
-				bLineOfSightBlocked = true;
-			}
-			bLineOfSightValid = false;
-		}
+		bLineOfSightValid = false;
 	}
 }
 
@@ -144,7 +167,7 @@ void UNpcSensorComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& St
 
 	if (ANpcAiController* Controller = GetAiController())
 	{
-		if (UNpcContextComponent* Context = Controller->FindComponentByClass<UNpcContextComponent>())
+		if (UNpcContextComponent* Context = Controller->GetContextComponent())
 		{
 			Context->HandleHearingStimulus(NoiseType, Stimulus);
 		}
@@ -173,9 +196,9 @@ void UNpcSensorComponent::OnTouchStimulus(AActor* Actor, const FAIStimulus& Stim
 		LastKnownPlayerPos = Stimulus.StimulusLocation;
 	}
 
-	if (ANpcAiController* Controller = GetAiController())
+	if (const ANpcAiController* Controller = GetAiController())
 	{
-		if (UNpcContextComponent* Context = Controller->FindComponentByClass<UNpcContextComponent>())
+		if (const UNpcContextComponent* Context = Controller->GetContextComponent())
 		{
 			Context->SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_TouchDetected);
 		}
@@ -197,9 +220,9 @@ void UNpcSensorComponent::OnDamageStimulus(AActor* Actor, const FAIStimulus& Sti
 		LastKnownPlayerPos = Stimulus.StimulusLocation;
 	}
 
-	if (ANpcAiController* Controller = GetAiController())
+	if (const ANpcAiController* Controller = GetAiController())
 	{
-		if (UNpcContextComponent* Context = Controller->FindComponentByClass<UNpcContextComponent>())
+		if (const UNpcContextComponent* Context = Controller->GetContextComponent())
 		{
 			Context->SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_DamageReceived);
 		}
@@ -283,9 +306,9 @@ void UNpcSensorComponent::UpdateLineOfSight(float DeltaTime)
 	bIsLookingDirectlyAtPlayer = (AngleToPlayer <= 45.0f);
 
 	PlayerExposureMultiplier = 1.0f;
-	if (CachedExposureSubsystem.IsValid())
+	if (GetPlayerExposureSubsystem())
 	{
-		PlayerExposureMultiplier = CachedExposureSubsystem->GetCurrentTotalExposure();
+		PlayerExposureMultiplier = GetPlayerExposureSubsystem()->GetCurrentTotalExposure();
 	}
 
 	if (const ACharacter* CharacterPlayer = Cast<ACharacter>(PlayerPawn))
@@ -309,8 +332,8 @@ void UNpcSensorComponent::UpdatePlayerLegality()
 {
 	bIsPlayerPerformingIllegalAction = false;
 
-	if (CachedLegalitySubsystem.IsValid())
+	if (GetLegalitySubsystem())
 	{
-		bIsPlayerPerformingIllegalAction = CachedLegalitySubsystem->IsPlayerPerformingIllegalAction();
+		bIsPlayerPerformingIllegalAction = GetLegalitySubsystem()->IsPlayerPerformingIllegalAction();
 	}
 }
