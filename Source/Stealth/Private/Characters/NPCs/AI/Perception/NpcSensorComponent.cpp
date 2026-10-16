@@ -1,339 +1,174 @@
 #include "Characters/NPCs/AI/Perception/NpcSensorComponent.h"
-#include "Characters/NPCs/NpcAiController.h"
-#include "Characters/NPCs/NpcContextComponent.h"
 #include "Characters/NPCs/Guards/NpcProfile.h"
-#include "Exposure/PlayerExposureSubsystem.h"
-#include "Legality/LegalitySubsystem.h"
-#include "Characters/Player/StealthPlayerCharacter.h"
-#include "Perception/AIPerceptionComponent.h"
 #include "Perception/AISense_Sight.h"
-#include "Perception/AISenseConfig_Sight.h"
-#include "Kismet/GameplayStatics.h"
+#include "Perception/AISense_Hearing.h"
+#include "Perception/AISense_Touch.h"
+#include "Perception/AISense_Damage.h"
+#include "Perception/AISense_Prediction.h"
 #include "GameFramework/Pawn.h"
+#include "Engine/World.h"
 
 UNpcSensorComponent::UNpcSensorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.TickGroup = TG_PrePhysics;
-}
-
-void UNpcSensorComponent::BeginPlay()
-{
-	Super::BeginPlay();
-
-	CachedPlayerExposureSubsystem = UPlayerExposureSubsystem::Get(this);
-	CachedLegalitySubsystem = ULegalitySubsystem::Get(this);
-}
-
-void UNpcSensorComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	Super::EndPlay(EndPlayReason);
+	PrimaryComponentTick.TickInterval = 0.1f;
 }
 
 void UNpcSensorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	UpdateSensoryState(DeltaTime);
+	SensorData.PruneInvalid();
 
-	// Reset single-tick flags
-	bTouchSensedThisTick = false;
-	bDamageSensedThisTick = false;
-}
+	const APawn* Pawn = GetNpcPawn();
+	const FVector MyLoc = Pawn ? Pawn->GetActorLocation() : FVector::ZeroVector;
 
-ANpcAiController* UNpcSensorComponent::GetAiController() const
-{
-	if (!CachedController.IsValid())
+	for (FNpcTrackedTarget& Target : SensorData.Targets)
 	{
-		CachedController = Cast<ANpcAiController>(GetOwner());
-		if (!CachedController.IsValid())
+		if (const AActor* TargetActor = Target.Actor.Get())
 		{
-			if (const APawn* Pawn = Cast<APawn>(GetOwner()))
-			{
-				CachedController = Cast<ANpcAiController>(Pawn->GetController());
-			}
+			Target.Distance = FVector::Dist(MyLoc, TargetActor->GetActorLocation());
+		}
+		else if (Target.bHasLocation)
+		{
+			Target.Distance = FVector::Dist(MyLoc, Target.LastKnownLocation);
 		}
 	}
-
-	return CachedController.Get();
 }
 
-UPlayerExposureSubsystem* UNpcSensorComponent::GetPlayerExposureSubsystem() const
+void UNpcSensorComponent::HandleStimulus(AActor* Actor, const FAIStimulus& Stimulus)
 {
-	if (!CachedPlayerExposureSubsystem.IsValid())
-	{
-		CachedPlayerExposureSubsystem = UPlayerExposureSubsystem::Get(this);
-	}
-
-	return CachedPlayerExposureSubsystem.Get();
-}
-
-ULegalitySubsystem* UNpcSensorComponent::GetLegalitySubsystem() const
-{
-	if (!CachedLegalitySubsystem.IsValid())
-	{
-		CachedLegalitySubsystem = ULegalitySubsystem::Get(this);
-	}
-
-	return CachedLegalitySubsystem.Get();
-}
-
-UNpcProfile* UNpcSensorComponent::GetNpcProfile() const
-{
-	if (NpcProfile)
-	{
-		return NpcProfile;
-	}
-
-	if (const ANpcAiController* Controller = GetAiController())
-	{
-		if (const UNpcContextComponent* Context = Controller->GetContextComponent())
-		{
-			return Context->GetNpcProfile();
-		}
-	}
-	return nullptr;
-}
-
-float UNpcSensorComponent::GetConfiguredSightRadius() const
-{
-	if (const ANpcAiController* Controller = GetAiController())
-	{
-		if (const UAIPerceptionComponent* Perception = Controller->GetAIPerceptionComponent())
-		{
-			if (const UAISenseConfig_Sight* SightConfig = Cast<UAISenseConfig_Sight>(Perception->GetSenseConfig(UAISense::GetSenseID<UAISense_Sight>())))
-			{
-				return SightConfig->SightRadius;
-			}
-		}
-	}
-	return 2000.0f; // Default fallback
-}
-
-void UNpcSensorComponent::OnSightStimulus(AActor* Actor, const FAIStimulus& Stimulus)
-{
-	if (!Actor || !Actor->IsA<AStealthPlayerCharacter>())
+	if (!Actor)
 	{
 		return;
 	}
 
-	LastPerceivedActor = Actor;
-	TimeSinceLastStimulus = 0.0f;
-	LastStimulusTag = Stimulus.Tag.IsNone() ? FGameplayTag::EmptyTag : FGameplayTag::RequestGameplayTag(Stimulus.Tag, false);
+	const FAISenseID SightSenseID = UAISense::GetSenseID<UAISense_Sight>();
+	const FAISenseID HearingSenseID = UAISense::GetSenseID<UAISense_Hearing>();
+	const FAISenseID TouchSenseID = UAISense::GetSenseID<UAISense_Touch>();
+	const FAISenseID DamageSenseID = UAISense::GetSenseID<UAISense_Damage>();
+	const FAISenseID PredictionSenseID = UAISense::GetSenseID<UAISense_Prediction>();
 
-	if (Stimulus.WasSuccessfullySensed())
+	const double Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0;
+	const FGameplayTag StimulusTag = Stimulus.Tag.IsNone() ? FGameplayTag::EmptyTag : FGameplayTag::RequestGameplayTag(Stimulus.Tag, false);
+
+	if (Stimulus.Type == SightSenseID)
 	{
-		bLineOfSightValid = true;
-		bLineOfSightBlocked = false;
-		bWasPreviouslySensedBySight = true;
-		LastValidObservationTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
-		LastKnownPlayerPos = Stimulus.StimulusLocation;
-	}
-	else
-	{
-		if (bWasPreviouslySensedBySight)
+		FNpcTrackedTarget& Target = SensorData.FindOrAdd(Actor);
+		Target.bHasLocation = true;
+		Target.LastKnownLocation = Stimulus.StimulusLocation;
+		Target.LastStimulusTag = StimulusTag;
+		Target.LastStimulusStrength = Stimulus.Strength;
+		Target.LastSensedTime = Now;
+
+		FNpcSensorEvent Event;
+		Event.Actor = Actor;
+		Event.Location = Target.LastKnownLocation;
+		Event.Strength = Stimulus.Strength;
+		Event.Tag = StimulusTag;
+
+		if (Stimulus.WasSuccessfullySensed())
 		{
-			bLineOfSightBlocked = true;
+			Target.CurrentSenses |= ENpcSenseFlags::Sight;
+			Target.LastSeenTime = Now;
+			Event.Type = ENpcSensorEventType::SightGained;
 		}
-		bLineOfSightValid = false;
-	}
-}
-
-void UNpcSensorComponent::OnHearingStimulus(AActor* Actor, const FAIStimulus& Stimulus)
-{
-	LastPerceivedActor = Actor;
-	TimeSinceLastStimulus = 0.0f;
-	HearingStimulusStrength = Stimulus.Strength;
-	LastHeardSoundLocation = Stimulus.StimulusLocation;
-	LastHeardSoundTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
-
-	const ENpcNoiseType NoiseType = ClassifyNoiseStimulus(Stimulus);
-	switch (NoiseType)
-	{
-	case ENpcNoiseType::Critical:
-		LastStimulusTag = StealthAiTags::TAG_Noise_Critical;
-		break;
-	case ENpcNoiseType::Major:
-		LastStimulusTag = StealthAiTags::TAG_Noise_Major;
-		break;
-	case ENpcNoiseType::Distraction:
-		LastStimulusTag = StealthAiTags::TAG_Noise_Distraction;
-		break;
-	case ENpcNoiseType::Subtle:
-	default:
-		LastStimulusTag = StealthAiTags::TAG_Noise_Footstep;
-		break;
-	}
-
-	if (ANpcAiController* Controller = GetAiController())
-	{
-		if (UNpcContextComponent* Context = Controller->GetContextComponent())
+		else
 		{
-			Context->HandleHearingStimulus(NoiseType, Stimulus);
+			Target.CurrentSenses &= ~ENpcSenseFlags::Sight;
+			Event.Type = ENpcSensorEventType::SightLost;
 		}
+
+		OnSensorEvent.Broadcast(Event);
+	}
+	else if (Stimulus.Type == HearingSenseID)
+	{
+		FNpcTrackedTarget& Target = SensorData.FindOrAdd(Actor);
+		Target.bHasLocation = true;
+		Target.LastKnownLocation = Stimulus.StimulusLocation;
+		Target.CurrentSenses |= ENpcSenseFlags::Hearing;
+		Target.LastHeardTime = Now;
+		Target.LastSensedTime = Now;
+		Target.LastStimulusTag = StimulusTag;
+		Target.LastStimulusStrength = Stimulus.Strength;
+
+		const UNpcProfile* Profile = GetNpcProfile();
+		const ENpcNoiseType NoiseType = Profile ? Profile->ClassifyNoise(Stimulus.Tag, Stimulus.Strength) : ENpcNoiseType::Subtle;
+
+		FNpcSensorEvent Event;
+		Event.Type = ENpcSensorEventType::Heard;
+		Event.Actor = Actor;
+		Event.Location = Target.LastKnownLocation;
+		Event.Strength = Stimulus.Strength;
+		Event.Tag = StimulusTag;
+		Event.NoiseType = NoiseType;
+
+		OnSensorEvent.Broadcast(Event);
+	}
+	else if (Stimulus.Type == TouchSenseID)
+	{
+		FNpcTrackedTarget& Target = SensorData.FindOrAdd(Actor);
+		Target.bHasLocation = true;
+		Target.LastKnownLocation = Stimulus.StimulusLocation;
+		Target.CurrentSenses |= ENpcSenseFlags::Touch;
+		Target.LastSensedTime = Now;
+		Target.LastStimulusTag = StimulusTag;
+		Target.LastStimulusStrength = Stimulus.Strength;
+
+		FNpcSensorEvent Event;
+		Event.Type = ENpcSensorEventType::Touched;
+		Event.Actor = Actor;
+		Event.Location = Target.LastKnownLocation;
+		Event.Strength = Stimulus.Strength;
+		Event.Tag = StimulusTag;
+
+		OnSensorEvent.Broadcast(Event);
+	}
+	else if (Stimulus.Type == DamageSenseID)
+	{
+		FNpcTrackedTarget& Target = SensorData.FindOrAdd(Actor);
+		Target.bHasLocation = true;
+		Target.LastKnownLocation = Stimulus.StimulusLocation;
+		Target.CurrentSenses |= ENpcSenseFlags::Damage;
+		Target.LastSensedTime = Now;
+		Target.LastStimulusTag = StimulusTag;
+		Target.LastStimulusStrength = Stimulus.Strength;
+
+		FNpcSensorEvent Event;
+		Event.Type = ENpcSensorEventType::Damaged;
+		Event.Actor = Actor;
+		Event.Location = Target.LastKnownLocation;
+		Event.Strength = Stimulus.Strength;
+		Event.Tag = StimulusTag;
+
+		OnSensorEvent.Broadcast(Event);
+	}
+	else if (Stimulus.Type == PredictionSenseID)
+	{
+		FNpcTrackedTarget& Target = SensorData.FindOrAdd(Actor);
+		Target.bHasLocation = true;
+		Target.LastKnownLocation = Stimulus.StimulusLocation;
+		Target.CurrentSenses |= ENpcSenseFlags::Prediction;
+		Target.LastSensedTime = Now;
+		Target.LastStimulusTag = StimulusTag;
+		Target.LastStimulusStrength = Stimulus.Strength;
 	}
 }
 
-void UNpcSensorComponent::OnPredictionStimulus(AActor* Actor, const FAIStimulus& Stimulus)
+void UNpcSensorComponent::HandleForgotten(AActor* Actor)
 {
-	LastPerceivedActor = Actor;
-	TimeSinceLastStimulus = 0.0f;
-	LastKnownPlayerPos = Stimulus.StimulusLocation;
-}
-
-void UNpcSensorComponent::OnTouchStimulus(AActor* Actor, const FAIStimulus& Stimulus)
-{
-	LastPerceivedActor = Actor;
-	TimeSinceLastStimulus = 0.0f;
-	bTouchSensedThisTick = true;
-	LastStimulusTag = StealthAiTags::TAG_NPC_Event_TouchDetected;
-
-	if (Actor && Actor->IsA<AStealthPlayerCharacter>())
-	{
-		bLineOfSightValid = true;
-		bLineOfSightBlocked = false;
-		LastValidObservationTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
-		LastKnownPlayerPos = Stimulus.StimulusLocation;
-	}
-
-	if (const ANpcAiController* Controller = GetAiController())
-	{
-		if (const UNpcContextComponent* Context = Controller->GetContextComponent())
-		{
-			Context->SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_TouchDetected);
-		}
-	}
-}
-
-void UNpcSensorComponent::OnDamageStimulus(AActor* Actor, const FAIStimulus& Stimulus)
-{
-	LastPerceivedActor = Actor;
-	TimeSinceLastStimulus = 0.0f;
-	bDamageSensedThisTick = true;
-	LastStimulusTag = StealthAiTags::TAG_NPC_Event_DamageReceived;
-
-	if (Actor && Actor->IsA<AStealthPlayerCharacter>())
-	{
-		bLineOfSightValid = true;
-		bLineOfSightBlocked = false;
-		LastValidObservationTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
-		LastKnownPlayerPos = Stimulus.StimulusLocation;
-	}
-
-	if (const ANpcAiController* Controller = GetAiController())
-	{
-		if (const UNpcContextComponent* Context = Controller->GetContextComponent())
-		{
-			Context->SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_DamageReceived);
-		}
-	}
-}
-
-ENpcNoiseType UNpcSensorComponent::ClassifyNoiseStimulus(const FAIStimulus& Stimulus) const
-{
-	if (Stimulus.Tag == FName("Explosion") || Stimulus.Tag == FName("DeathScream") || Stimulus.Tag == FName("CombatNoise"))
-	{
-		return ENpcNoiseType::Critical;
-	}
-
-	if (Stimulus.Tag == FName("GlassShatter") || Stimulus.Tag == FName("Alarm") || Stimulus.Tag == FName("DoorForced"))
-	{
-		return ENpcNoiseType::Major;
-	}
-
-	if (Stimulus.Tag == FName("Distraction") || Stimulus.Tag == FName("RockThrow") || Stimulus.Tag == FName("Whistle"))
-	{
-		return ENpcNoiseType::Distraction;
-	}
-
-	if (Stimulus.Strength >= 0.8f)
-	{
-		return ENpcNoiseType::Critical;
-	}
-	if (Stimulus.Strength >= 0.5f)
-	{
-		return ENpcNoiseType::Major;
-	}
-	if (Stimulus.Strength >= 0.2f)
-	{
-		return ENpcNoiseType::Distraction;
-	}
-
-	return ENpcNoiseType::Subtle;
-}
-
-void UNpcSensorComponent::UpdateSensoryState(float DeltaTime)
-{
-	TimeSinceLastStimulus += DeltaTime;
-
-	UpdateLineOfSight(DeltaTime);
-	UpdatePlayerLegality();
-}
-
-void UNpcSensorComponent::UpdateLineOfSight(float DeltaTime)
-{
-	const ANpcAiController* Controller = GetAiController();
-	if (!Controller)
+	if (!Actor)
 	{
 		return;
 	}
 
-	const APawn* ControlledPawn = Controller->GetPawn();
-	if (!ControlledPawn)
+	if (SensorData.Find(Actor))
 	{
-		return;
-	}
+		SensorData.Remove(Actor);
 
-	const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!PlayerPawn)
-	{
-		bHasLineOfSight = false;
-		return;
-	}
-
-	PlayerDistance = FVector::Dist(ControlledPawn->GetActorLocation(), PlayerPawn->GetActorLocation());
-
-	const UNpcProfile* Profile = GetNpcProfile();
-	const float AlwaysSeeRange = Profile ? Profile->AlwaysSeePlayerRange : 100.0f;
-	bIsFullyVisibleByDistance = (PlayerDistance <= AlwaysSeeRange);
-
-	const float SightRadius = GetConfiguredSightRadius();
-	bInDetectionRange = (PlayerDistance <= SightRadius);
-
-	const FVector DirectionToPlayer = (PlayerPawn->GetActorLocation() - ControlledPawn->GetActorLocation()).GetSafeNormal();
-	const float ForwardDot = FVector::DotProduct(ControlledPawn->GetActorForwardVector(), DirectionToPlayer);
-	const float AngleToPlayer = FMath::RadiansToDegrees(FMath::Acos(FMath::Clamp(ForwardDot, -1.0f, 1.0f)));
-	bIsLookingDirectlyAtPlayer = (AngleToPlayer <= 45.0f);
-
-	PlayerExposureMultiplier = 1.0f;
-	if (GetPlayerExposureSubsystem())
-	{
-		PlayerExposureMultiplier = GetPlayerExposureSubsystem()->GetCurrentTotalExposure();
-	}
-
-	if (const ACharacter* CharacterPlayer = Cast<ACharacter>(PlayerPawn))
-	{
-		if (CharacterPlayer->bIsCrouched && Profile)
-		{
-			PlayerExposureMultiplier *= Profile->CrouchSuspicionMultiplier;
-		}
-	}
-
-	const bool bExposureGated = (PlayerExposureMultiplier >= 0.05f);
-	bHasLineOfSight = (bLineOfSightValid || bTouchSensedThisTick) && (bIsFullyVisibleByDistance || bExposureGated);
-
-	if (bHasLineOfSight)
-	{
-		LastKnownPlayerPos = PlayerPawn->GetActorLocation();
-	}
-}
-
-void UNpcSensorComponent::UpdatePlayerLegality()
-{
-	bIsPlayerPerformingIllegalAction = false;
-
-	if (GetLegalitySubsystem())
-	{
-		bIsPlayerPerformingIllegalAction = GetLegalitySubsystem()->IsPlayerPerformingIllegalAction();
+		FNpcSensorEvent Event;
+		Event.Type = ENpcSensorEventType::Forgotten;
+		Event.Actor = Actor;
+		OnSensorEvent.Broadcast(Event);
 	}
 }

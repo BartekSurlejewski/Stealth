@@ -1,9 +1,11 @@
 #include "Characters/NPCs/Guards/GuardNpcContextComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
+#include "Characters/NPCs/AI/Perception/NpcAwarenessComponent.h"
 #include "Characters/NPCs/AI/Patrol/PatrolRoute.h"
 #include "Characters/NPCs/AI/Patrol/PatrolSubsystem.h"
 #include "Characters/NPCs/CharactersRegistrySubsystem.h"
-#include "Characters/Player/StealthPlayerCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Pawn.h"
 #include "Stealth/Stealth.h"
 
 void UGuardNpcContextComponent::BeginPlay()
@@ -34,11 +36,7 @@ APatrolRoute* UGuardNpcContextComponent::AssignPatrolRouteForLocation(const FGam
 	if (UPatrolSubsystem* Subsystem = UPatrolSubsystem::Get(this))
 	{
 		FVector RequesterPos = FVector::ZeroVector;
-		if (CachedNpcAiController.Get() && CachedNpcAiController->GetPawn())
-		{
-			RequesterPos = CachedNpcAiController->GetPawn()->GetActorLocation();
-		}
-		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+		if (const APawn* Pawn = GetNpcPawn())
 		{
 			RequesterPos = Pawn->GetActorLocation();
 		}
@@ -78,11 +76,7 @@ void UGuardNpcContextComponent::ResumePatrol()
 	if (const APatrolRoute* Route = GetActivePatrolRoute())
 	{
 		FVector RequesterPos = FVector::ZeroVector;
-		if (CachedNpcAiController.Get() && CachedNpcAiController->GetPawn())
-		{
-			RequesterPos = CachedNpcAiController->GetPawn()->GetActorLocation();
-		}
-		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
+		if (const APawn* Pawn = GetNpcPawn())
 		{
 			RequesterPos = Pawn->GetActorLocation();
 		}
@@ -122,23 +116,24 @@ bool UGuardNpcContextComponent::HasStandingGuardSpot() const
 
 void UGuardNpcContextComponent::LookAtPlayer()
 {
-	if (!CachedNpcAiController.Get() || !CachedNpcAiController->GetPawn())
+	const APawn* Pawn = GetNpcPawn();
+	if (!Pawn)
 	{
 		return;
 	}
 
-	const AStealthPlayerCharacter* Player = GetPlayerCharacter();
-	if (!Player)
+	const APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!PlayerPawn)
 	{
 		return;
 	}
 
-	FVector DirectionToPlayer = Player->GetActorLocation() - CachedNpcAiController->GetPawn()->GetActorLocation();
+	FVector DirectionToPlayer = PlayerPawn->GetActorLocation() - Pawn->GetActorLocation();
 	FRotator LookAtRotation = DirectionToPlayer.Rotation();
 	LookAtRotation.Pitch = 0.0f;
 	LookAtRotation.Roll = 0.0f;
 
-	CachedNpcAiController->GetPawn()->SetActorRotation(LookAtRotation);
+	const_cast<APawn*>(Pawn)->SetActorRotation(LookAtRotation);
 }
 
 void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVector& SourceLocation)
@@ -146,7 +141,13 @@ void UGuardNpcContextComponent::OnAlarmChanged(const int32 NewLevel, const FVect
 	GlobalAlarmLevel = NewLevel;
 	if (NewLevel >= 2)
 	{
-		AddSuspicion(100.0f);
+		if (const ANpcAiController* Controller = GetNpcController())
+		{
+			if (UNpcAwarenessComponent* Awareness = Controller->GetAwarenessComponent())
+			{
+				Awareness->AddSuspicion(100.0f);
+			}
+		}
 		SendStateTreeEvent(StealthAiTags::TAG_NPC_Event_CrimeReported);
 	}
 }

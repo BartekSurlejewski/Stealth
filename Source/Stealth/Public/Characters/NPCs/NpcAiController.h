@@ -2,19 +2,16 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "GameplayTagContainer.h"
+#include "Perception/AIPerceptionTypes.h"
 #include "NpcAiController.generated.h"
 
-class UNpcScheduleComponent;
 class UInventoryComponent;
 class UNpcFocusComponent;
 class UNpcSensorComponent;
 class UNpcAwarenessComponent;
 class UNpcContextComponent;
-struct FGameplayTag;
+class UNpcProfile;
 class UStateTreeAIComponent;
-class UPlayerExposureSubsystem;
-struct FAIStimulus;
 
 UCLASS(Abstract)
 class STEALTH_API ANpcAiController : public AAIController
@@ -34,33 +31,37 @@ public:
 	UNpcAwarenessComponent* GetAwarenessComponent() const { return AwarenessComponent; }
 
 	UFUNCTION(BlueprintPure, Category = "AI Components")
-	UNpcContextComponent* GetContextComponent() const;
+	UNpcContextComponent* GetContextComponent() const { return ContextComponent; }
+
+	UFUNCTION(BlueprintPure, Category = "AI Components")
+	const UNpcProfile* GetNpcProfile() const;
 
 protected:
+	virtual void PostInitializeComponents() override;
 	virtual void OnPossess(APawn* InPawn) override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION()
 	virtual void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
+
 	UFUNCTION()
-	void OnTargetPerceptionForgotten(AActor* Actor);
+	virtual void OnTargetPerceptionForgotten(AActor* Actor);
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components")
 	TObjectPtr<UStateTreeAIComponent> StateTreeAIComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UNpcSensorComponent> SensorComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UNpcAwarenessComponent> AwarenessComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UNpcFocusComponent> FocusComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AI")
-	FGameplayTag ChangedStateEventTag;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
-	FGuid NpcGUID;
 
-private:
-	mutable TWeakObjectPtr<UNpcContextComponent> CachedNpcContextComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components")
+	TObjectPtr<UInventoryComponent> NpcInventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components")
+	TObjectPtr<UNpcSensorComponent> SensorComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components")
+	TObjectPtr<UNpcAwarenessComponent> AwarenessComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components")
+	TObjectPtr<UNpcFocusComponent> FocusComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Components")
+	TObjectPtr<UNpcContextComponent> ContextComponent;
 };

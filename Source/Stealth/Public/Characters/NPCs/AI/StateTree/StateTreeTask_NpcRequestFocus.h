@@ -7,7 +7,6 @@
 #include "StateTreeTask_NpcRequestFocus.generated.h"
 
 class ANpcAiController;
-class UNpcFocusComponent;
 class AActor;
 
 USTRUCT()
@@ -17,9 +16,6 @@ struct STEALTH_API FStateTreeTask_NpcRequestFocusInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<ANpcAiController> Controller = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Context")
-	TObjectPtr<UNpcFocusComponent> FocusComponent = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	bool bClearFocusOnEnter = false;
@@ -37,7 +33,13 @@ struct STEALTH_API FStateTreeTask_NpcRequestFocusInstanceData
 	FVector FocusLocation = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, Category = "Parameter")
+	bool bHasLocation = false;
+
+	UPROPERTY(EditAnywhere, Category = "Parameter")
 	float Duration = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Parameter")
+	float AwarenessReductionMultiplier = 1.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	bool bClearFocusOnExit = false;

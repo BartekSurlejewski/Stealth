@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "Core/StealthWorldSubsystem.h"
 #include "GameplayTagContainer.h"
-#include "Characters/NPCs/AI/StealthAiTypes.h"
+#include "Characters/NPCs/AI/ActivitySlotClaim.h"
 #include "ActivityPointSubsystem.generated.h"
 
 class AActor;

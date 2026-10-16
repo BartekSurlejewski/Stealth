@@ -5,7 +5,6 @@
 #include "StateTreeTask_NpcInvestigate.generated.h"
 
 class ANpcAiController;
-class UNpcContextComponent;
 
 USTRUCT()
 struct STEALTH_API FStateTreeTask_NpcInvestigateInstanceData
@@ -14,9 +13,6 @@ struct STEALTH_API FStateTreeTask_NpcInvestigateInstanceData
 
 	UPROPERTY(EditAnywhere, Category = "Context")
 	TObjectPtr<ANpcAiController> Controller = nullptr;
-
-	UPROPERTY(EditAnywhere, Category = "Context")
-	TObjectPtr<UNpcContextComponent> NpcContext = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Parameter")
 	FVector InvestigateLocation = FVector::ZeroVector;

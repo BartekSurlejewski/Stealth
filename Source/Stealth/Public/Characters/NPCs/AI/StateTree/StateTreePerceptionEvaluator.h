@@ -5,7 +5,7 @@
 #include "Characters/NPCs/AI/StealthAiTypes.h"
 #include "StateTreePerceptionEvaluator.generated.h"
 
-class UNpcContextComponent;
+class ANpcAiController;
 
 USTRUCT()
 struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
@@ -13,43 +13,19 @@ struct STEALTH_API FStateTreePerceptionEvaluatorInstanceData
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, Category = "Context")
-	TObjectPtr<UNpcContextComponent> NpcContext = nullptr;
+	TObjectPtr<ANpcAiController> Controller = nullptr;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
-	FStateTreeAiPerceptionData PerceptionSnapshot;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	FGameplayTag CurrentStateTag;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	float Awareness = 0.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	ENpcBehaviourState BehaviourState = ENpcBehaviourState::Routine;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	bool bHasPlayerLineOfSight = false;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	bool bEffectivelySeesPlayer = false;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	bool bIsPlayerPerformingIllegalAction = false;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	FVector LastKnownPlayerPos = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, Category = "Output")
-	FVector LastHeardSoundLocation = FVector::ZeroVector;
+	FNpcAwarenessState AwarenessState;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
 	FNpcFocusTarget CurrentFocus;
 
 	UPROPERTY(EditAnywhere, Category = "Output")
-	bool bIsDistracted = false;
+	float SuspicionThreshold_Suspicious = 25.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Output")
+	float SuspicionThreshold_Alert = 75.0f;
 };
 
 USTRUCT(meta = (DisplayName = "NPC Perception Evaluator", Category = "NPC"))

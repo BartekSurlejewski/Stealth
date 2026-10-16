@@ -1,53 +1,61 @@
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
-#include "GameFramework/Pawn.h"
+#include "Characters/NPCs/AI/Perception/NpcSensorComponent.h"
+#include "Characters/NPCs/Guards/NpcProfile.h"
 
 UNpcFocusComponent::UNpcFocusComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = true;
-	PrimaryComponentTick.TickInterval = 0.05f;
 }
 
 void UNpcFocusComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	GetAiController();
+
+	if (const ANpcAiController* Controller = GetNpcController())
+	{
+		if (UNpcSensorComponent* Sensor = Controller->GetSensorComponent())
+		{
+			Sensor->OnSensorEvent.AddUObject(this, &UNpcFocusComponent::HandleSensorEvent);
+		}
+	}
 }
 
 void UNpcFocusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	UpdateFocus(DeltaTime);
-}
 
-ANpcAiController* UNpcFocusComponent::GetAiController() const
-{
-	if (!CachedController.IsValid())
+	if (CurrentFocus.IsValid() && CurrentFocus.Duration > 0.0f)
 	{
-		if (ANpcAiController* Controller = Cast<ANpcAiController>(GetOwner()))
+		CurrentFocus.RemainingTime -= DeltaTime;
+		if (CurrentFocus.RemainingTime <= 0.0f)
 		{
-			CachedController = Controller;
-		}
-		else if (const APawn* Pawn = Cast<APawn>(GetOwner()))
-		{
-			CachedController = Cast<ANpcAiController>(Pawn->GetController());
+			ClearFocus(CurrentFocus.Priority);
 		}
 	}
-	return CachedController.Get();
 }
 
 bool UNpcFocusComponent::RequestFocus(const FNpcFocusTarget& NewFocusCandidate)
 {
-	// Rule: Higher numerical priority wins.
-	// Active focus is protected if its priority is > None and it hasn't expired.
-	// An indefinite focus (Duration <= 0.0f) is protected indefinitely until explicitly cleared or preempted by equal-or-higher priority.
-	const bool bHasActiveProtectedFocus = (CurrentFocus.Priority > ENpcFocusPriority::None) &&
-		(CurrentFocus.Duration <= 0.0f || CurrentFocus.RemainingTime > 0.0f);
-
-	if (bHasActiveProtectedFocus && NewFocusCandidate.Priority < CurrentFocus.Priority)
+	if (!NewFocusCandidate.IsValid())
 	{
 		return false;
+	}
+
+	if (CurrentFocus == NewFocusCandidate)
+	{
+		return true;
+	}
+
+	const bool bHasActiveProtectedFocus = CurrentFocus.IsValid() &&
+		(CurrentFocus.Duration <= 0.0f || CurrentFocus.RemainingTime > 0.0f);
+
+	if (bHasActiveProtectedFocus)
+	{
+		if (NewFocusCandidate.Priority <= CurrentFocus.Priority)
+		{
+			return false;
+		}
 	}
 
 	const FNpcFocusTarget PreviousFocus = CurrentFocus;
@@ -59,19 +67,19 @@ bool UNpcFocusComponent::RequestFocus(const FNpcFocusTarget& NewFocusCandidate)
 	return true;
 }
 
-void UNpcFocusComponent::ClearFocus(ENpcFocusPriority MinimumPriorityToClear)
+void UNpcFocusComponent::ClearFocus(ENpcFocusPriority MaxPriorityToClear)
 {
-	if (CurrentFocus.Priority == ENpcFocusPriority::None && !CurrentFocus.FocusActor.IsValid() && CurrentFocus.FocusLocation.IsZero())
+	if (!CurrentFocus.IsValid())
 	{
 		return;
 	}
 
-	if (MinimumPriorityToClear == ENpcFocusPriority::None || CurrentFocus.Priority <= MinimumPriorityToClear)
+	if (MaxPriorityToClear == ENpcFocusPriority::None || CurrentFocus.Priority <= MaxPriorityToClear)
 	{
 		const FNpcFocusTarget PreviousFocus = CurrentFocus;
 		CurrentFocus = FNpcFocusTarget();
 
-		if (ANpcAiController* Controller = GetAiController())
+		if (ANpcAiController* Controller = GetNpcController())
 		{
 			Controller->ClearFocus(EAIFocusPriority::Gameplay);
 		}
@@ -80,21 +88,38 @@ void UNpcFocusComponent::ClearFocus(ENpcFocusPriority MinimumPriorityToClear)
 	}
 }
 
-void UNpcFocusComponent::UpdateFocus(float DeltaTime)
+bool UNpcFocusComponent::IsFocusedOn(const AActor* Actor) const
 {
-	if (CurrentFocus.Duration > 0.0f && CurrentFocus.RemainingTime > 0.0f)
+	return Actor && CurrentFocus.FocusActor.Get() == Actor;
+}
+
+bool UNpcFocusComponent::IsFocusedOnPlayer() const
+{
+	const AActor* Actor = CurrentFocus.FocusActor.Get();
+	return Actor && NpcAi::IsPlayerActor(Actor);
+}
+
+bool UNpcFocusComponent::IsDistracted() const
+{
+	if (IsFocusedOnPlayer())
 	{
-		CurrentFocus.RemainingTime -= DeltaTime;
-		if (CurrentFocus.RemainingTime <= 0.0f)
-		{
-			ClearFocus(CurrentFocus.Priority);
-		}
+		return false;
 	}
+	return CurrentFocus.Priority >= ENpcFocusPriority::MinorDistraction && CurrentFocus.Priority < ENpcFocusPriority::SuspiciousPlayer;
+}
+
+float UNpcFocusComponent::GetAwarenessMultiplier() const
+{
+	if (CurrentFocus.IsValid())
+	{
+		return FMath::Clamp(CurrentFocus.AwarenessReductionMultiplier, 0.0f, 1.0f);
+	}
+	return 1.0f;
 }
 
 void UNpcFocusComponent::ApplyPhysicalFocus()
 {
-	ANpcAiController* Controller = GetAiController();
+	ANpcAiController* Controller = GetNpcController();
 	if (!Controller)
 	{
 		return;
@@ -104,7 +129,7 @@ void UNpcFocusComponent::ApplyPhysicalFocus()
 	{
 		Controller->SetFocus(CurrentFocus.FocusActor.Get(), EAIFocusPriority::Gameplay);
 	}
-	else if (!CurrentFocus.FocusLocation.IsZero())
+	else if (CurrentFocus.bHasLocation)
 	{
 		Controller->SetFocalPoint(CurrentFocus.FocusLocation, EAIFocusPriority::Gameplay);
 	}
@@ -114,21 +139,100 @@ void UNpcFocusComponent::ApplyPhysicalFocus()
 	}
 }
 
-bool UNpcFocusComponent::IsDistracted() const
+void UNpcFocusComponent::HandleSensorEvent(const FNpcSensorEvent& Event)
 {
-	return CurrentFocus.Priority >= ENpcFocusPriority::MinorDistraction && CurrentFocus.Priority < ENpcFocusPriority::SuspiciousPlayer;
-}
-
-bool UNpcFocusComponent::IsFocusingOnPlayer() const
-{
-	return CurrentFocus.Priority >= ENpcFocusPriority::SuspiciousPlayer;
-}
-
-float UNpcFocusComponent::GetAwarenessMultiplier() const
-{
-	if (IsDistracted())
+	const UNpcProfile* Profile = GetNpcProfile();
+	if (!Profile)
 	{
-		return FMath::Clamp(CurrentFocus.AwarenessReductionMultiplier, 0.0f, 1.0f);
+		return;
 	}
-	return 1.0f;
+
+	switch (Event.Type)
+	{
+	case ENpcSensorEventType::SightGained:
+		if (Event.Actor.IsValid() && NpcAi::IsPlayerActor(Event.Actor.Get()))
+		{
+			const FNpcFocusRule& Rule = Profile->PlayerSightedFocusRule;
+			if (Rule.Priority > ENpcFocusPriority::None)
+			{
+				FNpcFocusTarget Candidate;
+				Candidate.FocusTag = Rule.FocusTag;
+				Candidate.Priority = Rule.Priority;
+				Candidate.FocusActor = Event.Actor;
+				Candidate.FocusLocation = Event.Location;
+				Candidate.bHasLocation = true;
+				Candidate.Duration = Rule.Duration;
+				Candidate.AwarenessReductionMultiplier = Rule.AwarenessReductionMultiplier;
+				RequestFocus(Candidate);
+			}
+		}
+		break;
+
+	case ENpcSensorEventType::SightLost:
+		// On SightLost keep the focus (awareness handles staleness)
+		break;
+
+	case ENpcSensorEventType::Heard:
+		if (const FNpcFocusRule* Rule = Profile->NoiseFocusRules.Find(Event.NoiseType))
+		{
+			if (Rule->Priority > ENpcFocusPriority::None)
+			{
+				FNpcFocusTarget Candidate;
+				Candidate.FocusTag = Rule->FocusTag;
+				Candidate.Priority = Rule->Priority;
+				Candidate.FocusActor = Event.Actor;
+				Candidate.FocusLocation = Event.Location;
+				Candidate.bHasLocation = true;
+				Candidate.Duration = Rule->Duration;
+				Candidate.AwarenessReductionMultiplier = Rule->AwarenessReductionMultiplier;
+				RequestFocus(Candidate);
+			}
+		}
+		break;
+
+	case ENpcSensorEventType::Touched:
+		if (Event.Actor.IsValid() && NpcAi::IsPlayerActor(Event.Actor.Get()))
+		{
+			const FNpcFocusRule& Rule = Profile->PlayerTouchedFocusRule;
+			if (Rule.Priority > ENpcFocusPriority::None)
+			{
+				FNpcFocusTarget Candidate;
+				Candidate.FocusTag = Rule.FocusTag;
+				Candidate.Priority = Rule.Priority;
+				Candidate.FocusActor = Event.Actor;
+				Candidate.FocusLocation = Event.Location;
+				Candidate.bHasLocation = true;
+				Candidate.Duration = Rule.Duration;
+				Candidate.AwarenessReductionMultiplier = Rule.AwarenessReductionMultiplier;
+				RequestFocus(Candidate);
+			}
+		}
+		break;
+
+	case ENpcSensorEventType::Damaged:
+		if (Event.Actor.IsValid() && NpcAi::IsPlayerActor(Event.Actor.Get()))
+		{
+			const FNpcFocusRule& Rule = Profile->PlayerDamagedFocusRule;
+			if (Rule.Priority > ENpcFocusPriority::None)
+			{
+				FNpcFocusTarget Candidate;
+				Candidate.FocusTag = Rule.FocusTag;
+				Candidate.Priority = Rule.Priority;
+				Candidate.FocusActor = Event.Actor;
+				Candidate.FocusLocation = Event.Location;
+				Candidate.bHasLocation = true;
+				Candidate.Duration = Rule.Duration;
+				Candidate.AwarenessReductionMultiplier = Rule.AwarenessReductionMultiplier;
+				RequestFocus(Candidate);
+			}
+		}
+		break;
+
+	case ENpcSensorEventType::Forgotten:
+		if (Event.Actor.IsValid() && CurrentFocus.FocusActor == Event.Actor)
+		{
+			ClearFocus(CurrentFocus.Priority);
+		}
+		break;
+	}
 }

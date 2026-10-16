@@ -7,6 +7,7 @@
 APrisonerNpcAiController::APrisonerNpcAiController()
 {
 	PrisonerContext = CreateDefaultSubobject<UPrisonerNpcContextComponent>(TEXT("Prisoner Context Component"));
+	ContextComponent = PrisonerContext;
 }
 
 void APrisonerNpcAiController::BeginPlay()

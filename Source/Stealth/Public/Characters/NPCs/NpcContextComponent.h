@@ -1,75 +1,35 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "Components/StateTreeAIComponent.h"
+#include "Characters/NPCs/AI/NpcAiComponentBase.h"
+#include "GameplayTagContainer.h"
 #include "Characters/NPCs/AI/StealthAiTypes.h"
-#include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
+#include "Characters/NPCs/AI/AiCrimeEventPayload.h"
 #include "NpcContextComponent.generated.h"
 
 class UNpcProfile;
-class ANpcAiController;
-class AStealthPlayerCharacter;
-class UNpcSensorComponent;
-class UNpcAwarenessComponent;
-struct FAIStimulus;
+class UStateTreeAIComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBehaviourStateChanged, ENpcBehaviourState, NewBehaviourState);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAlertLevelChanged, ENpcAlertLevel, NewAlertLevel);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPlayerInSightChanged, bool, IsPlayerInDirectSight);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, OldStateTag);
 
 /**
- * Context Component acting as an interface and unified data facade
- * between NPC subsystems/components (Sensor, Awareness, Focus, Schedule, Profile)
- * and AI systems (StateTrees, Gameplay Messages, external queries).
+ * Context Component holding high-level NPC state tags, stance tags, profile reference,
+ * and dispatching StateTree events.
  */
 UCLASS(Blueprintable, ClassGroup = "NPC")
-class STEALTH_API UNpcContextComponent : public UActorComponent
+class STEALTH_API UNpcContextComponent : public UNpcAiComponentBase
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnNpcStateChanged OnNpcStateChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnBehaviourStateChanged OnBehaviourStateChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnAlertLevelChanged OnAlertLevelChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnPlayerInSightChanged OnPlayerInSightChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnSuspicionChanged OnSuspicionChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnNpcFocusChanged OnNpcFocusChanged;
-
-	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
-	FOnNpcNoiseHeard OnNoiseHeard;
 
 public:
 	UNpcContextComponent();
 
 	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	// Stimulus Handlers
-	UFUNCTION()
-	virtual void OnSightStimulus(const AActor* Actor, const FAIStimulus& Stimulus);
+	UPROPERTY(BlueprintAssignable, Category = "NPC|Events")
+	FOnNpcStateChanged OnNpcStateChanged;
 
-	UFUNCTION(BlueprintCallable, Category = "NPC|Perception")
-	virtual void HandleHearingStimulus(ENpcNoiseType NoiseType, const FAIStimulus& Stimulus);
-
-	/** Handle crime report dispatched from HousingSubsystem */
-	UFUNCTION(BlueprintCallable, Category = "NPC|Crime")
-	virtual void HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload);
-
-	// State Bookkeeping (Called by StateTree ApplyPerceptionProfile task)
+	// State Bookkeeping
 	UFUNCTION(BlueprintCallable, Category = "NPC|State")
 	void SetCurrentStateTag(const FGameplayTag& NewStateTag);
 
@@ -85,120 +45,38 @@ public:
 	UFUNCTION(BlueprintPure, Category = "NPC|State")
 	const FGuid& GetNpcGuid() const { return OwnerNpcGuid; }
 
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	virtual bool IsPlayerPerformingIllegalAction() const;
+	void SetNpcGuid(const FGuid& InGuid) { OwnerNpcGuid = InGuid; }
 
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	float GetSuspicion() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	float GetAwareness() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	ENpcAlertLevel GetAlertLevel() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	ENpcBehaviourState GetBehaviourState() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	bool HasPlayerLineOfSight() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	bool EffectivelySeesPlayer() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	FVector GetLastKnownPlayerPos() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	FVector GetLastHeardSoundLocation() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	FVector GetInvestigationTarget() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	const FNpcFocusTarget& GetCurrentFocus() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	const FStateTreeAiPerceptionData& GetPerceptionSnapshot() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	bool IsDistracted() const;
-
-	// Actions & StateTree communication
-	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void AddSuspicion(float Amount);
-
-	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void SetSuspicion(float NewSuspicion);
-
-	UFUNCTION(BlueprintCallable, Category = "NPC|Focus")
-	bool RequestFocus(const FNpcFocusTarget& NewFocusCandidate);
-
-	UFUNCTION(BlueprintCallable, Category = "NPC|Focus")
-	void ClearFocus(ENpcFocusPriority MinimumPriorityToClear = ENpcFocusPriority::None);
-
-	UFUNCTION(BlueprintCallable, Category = "NPC|State")
-	void SendStateTreeEvent(const FGameplayTag& Tag) const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|State")
-	AStealthPlayerCharacter* GetPlayerCharacter() const;
-
-	// Subcomponent accessors
-	UFUNCTION(BlueprintPure, Category = "NPC|Components")
-	UNpcSensorComponent* GetSensorComponent() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|Components")
-	UNpcAwarenessComponent* GetAwarenessComponent() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|Components")
-	UNpcFocusComponent* GetFocusComponent() const;
-
-	UFUNCTION(BlueprintPure, Category = "NPC|Profile")
-	UNpcProfile* GetNpcProfile() const;
+	// Profile Access
+	virtual const UNpcProfile* GetNpcProfile() const override { return NpcProfile; }
 
 	UFUNCTION(BlueprintCallable, Category = "NPC|Profile")
-	void SetProfile(UNpcProfile* InProfile);
+	void SetNpcProfile(UNpcProfile* InProfile) { NpcProfile = InProfile; }
+
+	// StateTree Event Dispatch
+	UFUNCTION(BlueprintCallable, Category = "NPC|StateTree")
+	void SendStateTreeEvent(const FGameplayTag& EventTag);
+
+	/** Handle crime report dispatched from HousingSubsystem */
+	UFUNCTION(BlueprintCallable, Category = "NPC|Crime")
+	virtual void HandleCrimeReported(const FAiCrimeEventPayload& CrimePayload);
 
 protected:
-	void BindToSubcomponents();
-
-	UFUNCTION()
-	void HandleSuspicionChanged(float NewSuspicion);
-
-	UFUNCTION()
-	void HandlePlayerInSightChanged(bool bInSight);
-
-	UFUNCTION()
-	void HandleFocusChanged(const FNpcFocusTarget& NewFocus, const FNpcFocusTarget& PreviousFocus);
-
-	static ENpcAlertLevel ResolveAlertLevelFromStateTag(const FGameplayTag& StateTag);
-	static ENpcBehaviourState ResolveBehaviourStateFromStateTag(const FGameplayTag& StateTag);
+	UStateTreeAIComponent* GetStateTreeComponent() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NPC|Profile")
-	TObjectPtr<UNpcProfile> Profile;
+	TObjectPtr<UNpcProfile> NpcProfile;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|State")
 	FGameplayTag CurrentStateTag;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|State")
 	FGameplayTag CurrentStanceTag;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "NPC|State")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NPC|Identification")
 	FGuid OwnerNpcGuid;
 
-	UPROPERTY()
-	TWeakObjectPtr<UStateTreeAIComponent> CachedStateTreeComponent;
-
-	UPROPERTY()
-	TWeakObjectPtr<ANpcAiController> CachedNpcAiController;
-
-	UPROPERTY()
-	mutable TWeakObjectPtr<UNpcSensorComponent> CachedSensorComponent;
-
-	UPROPERTY()
-	mutable TWeakObjectPtr<UNpcAwarenessComponent> CachedAwarenessComponent;
-
-	UPROPERTY()
-	mutable TWeakObjectPtr<UNpcFocusComponent> CachedFocusComponent;
+private:
+	mutable TWeakObjectPtr<UStateTreeAIComponent> CachedStateTreeComponent;
 };

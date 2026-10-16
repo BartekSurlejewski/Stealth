@@ -19,6 +19,8 @@ bool FNpcFocusIndefinitePreemptionTest::RunTest(const FString& Parameters)
 	CombatFocus.FocusTag = StealthAiTags::TAG_NPC_Focus_Player_Hostile;
 	CombatFocus.Priority = ENpcFocusPriority::CombatTarget; // 60
 	CombatFocus.Duration = 0.0f; // Indefinite
+	CombatFocus.bHasLocation = true;
+	CombatFocus.FocusLocation = FVector(100.0f, 0.0f, 0.0f);
 
 	const bool bCombatAccepted = FocusComp->RequestFocus(CombatFocus);
 	TestTrue(TEXT("Combat target focus should be accepted"), bCombatAccepted);
@@ -29,6 +31,8 @@ bool FNpcFocusIndefinitePreemptionTest::RunTest(const FString& Parameters)
 	MinorNoiseFocus.FocusTag = StealthAiTags::TAG_NPC_Focus_Noise_Distraction;
 	MinorNoiseFocus.Priority = ENpcFocusPriority::MinorDistraction; // 20
 	MinorNoiseFocus.Duration = 4.0f;
+	MinorNoiseFocus.bHasLocation = true;
+	MinorNoiseFocus.FocusLocation = FVector(200.0f, 0.0f, 0.0f);
 
 	const bool bMinorNoiseAccepted = FocusComp->RequestFocus(MinorNoiseFocus);
 	TestFalse(TEXT("Indefinite combat focus must NOT be preempted by MinorDistraction"), bMinorNoiseAccepted);
@@ -38,6 +42,8 @@ bool FNpcFocusIndefinitePreemptionTest::RunTest(const FString& Parameters)
 	MajorDisturbanceFocus.FocusTag = StealthAiTags::TAG_NPC_Focus_Disturbance_Environment;
 	MajorDisturbanceFocus.Priority = ENpcFocusPriority::MajorDisturbance; // 30
 	MajorDisturbanceFocus.Duration = 5.0f;
+	MajorDisturbanceFocus.bHasLocation = true;
+	MajorDisturbanceFocus.FocusLocation = FVector(300.0f, 0.0f, 0.0f);
 
 	const bool bMajorDisturbanceAccepted = FocusComp->RequestFocus(MajorDisturbanceFocus);
 	TestFalse(TEXT("Indefinite combat focus must NOT be preempted by MajorDisturbance"), bMajorDisturbanceAccepted);
@@ -55,6 +61,7 @@ bool FNpcPlayerAttentionGatingTest::RunTest(const FString& Parameters)
 	// 1. NPC is investigating a MajorDisturbance (Priority = 30)
 	FNpcFocusTarget DisturbanceFocus;
 	DisturbanceFocus.FocusLocation = FVector(100.0f, 200.0f, 0.0f);
+	DisturbanceFocus.bHasLocation = true;
 	DisturbanceFocus.FocusTag = StealthAiTags::TAG_NPC_Focus_Disturbance_Environment;
 	DisturbanceFocus.Priority = ENpcFocusPriority::MajorDisturbance; // 30
 	DisturbanceFocus.Duration = 5.0f;
@@ -67,6 +74,8 @@ bool FNpcPlayerAttentionGatingTest::RunTest(const FString& Parameters)
 	SuspiciousPlayerFocus.FocusTag = StealthAiTags::TAG_NPC_Focus_Player_Suspicious;
 	SuspiciousPlayerFocus.Priority = ENpcFocusPriority::SuspiciousPlayer; // 25
 	SuspiciousPlayerFocus.Duration = 3.0f;
+	SuspiciousPlayerFocus.bHasLocation = true;
+	SuspiciousPlayerFocus.FocusLocation = FVector(500.0f, 500.0f, 0.0f);
 
 	const bool bSuspiciousPlayerWon = FocusComp->RequestFocus(SuspiciousPlayerFocus);
 	TestFalse(TEXT("Merely suspicious player must lose arbitration against active MajorDisturbance"), bSuspiciousPlayerWon);
@@ -77,6 +86,8 @@ bool FNpcPlayerAttentionGatingTest::RunTest(const FString& Parameters)
 	IllegalPlayerFocus.FocusTag = StealthAiTags::TAG_NPC_Focus_Player_Hostile;
 	IllegalPlayerFocus.Priority = ENpcFocusPriority::CombatTarget; // 60
 	IllegalPlayerFocus.Duration = 0.0f;
+	IllegalPlayerFocus.bHasLocation = true;
+	IllegalPlayerFocus.FocusLocation = FVector(500.0f, 500.0f, 0.0f);
 
 	const bool bIllegalPlayerWon = FocusComp->RequestFocus(IllegalPlayerFocus);
 	TestTrue(TEXT("Illegal player action (CombatTarget) beats MajorDisturbance in arbitration"), bIllegalPlayerWon);
@@ -91,8 +102,13 @@ bool FNpcSuspicionModesTest::RunTest(const FString& Parameters)
 {
 	UNpcAwarenessComponent* AwarenessComp = NewObject<UNpcAwarenessComponent>();
 
-	// Test SetPerceptionTuningDirect
-	AwarenessComp->SetPerceptionTuningDirect(ENpcSuspicionMode::Normal, 1.2f, 0.8f);
+	// Test SetPerceptionTuning
+	FNpcPerceptionTuningParams TuningParams;
+	TuningParams.Mode = ENpcSuspicionMode::Normal;
+	TuningParams.SuspicionGainMultiplier = 1.2f;
+	TuningParams.SuspicionDecayMultiplier = 0.8f;
+
+	AwarenessComp->SetPerceptionTuning(TuningParams);
 	TestTrue(TEXT("Tuning mode should be Normal"), AwarenessComp->GetTuningParams().Mode == ENpcSuspicionMode::Normal);
 	TestEqual(TEXT("Gain multiplier should be 1.2"), AwarenessComp->GetTuningParams().SuspicionGainMultiplier, 1.2f);
 	TestEqual(TEXT("Decay multiplier should be 0.8"), AwarenessComp->GetTuningParams().SuspicionDecayMultiplier, 0.8f);
@@ -118,28 +134,23 @@ bool FNpcContextStateMappingTest::RunTest(const FString& Parameters)
 
 	// Default state is Unaware
 	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Unaware);
-	TestTrue(TEXT("Default AlertLevel must resolve to Unaware"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Unaware);
-	TestTrue(TEXT("Default BehaviourState must resolve to Routine"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Routine);
+	TestTrue(TEXT("State tag must resolve to Unaware"), ContextComp->GetCurrentStateTag().MatchesTagExact(StealthAiTags::TAG_NPC_State_Unaware));
 
 	// Combat State
 	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Combat);
-	TestTrue(TEXT("AlertLevel must resolve to Hostile in Combat state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Hostile);
-	TestTrue(TEXT("BehaviourState must resolve to Combat in Combat state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Combat);
+	TestTrue(TEXT("State tag must resolve to Combat"), ContextComp->GetCurrentStateTag().MatchesTagExact(StealthAiTags::TAG_NPC_State_Combat));
 
 	// Alerted State
 	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Alerted);
-	TestTrue(TEXT("AlertLevel must resolve to Alerted in Alerted state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Alerted);
-	TestTrue(TEXT("BehaviourState must resolve to Alerted in Alerted state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Alerted);
+	TestTrue(TEXT("State tag must resolve to Alerted"), ContextComp->GetCurrentStateTag().MatchesTagExact(StealthAiTags::TAG_NPC_State_Alerted));
 
 	// Search State
 	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Search);
-	TestTrue(TEXT("AlertLevel must resolve to Alerted in Search state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Alerted);
-	TestTrue(TEXT("BehaviourState must resolve to Search in Search state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Search);
+	TestTrue(TEXT("State tag must resolve to Search"), ContextComp->GetCurrentStateTag().MatchesTagExact(StealthAiTags::TAG_NPC_State_Search));
 
 	// Suspicious State
 	ContextComp->SetCurrentStateTag(StealthAiTags::TAG_NPC_State_Suspicious);
-	TestTrue(TEXT("AlertLevel must resolve to Suspicious in Suspicious state"), ContextComp->GetAlertLevel() == ENpcAlertLevel::Suspicious);
-	TestTrue(TEXT("BehaviourState must resolve to Suspicious in Suspicious state"), ContextComp->GetBehaviourState() == ENpcBehaviourState::Suspicious);
+	TestTrue(TEXT("State tag must resolve to Suspicious"), ContextComp->GetCurrentStateTag().MatchesTagExact(StealthAiTags::TAG_NPC_State_Suspicious));
 
 	return true;
 }

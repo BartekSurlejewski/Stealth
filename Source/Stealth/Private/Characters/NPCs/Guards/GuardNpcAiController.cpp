@@ -7,6 +7,7 @@
 AGuardNpcAiController::AGuardNpcAiController()
 {
 	GuardContext = CreateDefaultSubobject<UGuardNpcContextComponent>(TEXT("Guard Context Component"));
+	ContextComponent = GuardContext;
 }
 
 void AGuardNpcAiController::OnPossess(APawn* InPawn)

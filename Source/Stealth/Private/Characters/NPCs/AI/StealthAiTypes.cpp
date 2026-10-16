@@ -2,7 +2,7 @@
 
 namespace StealthAiTags
 {
-	// NPC State Tags (Single Source of Truth)
+	// NPC State Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Unaware, "NPC.State.Unaware");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Suspicious, "NPC.State.Suspicious");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Alerted, "NPC.State.Alerted");
@@ -11,7 +11,23 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Dead, "NPC.State.Dead");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_State_Fleeing, "NPC.State.Fleeing");
 
-	// NPC Event / Trigger Tags
+	// NPC Activity Tags
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Patrol, "NPC.Activity.Patrol");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_GuardPost, "NPC.Activity.GuardPost");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Pub, "NPC.Activity.Pub");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Sleep, "NPC.Activity.Sleep");
+
+	// NPC Focus Tags
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_None, "NPC.Focus.None");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Routine, "NPC.Focus.Routine");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Noise_Distraction, "NPC.Focus.Noise.Distraction");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Disturbance_Environment, "NPC.Focus.Disturbance.Environment");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Disturbance_DeadBody, "NPC.Focus.Disturbance.DeadBody");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player, "NPC.Focus.Player");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player_Suspicious, "NPC.Focus.Player.Suspicious");
+	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player_Hostile, "NPC.Focus.Player.Hostile");
+
+	// NPC StateTree Event Tags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_Investigate, "NPC.Event.Investigate");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_NoiseHeard, "NPC.Event.NoiseHeard");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_CrimeReported, "NPC.Event.CrimeReported");
@@ -23,26 +39,4 @@ namespace StealthAiTags
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_ResumeRoutine, "NPC.Event.ResumeRoutine");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_DamageReceived, "NPC.Event.DamageReceived");
 	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Event_TouchDetected, "NPC.Event.TouchDetected");
-
-
-	// NPC Activity Tags (Schedule & Routines)
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Patrol, "NPC.Activity.Patrol");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_GuardPost, "NPC.Activity.GuardPost");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Pub, "NPC.Activity.Pub");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Activity_Sleep, "NPC.Activity.Sleep");
-
-	// Noise Tags
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Footstep, "Noise.Footstep");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Distraction, "Noise.Distraction");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Major, "Noise.Major");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_Noise_Critical, "Noise.Critical");
-
-	// NPC Focus Tags
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_None, "NPC.Focus.None");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Routine, "NPC.Focus.Routine");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Noise_Distraction, "NPC.Focus.Noise.Distraction");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Disturbance_Environment, "NPC.Focus.Disturbance.Environment");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Disturbance_DeadBody, "NPC.Focus.Disturbance.DeadBody");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player_Suspicious, "NPC.Focus.Player.Suspicious");
-	UE_DEFINE_GAMEPLAY_TAG(TAG_NPC_Focus_Player_Hostile, "NPC.Focus.Player.Hostile");
 }

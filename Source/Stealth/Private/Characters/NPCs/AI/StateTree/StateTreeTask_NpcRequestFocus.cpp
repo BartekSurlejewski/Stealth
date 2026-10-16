@@ -2,46 +2,25 @@
 #include "Characters/NPCs/NpcAiController.h"
 #include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
 #include "StateTreeExecutionContext.h"
-#include "GameFramework/Pawn.h"
 
 EStateTreeRunStatus FStateTreeTask_NpcRequestFocus::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
-	AActor* OwnerActor = Cast<AActor>(Context.GetOwner());
-
-	if (!InstanceData.Controller)
+	ANpcAiController* Controller = InstanceData.Controller;
+	if (!Controller)
 	{
-		InstanceData.Controller = Cast<ANpcAiController>(OwnerActor);
-		if (!InstanceData.Controller && OwnerActor)
-		{
-			if (const APawn* Pawn = Cast<APawn>(OwnerActor))
-			{
-				InstanceData.Controller = Cast<ANpcAiController>(Pawn->GetController());
-			}
-		}
+		return EStateTreeRunStatus::Failed;
 	}
 
-	if (!InstanceData.FocusComponent)
-	{
-		if (InstanceData.Controller)
-		{
-			InstanceData.FocusComponent = InstanceData.Controller->GetFocusComponent();
-		}
-		if (!InstanceData.FocusComponent && OwnerActor)
-		{
-			InstanceData.FocusComponent = OwnerActor->FindComponentByClass<UNpcFocusComponent>();
-		}
-	}
-
-	if (!InstanceData.FocusComponent)
+	UNpcFocusComponent* FocusComp = Controller->GetFocusComponent();
+	if (!FocusComp)
 	{
 		return EStateTreeRunStatus::Failed;
 	}
 
 	if (InstanceData.bClearFocusOnEnter)
 	{
-		InstanceData.FocusComponent->ClearFocus(InstanceData.Priority);
+		FocusComp->ClearFocus(InstanceData.Priority);
 		return EStateTreeRunStatus::Running;
 	}
 
@@ -50,17 +29,22 @@ EStateTreeRunStatus FStateTreeTask_NpcRequestFocus::EnterState(FStateTreeExecuti
 	Target.Priority = InstanceData.Priority;
 	Target.FocusActor = InstanceData.FocusActor;
 	Target.FocusLocation = InstanceData.FocusLocation;
+	Target.bHasLocation = InstanceData.bHasLocation;
 	Target.Duration = InstanceData.Duration;
+	Target.AwarenessReductionMultiplier = InstanceData.AwarenessReductionMultiplier;
 
-	InstanceData.FocusComponent->RequestFocus(Target);
+	FocusComp->RequestFocus(Target);
 	return EStateTreeRunStatus::Running;
 }
 
 void FStateTreeTask_NpcRequestFocus::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	if (InstanceData.bClearFocusOnExit && InstanceData.FocusComponent)
+	if (InstanceData.bClearFocusOnExit && InstanceData.Controller)
 	{
-		InstanceData.FocusComponent->ClearFocus(InstanceData.Priority);
+		if (UNpcFocusComponent* FocusComp = InstanceData.Controller->GetFocusComponent())
+		{
+			FocusComp->ClearFocus(InstanceData.Priority);
+		}
 	}
 }

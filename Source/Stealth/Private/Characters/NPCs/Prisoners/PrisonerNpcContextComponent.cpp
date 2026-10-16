@@ -1,5 +1,4 @@
-﻿#include "Characters/NPCs/Prisoners/PrisonerNpcContextComponent.h"
-
+#include "Characters/NPCs/Prisoners/PrisonerNpcContextComponent.h"
 #include "Characters/NPCs/NpcAiController.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -8,10 +7,16 @@ void UPrisonerNpcContextComponent::BeginPlay()
 	Super::BeginPlay();
 
 	UGameplayMessageSubsystem& MsgSubsystem = UGameplayMessageSubsystem::Get(this);
-	DailyTaskStartedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskStartedMessage>(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskStarted, this,
-	                                                                                         &UPrisonerNpcContextComponent::OnDailyTaskStarted);
-	DailyTaskEndedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskEndedMessage>(StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskEnded, this,
-	                                                                                     &UPrisonerNpcContextComponent::OnDailyTaskEnded);
+	DailyTaskStartedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskStartedMessage>(
+		StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskStarted,
+		this,
+		&UPrisonerNpcContextComponent::OnDailyTaskStarted
+	);
+	DailyTaskEndedListenerHandle = MsgSubsystem.RegisterListener<FDailyTaskEndedMessage>(
+		StealthMessageChannels::TAG_Message_DailyTask_OnDailyTaskEnded,
+		this,
+		&UPrisonerNpcContextComponent::OnDailyTaskEnded
+	);
 }
 
 void UPrisonerNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -23,7 +28,6 @@ void UPrisonerNpcContextComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
 	Super::EndPlay(EndPlayReason);
 }
 
-
 void UPrisonerNpcContextComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -31,7 +35,8 @@ void UPrisonerNpcContextComponent::TickComponent(float DeltaTime, ELevelTick Tic
 
 void UPrisonerNpcContextComponent::MoveToPosition(const FVector& Destination, TFunction<void(bool bSuccess)> OnComplete)
 {
-	if (!CachedNpcAiController.Get())
+	ANpcAiController* Controller = GetNpcController();
+	if (!Controller)
 	{
 		OnComplete(false);
 		return;
@@ -39,15 +44,18 @@ void UPrisonerNpcContextComponent::MoveToPosition(const FVector& Destination, TF
 
 	PendingMoveCallback = MoveTemp(OnComplete);
 
-	CachedNpcAiController->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
-	CachedNpcAiController->ReceiveMoveCompleted.AddDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	Controller->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	Controller->ReceiveMoveCompleted.AddDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
 
-	CachedNpcAiController->MoveToLocation(Destination, 50.0f, true, true);
+	Controller->MoveToLocation(Destination, 50.0f, true, true);
 }
 
 void UPrisonerNpcContextComponent::HandleMoveCompleted(FAIRequestID RequestID, EPathFollowingResult::Type Result)
 {
-	CachedNpcAiController->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	if (ANpcAiController* Controller = GetNpcController())
+	{
+		Controller->ReceiveMoveCompleted.RemoveDynamic(this, &UPrisonerNpcContextComponent::HandleMoveCompleted);
+	}
 
 	if (PendingMoveCallback)
 	{

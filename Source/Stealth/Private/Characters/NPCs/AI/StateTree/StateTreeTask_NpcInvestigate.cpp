@@ -1,61 +1,50 @@
 #include "Characters/NPCs/AI/StateTree/StateTreeTask_NpcInvestigate.h"
 #include "Characters/NPCs/NpcAiController.h"
-#include "Characters/NPCs/NpcContextComponent.h"
+#include "Characters/NPCs/AI/Focus/NpcFocusComponent.h"
+#include "Characters/NPCs/AI/Perception/NpcAwarenessComponent.h"
 #include "StateTreeExecutionContext.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "GameFramework/Pawn.h"
 
 EStateTreeRunStatus FStateTreeTask_NpcInvestigate::EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
-	if (!InstanceData.Controller)
+	ANpcAiController* Controller = InstanceData.Controller;
+	if (!Controller)
 	{
-		InstanceData.Controller = Cast<ANpcAiController>(Context.GetOwner());
-		if (!InstanceData.Controller)
-		{
-			if (const APawn* Pawn = Cast<APawn>(Context.GetOwner()))
-			{
-				InstanceData.Controller = Cast<ANpcAiController>(Pawn->GetController());
-			}
-		}
-	}
-
-	if (!InstanceData.NpcContext && InstanceData.Controller)
-	{
-		InstanceData.NpcContext = InstanceData.Controller->FindComponentByClass<UNpcContextComponent>();
-		if (!InstanceData.NpcContext && InstanceData.Controller->GetPawn())
-		{
-			InstanceData.NpcContext = InstanceData.Controller->GetPawn()->FindComponentByClass<UNpcContextComponent>();
-		}
+		return EStateTreeRunStatus::Failed;
 	}
 
 	InstanceData.CurrentInvestigationTime = 0.0f;
 	InstanceData.bHasReachedLocation = false;
 
-	if (InstanceData.NpcContext && InstanceData.InvestigateLocation.IsZero())
+	if (InstanceData.InvestigateLocation.IsZero())
 	{
-		const FNpcFocusTarget& CurrentFocus = InstanceData.NpcContext->GetCurrentFocus();
-		if (CurrentFocus.IsValid() && !CurrentFocus.FocusLocation.IsZero())
+		if (const UNpcFocusComponent* FocusComp = Controller->GetFocusComponent())
 		{
-			InstanceData.InvestigateLocation = CurrentFocus.FocusLocation;
+			const FNpcFocusTarget& CurrentFocus = FocusComp->GetCurrentFocus();
+			if (CurrentFocus.IsValid() && CurrentFocus.bHasLocation)
+			{
+				InstanceData.InvestigateLocation = CurrentFocus.FocusLocation;
+			}
 		}
-		else if (!InstanceData.NpcContext->GetInvestigationTarget().IsZero())
+
+		if (InstanceData.InvestigateLocation.IsZero())
 		{
-			InstanceData.InvestigateLocation = InstanceData.NpcContext->GetInvestigationTarget();
-		}
-		else if (!InstanceData.NpcContext->GetLastHeardSoundLocation().IsZero())
-		{
-			InstanceData.InvestigateLocation = InstanceData.NpcContext->GetLastHeardSoundLocation();
-		}
-		else if (!InstanceData.NpcContext->GetLastKnownPlayerPos().IsZero())
-		{
-			InstanceData.InvestigateLocation = InstanceData.NpcContext->GetLastKnownPlayerPos();
+			if (const UNpcAwarenessComponent* AwarenessComp = Controller->GetAwarenessComponent())
+			{
+				const FNpcAwarenessState& AwarenessState = AwarenessComp->GetAwarenessState();
+				if (AwarenessState.bHasInvestigationLocation)
+				{
+					InstanceData.InvestigateLocation = AwarenessState.InvestigationLocation;
+				}
+			}
 		}
 	}
 
-	if (InstanceData.Controller && !InstanceData.InvestigateLocation.IsZero())
+	if (!InstanceData.InvestigateLocation.IsZero())
 	{
-		InstanceData.Controller->MoveToLocation(InstanceData.InvestigateLocation, InstanceData.AcceptanceRadius);
+		Controller->MoveToLocation(InstanceData.InvestigateLocation, InstanceData.AcceptanceRadius);
 		return EStateTreeRunStatus::Running;
 	}
 
@@ -65,13 +54,13 @@ EStateTreeRunStatus FStateTreeTask_NpcInvestigate::EnterState(FStateTreeExecutio
 EStateTreeRunStatus FStateTreeTask_NpcInvestigate::Tick(FStateTreeExecutionContext& Context, const float DeltaTime) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-
-	if (!InstanceData.Controller)
+	ANpcAiController* Controller = InstanceData.Controller;
+	if (!Controller)
 	{
 		return EStateTreeRunStatus::Failed;
 	}
 
-	APawn* Pawn = InstanceData.Controller->GetPawn();
+	APawn* Pawn = Controller->GetPawn();
 	if (!Pawn)
 	{
 		return EStateTreeRunStatus::Failed;
@@ -81,12 +70,12 @@ EStateTreeRunStatus FStateTreeTask_NpcInvestigate::Tick(FStateTreeExecutionConte
 	{
 		const float DistSq = FVector::DistSquared(Pawn->GetActorLocation(), InstanceData.InvestigateLocation);
 		const bool bArrivedByDistance = DistSq <= FMath::Square(InstanceData.AcceptanceRadius + 50.0f);
-		const bool bArrivedByMoveStatus = (InstanceData.Controller->GetMoveStatus() == EPathFollowingStatus::Idle);
+		const bool bArrivedByMoveStatus = (Controller->GetMoveStatus() == EPathFollowingStatus::Idle);
 
 		if (bArrivedByDistance || bArrivedByMoveStatus)
 		{
 			InstanceData.bHasReachedLocation = true;
-			InstanceData.Controller->StopMovement();
+			Controller->StopMovement();
 		}
 	}
 
@@ -105,14 +94,14 @@ EStateTreeRunStatus FStateTreeTask_NpcInvestigate::Tick(FStateTreeExecutionConte
 void FStateTreeTask_NpcInvestigate::ExitState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) const
 {
 	FInstanceDataType& InstanceData = Context.GetInstanceData(*this);
-	if (InstanceData.Controller)
+	if (ANpcAiController* Controller = InstanceData.Controller)
 	{
-		InstanceData.Controller->StopMovement();
-		InstanceData.Controller->ClearFocus(EAIFocusPriority::Gameplay);
-	}
+		Controller->StopMovement();
+		Controller->ClearFocus(EAIFocusPriority::Gameplay);
 
-	if (InstanceData.NpcContext)
-	{
-		InstanceData.NpcContext->ClearFocus(ENpcFocusPriority::MajorDisturbance);
+		if (UNpcFocusComponent* FocusComp = Controller->GetFocusComponent())
+		{
+			FocusComp->ClearFocus(ENpcFocusPriority::MajorDisturbance);
+		}
 	}
 }

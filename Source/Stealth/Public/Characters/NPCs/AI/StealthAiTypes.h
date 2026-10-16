@@ -3,87 +3,283 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
-#include "Housing/HouseData.h"
+#include "GameFramework/Pawn.h"
 #include "StealthAiTypes.generated.h"
 
 class AActor;
-class ANpcCharacter;
-class ANpcAiController;
+
+// ============================================================================
+// AI Gameplay Tags Declarations
+// ============================================================================
 
 namespace StealthAiTags
 {
-	// NPC State Tags (Single Source of Truth)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Unaware);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Suspicious);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Alerted);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Combat);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Search);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Dead);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Fleeing);
+	// NPC State Tags
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Unaware);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Suspicious);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Alerted);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Combat);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Search);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Dead);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_State_Fleeing);
 
-	// NPC Event / Trigger Tags
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Investigate);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_NoiseHeard);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_CrimeReported);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_PlayerSpotted);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_PlayerLost);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Distraction);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_FocusCleared);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_SearchExpired);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_ResumeRoutine);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_DamageReceived);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_TouchDetected);
-
-	// NPC Activity Tags (Schedule & Routines)
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Patrol);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_GuardPost);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Pub);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Sleep);
-
-	// Noise Tags
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Footstep);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Distraction);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Major);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Noise_Critical);
+	// NPC Activity Tags
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Patrol);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_GuardPost);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Pub);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Activity_Sleep);
 
 	// NPC Focus Tags
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_None);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Routine);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Noise_Distraction);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Disturbance_Environment);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Disturbance_DeadBody);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player_Suspicious);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player_Hostile);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_None);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Routine);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Noise_Distraction);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Disturbance_Environment);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Disturbance_DeadBody);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player_Suspicious);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Focus_Player_Hostile);
+
+	// NPC StateTree Event Tags
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Investigate);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_NoiseHeard);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_CrimeReported);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_PlayerSpotted);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_PlayerLost);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_Distraction);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_FocusCleared);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_SearchExpired);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_ResumeRoutine);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_DamageReceived);
+	STEALTH_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_NPC_Event_TouchDetected);
 }
 
-/**
- * Behavior and Alert level of an NPC
- */
+// ============================================================================
+// Patrol & Noise Enums
+// ============================================================================
+
 UENUM(BlueprintType)
-enum class ENpcAlertLevel : uint8
+enum class EPatrolMode : uint8
 {
-	Unaware UMETA(DisplayName = "Unaware / Routine"),
-	Suspicious UMETA(DisplayName = "Suspicious / Inquiring"),
-	Alerted UMETA(DisplayName = "Alerted / Investigating"),
-	Hostile UMETA(DisplayName = "Hostile / Combat / Alarm")
+	Loop,
+	PingPong,
+	Once
 };
 
 UENUM(BlueprintType)
-enum class ENpcBehaviourState : uint8
+enum class ENpcNoiseType : uint8
 {
-	Routine UMETA(DisplayName = "Routine / Patrol / Schedule"),
-	Suspicious UMETA(DisplayName = "Suspicious"),
-	Alerted UMETA(DisplayName = "Alerted"),
-	Search UMETA(DisplayName = "Search"),
-	Combat UMETA(DisplayName = "Combat / Alarm")
+	Subtle = 0 UMETA(DisplayName = "Subtle"),
+	Distraction = 1 UMETA(DisplayName = "Distraction"),
+	Major = 2 UMETA(DisplayName = "Major"),
+	Critical = 3 UMETA(DisplayName = "Critical")
 };
 
-// Typedef alias for backward compatibility
-using EGuardBehaviourState = ENpcBehaviourState;
+// ============================================================================
+// Sense Flags
+// ============================================================================
 
-/**
- * Suspicion evaluation mode configured per StateTree state
- */
+UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
+enum class ENpcSenseFlags : uint8
+{
+	None = 0 UMETA(Hidden),
+	Sight = 1 << 0 UMETA(DisplayName = "Sight"),
+	Hearing = 1 << 1 UMETA(DisplayName = "Hearing"),
+	Touch = 1 << 2 UMETA(DisplayName = "Touch"),
+	Damage = 1 << 3 UMETA(DisplayName = "Damage"),
+	Prediction = 1 << 4 UMETA(DisplayName = "Prediction")
+};
+ENUM_CLASS_FLAGS(ENpcSenseFlags);
+
+// ============================================================================
+// Namespace NpcAi Utilities
+// ============================================================================
+
+namespace NpcAi
+{
+	inline bool IsPlayerActor(const AActor* Actor)
+	{
+		if (const APawn* Pawn = Cast<APawn>(Actor))
+		{
+			return Pawn->IsPlayerControlled();
+		}
+		return false;
+	}
+}
+
+// ============================================================================
+// Sensor Types
+// ============================================================================
+
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcTrackedTarget
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	TWeakObjectPtr<AActor> Actor = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	FVector LastKnownLocation = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	bool bHasLocation = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	ENpcSenseFlags CurrentSenses = ENpcSenseFlags::None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	double LastSeenTime = -1.0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	double LastHeardTime = -1.0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	double LastSensedTime = -1.0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	FGameplayTag LastStimulusTag = FGameplayTag::EmptyTag;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	float LastStimulusStrength = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	float Distance = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	bool bIsPlayer = false;
+
+	bool IsCurrentlySeen() const
+	{
+		return EnumHasAnyFlags(CurrentSenses, ENpcSenseFlags::Sight);
+	}
+
+	double GetAge(double Now) const
+	{
+		return (LastSensedTime >= 0.0) ? (Now - LastSensedTime) : -1.0;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcSensorData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	TArray<FNpcTrackedTarget> Targets;
+
+	static constexpr int32 MaxTrackedTargets = 16;
+
+	const FNpcTrackedTarget* Find(const AActor* InActor) const
+	{
+		if (!InActor)
+		{
+			return nullptr;
+		}
+		return Targets.FindByPredicate([InActor](const FNpcTrackedTarget& Item) {
+			return Item.Actor.Get() == InActor;
+		});
+	}
+
+	FNpcTrackedTarget* Find(const AActor* InActor)
+	{
+		if (!InActor)
+		{
+			return nullptr;
+		}
+		return Targets.FindByPredicate([InActor](const FNpcTrackedTarget& Item) {
+			return Item.Actor.Get() == InActor;
+		});
+	}
+
+	FNpcTrackedTarget& FindOrAdd(AActor* InActor)
+	{
+		if (FNpcTrackedTarget* Found = Find(InActor))
+		{
+			return *Found;
+		}
+
+		if (Targets.Num() >= MaxTrackedTargets)
+		{
+			int32 OldestIndex = 0;
+			double OldestTime = Targets[0].LastSensedTime;
+			for (int32 i = 1; i < Targets.Num(); ++i)
+			{
+				if (Targets[i].LastSensedTime < OldestTime)
+				{
+					OldestTime = Targets[i].LastSensedTime;
+					OldestIndex = i;
+				}
+			}
+			Targets.RemoveAt(OldestIndex);
+		}
+
+		FNpcTrackedTarget NewTarget;
+		NewTarget.Actor = InActor;
+		NewTarget.bIsPlayer = NpcAi::IsPlayerActor(InActor);
+		return Targets.Add_GetRef(NewTarget);
+	}
+
+	bool Remove(const AActor* InActor)
+	{
+		if (!InActor)
+		{
+			return false;
+		}
+		const int32 NumRemoved = Targets.RemoveAll([InActor](const FNpcTrackedTarget& Item) {
+			return Item.Actor.Get() == InActor || !Item.Actor.IsValid();
+		});
+		return NumRemoved > 0;
+	}
+
+	void PruneInvalid()
+	{
+		Targets.RemoveAll([](const FNpcTrackedTarget& Item) {
+			return !Item.Actor.IsValid();
+		});
+	}
+};
+
+UENUM(BlueprintType)
+enum class ENpcSensorEventType : uint8
+{
+	SightGained,
+	SightLost,
+	Heard,
+	Touched,
+	Damaged,
+	Forgotten
+};
+
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcSensorEvent
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	ENpcSensorEventType Type = ENpcSensorEventType::SightGained;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	TWeakObjectPtr<AActor> Actor = nullptr;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	FVector Location = FVector::ZeroVector;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	float Strength = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	FGameplayTag Tag = FGameplayTag::EmptyTag;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Sensor")
+	ENpcNoiseType NoiseType = ENpcNoiseType::Subtle;
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNpcSensorEvent, const FNpcSensorEvent&);
+
+// ============================================================================
+// Awareness Types
+// ============================================================================
+
 UENUM(BlueprintType)
 enum class ENpcSuspicionMode : uint8
 {
@@ -92,81 +288,90 @@ enum class ENpcSuspicionMode : uint8
 	AlwaysDecay UMETA(DisplayName = "Always Decay")
 };
 
-/**
- * Graded visibility of player from NPC's point of view
- */
-UENUM(BlueprintType)
-enum class ENpcVisibilityGrade : uint8
-{
-	Hidden UMETA(DisplayName = "Hidden"),
-	Shadowed UMETA(DisplayName = "Shadowed"),
-	PartiallyExposed UMETA(DisplayName = "Partially Exposed"),
-	FullyVisible UMETA(DisplayName = "Fully Visible")
-};
-
-/**
- * Perception tuning parameters passed from StateTree to UNpcAwarenessComponent
- */
 USTRUCT(BlueprintType)
 struct STEALTH_API FNpcPerceptionTuningParams
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Tuning")
 	ENpcSuspicionMode Mode = ENpcSuspicionMode::Normal;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Tuning", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SuspicionGainMultiplier = 1.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Tuning", meta = (ClampMin = "0.0", UIMin = "0.0"))
 	float SuspicionDecayMultiplier = 1.0f;
 };
 
-/**
- * Noise classification for hearing stimuli
- */
 UENUM(BlueprintType)
-enum class ENpcNoiseType : uint8
+enum class ENpcVisibilityGrade : uint8
 {
-	Subtle UMETA(DisplayName = "Subtle / Footsteps"),
-	Distraction UMETA(DisplayName = "Distraction / Thrown Rock"),
-	Major UMETA(DisplayName = "Major Disturbance / Glass Shatter"),
-	Critical UMETA(DisplayName = "Critical / Explosion / Death Scream")
+	Hidden,
+	Shadowed,
+	PartiallyExposed,
+	FullyVisible
 };
 
-/**
- * Patrol traversal pattern for patrol routes
- */
-UENUM(BlueprintType)
-enum class EPatrolMode : uint8
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcAwarenessState
 {
-	Loop UMETA(DisplayName = "Loop (0 -> 1 -> 2 -> 0)"),
-	PingPong UMETA(DisplayName = "Ping-Pong (0 -> 1 -> 2 -> 1 -> 0)"),
-	Once UMETA(DisplayName = "Once (Stop at last waypoint)"),
-	Random UMETA(DisplayName = "Random Waypoint")
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Awareness")
+	float Suspicion = 0.0f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Awareness")
+	ENpcVisibilityGrade VisibilityGrade = ENpcVisibilityGrade::Hidden;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Awareness")
+	bool bFocusTargetVisible = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Awareness")
+	bool bFocusTargetStale = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Awareness")
+	bool bHasInvestigationLocation = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI|Awareness")
+	FVector InvestigationLocation = FVector::ZeroVector;
 };
 
-/**
- * Focus priority hierarchy: Higher numerical values preempt lower ones.
- * Ordering is behaviorally load-bearing: it gates whether an NPC notices or reacts to a player
- * while engaged in other activities.
- */
+// ============================================================================
+// Focus Types
+// ============================================================================
+
 UENUM(BlueprintType)
 enum class ENpcFocusPriority : uint8
 {
-	None = 0,
-	Routine = 10, // Daily activity / idle facing
-	MinorDistraction = 20, // Soft noise, rock throw, whistling
-	SuspiciousPlayer = 25, // Player spotted / suspicious presence (sub-disturbance, ignored if busy with major tasks)
-	MajorDisturbance = 30, // Open door in secure area, blood, missing item
-	CriticalDisturbance = 40, // Dead / incapacitated body
-	CombatTarget = 60 // Confirmed hostile player in combat / illegal act seen (highest priority)
+	None = 0 UMETA(DisplayName = "None"),
+	Ambient = 10 UMETA(DisplayName = "Ambient"),
+	Routine = 15 UMETA(DisplayName = "Routine"),
+	MinorDistraction = 20 UMETA(DisplayName = "Minor Distraction"),
+	MajorDisturbance = 30 UMETA(DisplayName = "Major Disturbance"),
+	SuspiciousPlayer = 25 UMETA(DisplayName = "Suspicious Player"),
+	CriticalDisturbance = 40 UMETA(DisplayName = "Critical Disturbance"),
+	ThreatInSight = 50 UMETA(DisplayName = "Threat In Sight"),
+	CombatTarget = 60 UMETA(DisplayName = "Combat Target")
 };
 
+USTRUCT(BlueprintType)
+struct STEALTH_API FNpcFocusRule
+{
+	GENERATED_BODY()
 
-/**
- * Snapshot of what the NPC is currently focusing on
- */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	FGameplayTag FocusTag = FGameplayTag::EmptyTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	ENpcFocusPriority Priority = ENpcFocusPriority::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	float Duration = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	float AwarenessReductionMultiplier = 1.0f;
+};
+
 USTRUCT(BlueprintType)
 struct STEALTH_API FNpcFocusTarget
 {
@@ -185,18 +390,20 @@ struct STEALTH_API FNpcFocusTarget
 	FVector FocusLocation = FVector::ZeroVector;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
-	float Duration = 0.0f; // 0 = indefinite until cleared or preempted
+	bool bHasLocation = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
+	float Duration = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
 	float RemainingTime = 0.0f;
 
-	/** Modifier applied to peripheral vision / pickpocket difficulty while focused (0.0 to 1.0) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Focus")
-	float AwarenessReductionMultiplier = 0.5f;
+	float AwarenessReductionMultiplier = 1.0f;
 
 	bool IsValid() const
 	{
-		return Priority > ENpcFocusPriority::None && (FocusActor.IsValid() || !FocusLocation.IsZero());
+		return Priority > ENpcFocusPriority::None && (FocusActor.IsValid() || bHasLocation);
 	}
 
 	bool operator==(const FNpcFocusTarget& Other) const
@@ -204,7 +411,8 @@ struct STEALTH_API FNpcFocusTarget
 		return FocusTag == Other.FocusTag
 			&& Priority == Other.Priority
 			&& FocusActor == Other.FocusActor
-			&& FocusLocation.Equals(Other.FocusLocation, 1.0f);
+			&& bHasLocation == Other.bHasLocation
+			&& (!bHasLocation || FocusLocation.Equals(Other.FocusLocation, 1.0f));
 	}
 
 	bool operator!=(const FNpcFocusTarget& Other) const
@@ -213,137 +421,4 @@ struct STEALTH_API FNpcFocusTarget
 	}
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcStateChanged, const FGameplayTag&, NewStateTag, const FGameplayTag&, PreviousStateTag);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSuspicionChanged, float, NewSuspicion);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcNoiseHeard, ENpcNoiseType, NoiseType, const FVector&, NoiseLocation);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnNpcFocusChanged, const FNpcFocusTarget&, NewFocus, const FNpcFocusTarget&, PreviousFocus);
-
-/**
- * Perception snapshot passed to StateTree and listeners
- */
-USTRUCT(BlueprintType)
-struct FStateTreeAiPerceptionData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	FVector PlayerPosition = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	FVector LastKnownPlayerPosition = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bIsPlayerVisible = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bLineOfSightValid = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bLineOfSightBlocked = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float HearingStimulusStrength = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float Suspicion = 0.0f; // 0.0 to 100.0
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	FVector InvestigationTarget = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float LastValidObservationTime = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float CurrentExposure = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	ENpcVisibilityGrade VisibilityGrade = ENpcVisibilityGrade::Hidden;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float DistanceToPlayer = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bInDetectionRange = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bMemoryStale = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bIsFullyVisibleByDistance = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	FVector LastHeardSoundLocation = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float TimeSinceLastStimulus = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	TWeakObjectPtr<AActor> LastPerceivedActor = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	FGameplayTag LastStimulusTag;
-
-	// Legacy / convenience fields
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	float Awareness = 0.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	ENpcAlertLevel AlertLevel = ENpcAlertLevel::Unaware;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bHasPlayerLineOfSight = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Perception")
-	bool bEffectivelySeesPlayer = false;
-};
-
-/**
- * Structured payload for crime events dispatched across AI systems
- */
-USTRUCT(BlueprintType)
-struct FAiCrimeEventPayload
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
-	FName HouseId = NAME_None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
-	EHouseCrimeType CrimeType = EHouseCrimeType::Trespassing;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
-	FVector CrimeLocation = FVector::ZeroVector;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
-	TWeakObjectPtr<AActor> Perpetrator = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
-	TWeakObjectPtr<AActor> VictimOrTarget = nullptr;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|Crime")
-	bool bIsPrimaryInvestigator = false;
-};
-
-/**
- * Information about an active activity slot / smart object
- */
-USTRUCT(BlueprintType)
-struct FActivitySlotClaim
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
-	FGuid ClaimerGuid;
-
-	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
-	TWeakObjectPtr<AActor> TargetActor = nullptr;
-
-	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
-	FGameplayTag ActivityTag;
-
-	UPROPERTY(BlueprintReadOnly, Category = "AI|Activity")
-	float ClaimTimestamp = 0.0f;
-};

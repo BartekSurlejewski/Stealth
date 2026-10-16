@@ -132,20 +132,6 @@ int32 APatrolRoute::GetNextWaypointIndex(int32 CurrentIndex, bool& bInOutMovingF
 	case EPatrolMode::Once:
 		return FMath::Min(Count - 1, CurrentIndex + 1);
 
-	case EPatrolMode::Random:
-		if (Count <= 1)
-		{
-			return 0;
-		}
-		{
-			int32 NextRandom = FMath::RandRange(0, Count - 1);
-			if (NextRandom == CurrentIndex && Count > 1)
-			{
-				NextRandom = (CurrentIndex + 1) % Count;
-			}
-			return NextRandom;
-		}
-
 	default:
 		return (CurrentIndex + 1) % Count;
 	}
